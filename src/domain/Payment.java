@@ -11,7 +11,13 @@ public class Payment {
 
     // Enum Payment Type
     public enum PaymentType {
-        PIX, CREDIT_CARD, DEBIT_CARD, CASH;
+        PIX(1), CREDIT_CARD(2), DEBIT_CARD(3), CASH(4);
+
+        public int value;
+
+        PaymentType(int value) {
+            this.value = value;
+        }
     }
 
     // Constructor
