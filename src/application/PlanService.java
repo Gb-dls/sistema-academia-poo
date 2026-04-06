@@ -6,10 +6,23 @@ import java.util.ArrayList;
 public class PlanService {
     ArrayList<Plan> plansArrayList = new ArrayList<Plan>();
 
+    public boolean nameExists(String name){
+        for (Plan planoActual : plansArrayList) {
+            if (planoActual.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /*Verificação de PlanType pendente*/
     public boolean/*OperationResult*/ registerPlan(String name, String description, PlanType plan, int minDurationMonths, double pricePerMonth){
 
+        if(nameExists(name)){
+            //return new OperationResult(false, "Já há um plano com esse nome", null);
+            System.out.println("[ERRO]: Já há um plano com esse nome.");
+            return false;
+        }
         if(minDurationMonths <= 0) {
             //return new OperationResult(false, "A duração mínima deve ser maior que zero.", null);
             System.out.println("[ERRO]: A duração mínima deve ser maior que zero.");
@@ -56,6 +69,7 @@ public class PlanService {
         return true;
         //return new OperationResult(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, null);
     }
+
 
 
 }
