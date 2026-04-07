@@ -2,6 +2,7 @@ package application;
 import domain.Plan;
 import domain.PlanType;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class PlanService {
     ArrayList<Plan> plansArrayList = new ArrayList<Plan>();
@@ -16,29 +17,23 @@ public class PlanService {
     }
 
     /*Verificação de PlanType pendente*/
-    public boolean/*OperationResult*/ registerPlan(String name, String description, PlanType plan, int minDurationMonths, double pricePerMonth){
+    public OperationResult registerPlan(String name, String description, PlanType plan, int minDurationMonths, double pricePerMonth){
 
         if(nameExists(name)){
-            //return new OperationResult(false, "Já há um plano com esse nome", null);
-            System.out.println("[ERRO]: Já há um plano com esse nome.");
-            return false;
+           return new OperationResult(false, "Já há um plano com esse nome");
         }
         if(minDurationMonths <= 0) {
-            //return new OperationResult(false, "A duração mínima deve ser maior que zero.", null);
-            System.out.println("[ERRO]: A duração mínima deve ser maior que zero.");
-            return false;
+            return new OperationResult(false, "A duração mínima deve ser maior que zero.");
         }
         if(pricePerMonth <= 0){
-            //return new OperationResult(false, "O preço deve ser positivo.", null);
-            System.out.println("[ERRO]: O preço deve ser positivo.");
-            return false;
+           return new OperationResult(false, "O preço deve ser positivo.");
         }
 
-        Plan novoPlano = new Plan(name, description, plan, minDurationMonths, pricePerMonth);
-        plansArrayList.add(novoPlano);
-        System.out.println("plano cadastrado");
-        //return new OperationResult(true, "Plano cadastrado com sucesso!", null);
-        return true;
+        Plan newPlan= new Plan(name, description, plan, minDurationMonths, pricePerMonth);
+        plansArrayList.add(newPlan);
+        // Ordenação da lista por ordem alfabetica
+        plansArrayList.sort(Comparator.comparing(Plan::getName));
+        return new OperationResult(true, "Plano cadastrado com sucesso!", newPlan);
     }
 
     public Plan findByName(String name) {
@@ -50,26 +45,23 @@ public class PlanService {
         return null;
     }
 
-    public boolean /*OperationResult*/ updatePrice(String name, double newPrice){
+    public OperationResult updatePrice(String name, double newPrice){
         Plan planUpdate = findByName(name);
 
         if(planUpdate == null){
-            //return new OperationResult(false, "O plano não foi encontrado.", null);
-            return false;
+            return new OperationResult(false, "O plano não foi encontrado.");
         }
 
         if(newPrice <= 0){
-            //return new OperationResult(false, "O preço deve ser positivo.", null);
-            System.out.println("[ERRO]: O preço deve ser positivo.");
-            return false;
+            return new OperationResult(false, "O preço deve ser positivo.");
         }
 
         planUpdate.setUpdatePrice(newPrice);
-        System.out.println("[SUCESSO]: O preço do plano " + name + " foi atualizado para R$ " + newPrice);
-        return true;
-        //return new OperationResult(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, null);
+        return new OperationResult(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice);
     }
 
-
+    public ArrayList<Plan> listPlans() {
+        return plansArrayList;
+    }
 
 }

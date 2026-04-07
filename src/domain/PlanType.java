@@ -13,7 +13,7 @@ public enum PlanType {
         return optionValue;
     }
 
-    /* NOVO MeTODO TRADUTOR */
+    /* Alterar metodo*/
     public static PlanType fromInt(int valor) {
         for (PlanType tipo : PlanType.values()) {
             if (tipo.getOptionValue() == valor) {
