@@ -1,4 +1,3 @@
 package ui;
 
-public class Main {
-}
+public class Main {}
