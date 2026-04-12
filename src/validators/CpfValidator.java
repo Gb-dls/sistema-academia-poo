@@ -1,6 +1,5 @@
 package validators;
 
-
 public class CpfValidator {
 
     public boolean isValidCpf(String cpf) {
@@ -13,7 +12,6 @@ public class CpfValidator {
 
         return firstDigit == (cpf.charAt(9) - '0') && secondDigit == (cpf.charAt(10) - '0');
     }
-
     private  boolean hasValidLength(String cpf) {
         return cpf != null && cpf.length() == 11;
     }
