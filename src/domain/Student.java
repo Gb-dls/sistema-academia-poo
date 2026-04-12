@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import  application.OperationResult;
 
 public class Student {
-
     private String name;
     private String cpf;
     private String contact;
@@ -19,14 +18,13 @@ public class Student {
     public Student(String name, String cpf, String contact, String email, LocalDate birthDate) {
         this.name = name;
         this.cpf = cpf;
-        this.contact = cleanedContact;
+        this.contact = contact;
         this.email = email;
         this.birthDate = birthDate;
         this.active = true;
     }
 
     // ================= FORMATADORES =================
-
     //Formata a saida do CPF
     public String getCpfFormatted() {
         return cpf.replaceAll("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
@@ -63,7 +61,6 @@ public class Student {
     public int calculateAge() {
         return Period.between(this.birthDate, LocalDate.now()).getYears();
     }
-
     // ================= STATUS =================
 
     public void activate() {
@@ -95,7 +92,6 @@ public class Student {
     public LocalDate getBirthDate() {
         return this.birthDate;
     }
-
     // ================= PRINT =================
 
     public void printStudent() {
@@ -158,4 +154,5 @@ public class Student {
         this.birthDate = birthDate;
         return new OperationResult(true, "Data de nascimento atualizada com sucesso.");
     }
+
 }
