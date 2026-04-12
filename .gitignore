@@ -1,2 +1,16 @@
-/.idea
+# 1. Arquivos compilados do Java (Binários)
+*.class
+
+# 2. Pastas de saída e compilação do IntelliJ
+out/
+build/
+target/
+
+# 3. Arquivos de configuração internos do IntelliJ
+.idea/
 *.iml
+*.iws
+
+# 4. Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
