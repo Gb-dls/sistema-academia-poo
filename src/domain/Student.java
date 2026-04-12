@@ -4,8 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 
-import util.CpfValidator;
-import util.ContactValidator;
+import  application.OperationResult;
 
 public class Student {
 
@@ -18,42 +17,6 @@ public class Student {
 
     // CONSTRUTOR
     public Student(String name, String cpf, String contact, String email, LocalDate birthDate) {
-
-        // valida nome
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Nome inválido!");
-        }
-
-        // valida CPF (formato básico)
-        if (cpf == null || cpf.isBlank()) {
-            throw new IllegalArgumentException("CPF inválido!");
-        }
-
-        // limpa CPF
-        cpf = cpf.replaceAll("\\D", "");
-
-        if (!CpfValidator.isValidCpf(cpf)) {
-            throw new IllegalArgumentException("CPF inválido!");
-        }
-
-        // valida data
-        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de nascimento inválida!");
-        }
-
-        // limpa telefone
-        String cleanedContact = null;
-
-        if (contact != null) {
-            cleanedContact = contact.replaceAll("\\D", "");
-        }
-
-        // valida telefone
-        if (cleanedContact != null && !ContactValidator.isValidContact(cleanedContact)) {
-            throw new IllegalArgumentException("Telefone inválido!");
-        }
-
-        // atribuições
         this.name = name;
         this.cpf = cpf;
         this.contact = cleanedContact;
@@ -64,10 +27,12 @@ public class Student {
 
     // ================= FORMATADORES =================
 
+    //Formata a saida do CPF
     public String getCpfFormatted() {
         return cpf.replaceAll("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
     }
 
+    //Formata a saida do contato
     public String getContactFormatted() {
         if (contact == null) {
             return "Não informado";
@@ -80,11 +45,13 @@ public class Student {
         }
     }
 
+    //Formata a data de aniversario
     public String getBirthDateFormatted() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return birthDate.format(formatter);
     }
 
+    //Retorna a situação do aluno
     public String getStatus() {
         if (active) {
             return "Ativo";
@@ -92,6 +59,7 @@ public class Student {
         return "Inativo";
     }
 
+    //Calcula a idade do estudante
     public int calculateAge() {
         return Period.between(this.birthDate, LocalDate.now()).getYears();
     }
@@ -128,10 +96,6 @@ public class Student {
         return this.birthDate;
     }
 
-    public boolean isActive() {
-        return this.active;
-    }
-
     // ================= PRINT =================
 
     public void printStudent() {
@@ -148,39 +112,50 @@ public class Student {
 
     // ================= SETTERS =================
 
-    public void setName(String name) {
+    //Altera o nome do estudante
+    public OperationResult setName(String name) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Nome inválido!");
+            return new OperationResult(false, "Nome inválido!");
         }
+
         this.name = name;
+        return new OperationResult(true, "Nome atualizado com sucesso.");
     }
 
-    public void setContact(String contact) {
+    //Altera o contato e valida do estudante
+    public OperationResult setContact(String contact) {
         if (contact == null) {
             this.contact = null;
-            return;
+            return new OperationResult(true, "Contato removido.");
         }
 
         String cleanedContact = contact.replaceAll("\\D", "");
 
         if (!ContactValidator.isValidContact(cleanedContact)) {
-            throw new IllegalArgumentException("Telefone inválido!");
+            return new OperationResult(false, "Telefone inválido!");
         }
 
         this.contact = cleanedContact;
+        return new OperationResult(true, "Contato atualizado com sucesso.");
     }
 
-    public void setEmail(String email) {
+    //Altera o email do estudante
+    public OperationResult setEmail(String email) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email inválido!");
+            return new OperationResult(false, "Email inválido!");
         }
+
         this.email = email;
+        return new OperationResult(true, "Email atualizado com sucesso.");
     }
 
-    public void setBirthDate(LocalDate birthDate) {
+    //Altera o dia do nascimento do estudante
+    public OperationResult setBirthDate(LocalDate birthDate) {
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de nascimento inválida!");
+            return new OperationResult(false, "Data de nascimento inválida!");
         }
+
         this.birthDate = birthDate;
+        return new OperationResult(true, "Data de nascimento atualizada com sucesso.");
     }
 }
