@@ -1,19 +1,26 @@
 package application;
 
 import domain.Student;
+import application.OperationResult;
+import validators.CpfValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import application.OperationResult;
 
 public class StudentService {
 
     private List<Student> students = new ArrayList<>();
+    private CpfValidator cpfValidator = new CpfValidator();
 
     // cadastrar aluno
     public OperationResult registerStudent(Student student) {
+
+        // valida CPF
+        if (!cpfValidator.isValidCpf(student.getCpf())) {
+            return new OperationResult(false, "CPF inválido.");
+        }
 
         // verifica duplicidade de CPF
         if (cpfExists(student.getCpf())) {
@@ -35,8 +42,6 @@ public class StudentService {
 
         return new OperationResult(false, "Aluno não encontrado.");
     }
-
-
 
     // listar alunos
     public OperationResult listStudents() {
