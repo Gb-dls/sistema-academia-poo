@@ -1,8 +1,8 @@
-package util;
+package validators;
 
 public class ContactValidator {
 
-    public static boolean isValidContact(String contact) {
+    public boolean isValidContact(String contact) {
 
         if (contact == null) return false;
 
