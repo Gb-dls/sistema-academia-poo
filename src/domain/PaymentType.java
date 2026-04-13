@@ -13,6 +13,7 @@ public enum PaymentType {
         return value;
     }
 
+    // Recebe uma opcao e procura o valor no enum - Retorna null se nao encontrar o tipo correspondente
     public static PaymentType fromInt(int option) {
         for (PaymentType type : PaymentType.values()) {
             if (type.getValue() == option) {
