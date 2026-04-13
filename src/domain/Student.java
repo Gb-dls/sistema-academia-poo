@@ -3,6 +3,7 @@ package domain;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import validators.ContactValidator;
 
 import  application.OperationResult;
 
@@ -93,17 +94,16 @@ public class Student {
         return this.birthDate;
     }
     // ================= PRINT =================
-
-    public void printStudent() {
-        System.out.println("===== DADOS DO ALUNO =====");
-        System.out.println("Nome: " + name);
-        System.out.println("CPF: " + getCpfFormatted());
-        System.out.println("Contato: " + getContactFormatted());
-        System.out.println("Email: " + email);
-        System.out.println("Data de nascimento: " + getBirthDateFormatted());
-        System.out.println("Idade: " + calculateAge() + " anos");
-        System.out.println("Status: " + getStatus());
-        System.out.println("==========================");
+    @Override
+    public String toString() {
+        return "\n=== ALUNO ===\n" +
+                "Nome: " + name + "\n" +
+                "CPF: " + getCpfFormatted() + "\n" +
+                "Email: " + email + "\n" +
+                "Contato: " + getContactFormatted() + "\n" +
+                "Nascimento: " + getBirthDateFormatted() + "\n" +
+                "Idade: " + calculateAge() + "\n" +
+                "Status: " + getStatus() + "\n";
     }
 
     // ================= SETTERS =================
@@ -127,7 +127,9 @@ public class Student {
 
         String cleanedContact = contact.replaceAll("\\D", "");
 
-        if (!ContactValidator.isValidContact(cleanedContact)) {
+        ContactValidator validator = new ContactValidator();
+
+        if (!validator.isValidContact(cleanedContact)) {
             return new OperationResult(false, "Telefone inválido!");
         }
 
