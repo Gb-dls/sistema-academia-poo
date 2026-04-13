@@ -24,13 +24,13 @@ public class UserInterface {
     // ===== Mensagem padrão (sucesso) =====
     // Exibe mensagens comuns (ex: cadastro realizado)
     public void showMessage(String message) {
-        System.out.println("\nSucesso\n" + message); //Mensagem de operationResult
+        System.out.println("\n\n" + message); //Mensagem de operationResult
     }
 
     // ===== Mensagem de erro =====
     // Exibe mensagens de erro (usa o System.err para destacar)
     public void showError(String message) {
-        System.err.println("\nERRO\n " + message); //Mensagem de operationResult
+        System.err.println("\nERRO: " + message); //Mensagem de operationResult
     }
 
   // ===== Exibir menu =====

@@ -28,4 +28,6 @@ public class OperationResult {
     public Object getData(){
         return this.data;
     }
+
+
 }
