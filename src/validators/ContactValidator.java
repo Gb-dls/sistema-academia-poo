@@ -1,10 +1,14 @@
 package validators;
 
+// Classe responsável por validar um número de contato (telefone)
 public class ContactValidator {
 
+    // Método principal que valida o contato
     public boolean isValidContact(String contact) {
 
-        if (contact == null) return false;
+        if (contact == null){
+            return false;
+        }
 
         // remove tudo que não for número
         contact = contact.replaceAll("\\D", "");
@@ -15,10 +19,11 @@ public class ContactValidator {
         }
 
         // verifica se todos os números são iguais
-        if (contact.matches("(\\d)\\1+")) {
+        if (contact.matches("(\\d)\\1+"))  {
             return false;
         }
 
         return true;
     }
 }
+
