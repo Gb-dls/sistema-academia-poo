@@ -3,6 +3,9 @@ package domain;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import validators.ContactValidator;
+
+import  application.OperationResult;
 
 public class Student {
     private String name;
@@ -12,26 +15,8 @@ public class Student {
     private LocalDate birthDate;
     private boolean active;
 
-    //CONSTRUTOR
-
+    // CONSTRUTOR
     public Student(String name, String cpf, String contact, String email, LocalDate birthDate) {
-
-        //limpa dados
-        cpf = cpf.replaceAll("\\D", ""); //remove tudo que não for numero
-        contact = contact.replaceAll("\\D", ""); // remove tudo que não for numero
-
-        //validaçoes
-        if (!isValidCpf(cpf)) {
-            throw new IllegalArgumentException("CPF inválido!");
-        }
-        if (!isValidContact(contact)) {
-            throw new IllegalArgumentException("Telefone inválido!");
-        }
-        if (birthDate.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de nascimento inválida!");
-        }
-
-        //atribuiçoes
         this.name = name;
         this.cpf = cpf;
         this.contact = contact;
@@ -40,76 +25,18 @@ public class Student {
         this.active = true;
     }
 
-    //VALIDAÇÕES
-
-    // metodo que valida o CPF
-    private boolean isValidCpf(String cpf) {
-        int sum;
-        // verifica se tem exatamente 11 digitos
-        if (cpf.length() != 11) {
-            return false;
-        }
-
-        // verifica se todos os numeros sao iguais, se for é um CPF invalido
-        if (cpf.matches("(\\d)\\1{10}")) {
-            return false;
-        }
-
-        sum = 0;
-        for (int i = 0; i < 9; i++) {
-            // pega o caractere e converte para número usando - '0'
-            sum = sum +  (cpf.charAt(i) - '0') * (10 - i); //pega o numero do CPF e multiplica pelo peso decrescente
-        }
-
-        // calcula o primeiro digito verificador
-        int firstDigit = 11 - (sum % 11);
-        if (firstDigit >= 10) {    // regra do CPF: se resultado for 10 ou 11 vira 0
-            firstDigit = 0;
-        }
-
-        sum = 0;
-        for (int i = 0; i < 10; i++) {
-            sum = sum + (cpf.charAt(i) - '0') * (11 - i);
-        }
-
-        // calcula o segundo dígito verificador
-        int secondDigit = 11 - (sum % 11);
-        if (secondDigit >= 10) {  // regra do CPF: se resultado for 10 ou 11 vira 0
-            secondDigit = 0;
-        }
-
-        if (firstDigit == (cpf.charAt(9) - '0') && secondDigit == (cpf.charAt(10) - '0')) { // compara os digitos calculados com os digitos reais do CPF
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private boolean isValidContact(String contact) {
-
-        // verifica se tem 10 ou 11 dígitos
-        if (contact.length() < 10 || contact.length() > 11) {
-            return false;
-        }
-
-        // verifica se todos os números são iguais
-        if (contact.matches("(\\d)\\1+")) {
-            return false;
-        }
-
-        return true;
-    }
-
-
-    // FORMATADORES
-
-    // Metodo que formata o CPF para print
+    // ================= FORMATADORES =================
+    //Formata a saida do CPF
     public String getCpfFormatted() {
-        return cpf.replaceAll("(\\d{3})(\\d{3})(\\d{3})(\\d{2})","$1.$2.$3-$4");
+        return cpf.replaceAll("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
     }
 
-    // Metodo que formata o telefone para print
+    //Formata a saida do contato
     public String getContactFormatted() {
+        if (contact == null) {
+            return "Não informado";
+        }
+
         if (contact.length() == 11) {
             return contact.replaceAll("(\\d{2})(\\d{5})(\\d{4})", "($1) $2-$3");
         } else {
@@ -117,34 +44,36 @@ public class Student {
         }
     }
 
-    // Metodo que formata o data para print
+    //Formata a data de aniversario
     public String getBirthDateFormatted() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return birthDate.format(formatter);
     }
 
-    //metodo que define o status
+    //Retorna a situação do aluno
     public String getStatus() {
-        return active ? "Ativo" : "Inativo";
+        if (active) {
+            return "Ativo";
+        }
+        return "Inativo";
     }
 
-    // calcula a idade do aluno
+    //Calcula a idade do estudante
     public int calculateAge() {
         return Period.between(this.birthDate, LocalDate.now()).getYears();
     }
+    // ================= STATUS =================
 
-    // aluno ativo
     public void activate() {
         this.active = true;
     }
 
-    //aluno inativo
     public void deactivate() {
         this.active = false;
     }
 
+    // ================= GETTERS =================
 
-    // GETTERS
     public String getName() {
         return this.name;
     }
@@ -164,25 +93,68 @@ public class Student {
     public LocalDate getBirthDate() {
         return this.birthDate;
     }
-
-    public boolean isActive() {
-        return this.active;
+    // ================= PRINT =================
+    @Override
+    public String toString() {
+        return "\n=== ALUNO ===\n" +
+                "Nome: " + name + "\n" +
+                "CPF: " + getCpfFormatted() + "\n" +
+                "Email: " + email + "\n" +
+                "Contato: " + getContactFormatted() + "\n" +
+                "Nascimento: " + getBirthDateFormatted() + "\n" +
+                "Idade: " + calculateAge() + "\n" +
+                "Status: " + getStatus() + "\n";
     }
 
-    //PRINT
+    // ================= SETTERS =================
 
-    // metodo para printar todos os dados so aluno
-    public void printStudent() {
-        System.out.println("===== DADOS DO ALUNO =====");
-        System.out.println("Nome: " + name);
-        System.out.println("CPF: " + getCpfFormatted());
-        System.out.println("Contato: " + getContactFormatted());
-        System.out.println("Email: " + email);
-        System.out.println("Data de nascimento: " + getBirthDateFormatted());
-        System.out.println("Idade: " + calculateAge() + " anos");
-        //  imprime o status do aluno (ativo ou inativo), chama o metodo que retorna true ou false para a situacao do aluno e faz a comparacao direta
-        System.out.println("Status: " + getStatus());
-        System.out.println("==========================");
+    //Altera o nome do estudante
+    public OperationResult setName(String name) {
+        if (name == null || name.isBlank()) {
+            return new OperationResult(false, "Nome inválido!");
+        }
+
+        this.name = name;
+        return new OperationResult(true, "Nome atualizado com sucesso.");
+    }
+
+    //Altera o contato e valida do estudante
+    public OperationResult setContact(String contact) {
+        if (contact == null) {
+            this.contact = null;
+            return new OperationResult(true, "Contato removido.");
+        }
+
+        String cleanedContact = contact.replaceAll("\\D", "");
+
+        ContactValidator validator = new ContactValidator();
+
+        if (!validator.isValidContact(cleanedContact)) {
+            return new OperationResult(false, "Telefone inválido!");
+        }
+
+        this.contact = cleanedContact;
+        return new OperationResult(true, "Contato atualizado com sucesso.");
+    }
+
+    //Altera o email do estudante
+    public OperationResult setEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return new OperationResult(false, "Email inválido!");
+        }
+
+        this.email = email;
+        return new OperationResult(true, "Email atualizado com sucesso.");
+    }
+
+    //Altera o dia do nascimento do estudante
+    public OperationResult setBirthDate(LocalDate birthDate) {
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
+            return new OperationResult(false, "Data de nascimento inválida!");
+        }
+
+        this.birthDate = birthDate;
+        return new OperationResult(true, "Data de nascimento atualizada com sucesso.");
     }
 
 }
