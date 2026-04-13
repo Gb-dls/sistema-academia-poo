@@ -26,6 +26,9 @@ public class PlanService {
     // ou com falha e mensagem descritiva caso alguma validação não passe.
     public OperationResult registerPlan(String name, String description, PlanType type, int minDurationMonths, double pricePerMonth){
 
+        if (type == null) {
+            return new OperationResult(false, "Tipo de plano inválido.");
+        }
         if (name == null || name.isBlank()) {
             return new OperationResult(false, "O nome do plano não pode ser vazio.");
         }
