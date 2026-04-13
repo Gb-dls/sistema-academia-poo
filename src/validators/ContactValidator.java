@@ -3,7 +3,7 @@ package validators;
 // Classe responsável por validar um número de contato (telefone)
 public class ContactValidator {
 
-    // Método principal que valida o contato
+    // Metodo principal que valida o contato
     public boolean isValidContact(String contact) {
 
         if (contact == null){
