@@ -4,6 +4,8 @@ import domain.Student;
 
 import application.FitManager;
 import ui.UserInterface;
+import application.OperationResult;
+import java.util.List;
 
 // Classe responsável pelo menu de gerenciamento de alunos
 public class StudentMenu {
@@ -55,26 +57,20 @@ public class StudentMenu {
                 default -> ui.showError("Opção inválida!");
             }
 
-        } while (!option.equals("6"));      // continua até escolher sair
+        } while (!option.equals("6"));
     }
 
 
     // ================= CADASTRAR ALUNO =================
     private void registerStudent() {
-
-        String name = ui.getInput("Nome");
-        String cpf = ui.getInput("CPF");
-        String email = ui.getInput("E-mail");
+        String name    = ui.getInput("Nome");
+        String cpf     = ui.getInput("CPF");
         String contact = ui.getInput("Contato");
-        String birth = ui.getInput("Data de nascimento (yyyy-mm-dd)");
+        String email   = ui.getInput("E-mail");
+        String birth   = ui.getInput("Data de nascimento (yyyy-MM-dd)");
 
-        // Cria o objeto Student e aqui ocorre conversão da data
-        Student student = new Student(name, cpf, contact, email, java.time.LocalDate.parse(birth));
+        var result = fitManager.registerStudent(name, cpf, contact, email, birth);
 
-        // Envia para o sistema (FitManager)
-        var result = fitManager.registerStudent(student);
-
-        // Mostra resultado
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
         } else {
@@ -89,7 +85,7 @@ public class StudentMenu {
 
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-            System.out.println(result.getData());
+            ui.showMessage(result.getData().toString());
         } else {
             ui.showError(result.getMessage());
         }
@@ -97,25 +93,17 @@ public class StudentMenu {
 
     // ================= ATUALIZAR ALUNO =================
     private void updateStudent() {
-
-        String cpf = ui.getInput("CPF do aluno");
-
-        String name = ui.getInput("Novo nome");
-        String email = ui.getInput("Novo e-mail");
+        String cpf     = ui.getInput("CPF do aluno");
+        String name    = ui.getInput("Novo nome");
         String contact = ui.getInput("Novo contato");
-        // Entrada da nova dat
-        String birthDateInput = ui.getInput("Nova data de nascimento (yyyy-MM-dd)");
+        String email   = ui.getInput("Novo e-mail");
+        String birth   = ui.getInput("Nova data de nascimento (yyyy-MM-dd)");
 
-        // Conversão da String para LocalDate
-
-        java.time.LocalDate birthDate = java.time.LocalDate.parse(birthDateInput);
-
-        // Chama o serviço para atualizar
-        var result = fitManager.updateStudent(cpf, name, contact, email, birthDate);
+        var result = fitManager.updateStudent(cpf, name, contact, email, birth);
 
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-            ui.showMessage(result.getData().toString()); // mostra aluno atualizado
+            ui.showMessage(result.getData().toString());
         } else {
             ui.showError(result.getMessage());
         }
@@ -134,12 +122,31 @@ public class StudentMenu {
     }
 
     // ================= LISTAR TODOS =================
-    private void listAll() {
+    /*private void listAll() {
         var result = fitManager.listStudents();
 
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-            System.out.println(result.getData());
+            ui.showMessage(result.getData().toString());
+        } else {
+            ui.showError(result.getMessage());
+        }
+    }*/
+
+
+    private void listAll() {
+        var result = fitManager.listStudents();
+
+        if (result.isSuccess()) {
+            // Converte o objeto para lista de Students
+            List<Student> students = (List<Student>) result.getData();
+
+            ui.showMessage("===== LISTA DE ALUNOS =====");
+            for (int i = 0; i < students.size(); i++) {
+                ui.showMessage("---------- " + (i + 1) + " ----------");
+                ui.showMessage(students.get(i).toString());
+            }
+            ui.showMessage("===========================");
         } else {
             ui.showError(result.getMessage());
         }
