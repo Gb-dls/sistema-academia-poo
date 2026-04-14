@@ -135,19 +135,6 @@ public class PlanMenu {
     }
 
     // ================= LISTAR TODOS =================
-    /*private void listAll() {
-        var plans = fitManager.listPlans();
-
-        if (plans.isEmpty()) {
-            ui.showError("Nenhum plano cadastrado.");
-            return;
-        }
-
-        ui.showMessage("Lista de planos:");
-        for (int i = 0; i < plans.size(); i++) {
-            ui.showMessage(plans.get(i).toString());
-        }
-    }*/
     private void listAll() {
         ArrayList<Plan> plans = fitManager.listPlans();
 
