@@ -5,6 +5,8 @@ public class CpfValidator {
 
     // Método principal que valida o CPF completo, verifica se tem 11 dígitos ou se não é um CPF com todos os números iguais
     public boolean isValidCpf(String cpf) {
+
+        //verifica se o CPF tem exatamente 11 dígitos e se não é uma sequencia de numeros iguais
         if (!hasValidLength(cpf) || isRepeatedCpf(cpf)) {
             return false;
         }
@@ -22,7 +24,7 @@ public class CpfValidator {
         return cpf != null && cpf.length() == 11;
     }
 
-    // Verifica se todos os números do CPF são iguais
+    // Verifica se todos os números do CPF são iguais.
     private boolean isRepeatedCpf(String cpf) {
         return cpf.matches("(\\d)\\1{10}");
     }

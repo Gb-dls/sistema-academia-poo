@@ -1,0 +1,102 @@
+package domain;
+
+// Imports
+import java.time.LocalDate;
+import java.util.ArrayList;
+
+
+// Class Enrollment
+public class Enrollment {
+
+    private int code;
+    private Student student;
+    private Plan plan;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private int durationMonths;
+    private double totalPrice;
+    private EnrollmentStatus status;
+    private ArrayList<Payment> payments;
+
+    // Constructor
+    public Enrollment(int code, Student student, Plan plan, LocalDate startDate, int durationMonths) {
+        this.code = code;   // vem de nextCode de Enrollment Service
+        this.student = student;
+        this.plan = plan;
+        this.startDate = startDate;
+        this.endDate = startDate.plusMonths(durationMonths);
+        this.durationMonths = durationMonths;
+        this.totalPrice = plan.calculateTotalPrice(durationMonths);
+        this.status = EnrollmentStatus.ACTIVE;
+        this.payments = new ArrayList<>();
+    }
+
+    // Methods
+
+    // Method registerPayment - Add payment no ArrayList
+    public void registerPayment(Payment payment) {
+        this.payments.add(payment);
+    }
+
+    // Method calculateTotalPaid - Calcula o valor total pago ate o momento
+    public double calculateTotalPaid() {
+        double total = 0;
+        for (Payment p : payments) {
+            total += p.getAmount();
+        }
+
+        return total;
+    }
+
+    // Method calculateBalance - Calcula o que o falta a ser pago de acordo com o total do contrato
+    public double calculateBalance() {
+        double balance = this.totalPrice;
+        double totalPaid = calculateTotalPaid();
+
+        return (balance - totalPaid);
+    }
+
+    // Method cancel - Cancela uma matrícula ativa
+    public void cancel() {
+        if(this.status == EnrollmentStatus.ACTIVE) {
+           this.status = EnrollmentStatus.CANCELLED;
+        }
+    }
+
+    // Getters
+    public int getCode() {
+        return code;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public Plan getPlan() {
+        return plan;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public int getDurationMonths() {
+        return durationMonths;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public EnrollmentStatus getStatus() {
+        return status;
+    }
+
+    public ArrayList<Payment> getPayments() {
+        return payments;
+    }
+}

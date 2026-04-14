@@ -2,48 +2,46 @@ package ui;
 
 import java.util.Scanner;
 
-// Classe responsável por TODA interação com o usuario (entrada e saida)
+// Classe responsável por TODA interação com o usuário (entrada e saída)
 public class UserInterface {
 
-    // Scanner para ler dados digitados no console
+    // ================= ATRIBUTOS =================
+
+    // Scanner é a ferramenta do Java para ler o que o usuário digita no console
     private final Scanner scanner;
 
-    // Construtor que inicializa o scanner
+    // ================= CONSTRUTOR =================
+
+    // Inicializa o Scanner apontando para o console (System.in)
     public UserInterface() {
         this.scanner = new Scanner(System.in);
     }
 
-   // ===== Entrada de Dados =====
-   // Exibe uma mensagem e captura o que o usuário digitar
+    // ================= ENTRADA =================
+
+    // Exibe uma mensagem de instrução e retorna o que o usuário digitou
     public String getInput(String message) {
-        System.out.print(message + ": ");   // mostra a mensagem
-        return scanner.nextLine();          // le a entrada do usuario
+        System.out.print(message + ": "); // exibe o rótulo do campo
+        return scanner.nextLine();        // le tudo que o usuario digitou ate pressionar ENTER
     }
 
+    // ================= SAÍDA =================
 
-    // ===== Mensagem padrão (sucesso) =====
-    // Exibe mensagens comuns (ex: cadastro realizado)
+    // Exibe uma mensagem comum no console
     public void showMessage(String message) {
-        System.out.println("\nSucesso\n" + message); //Mensagem de operationResult
+        System.out.println("\n\n" + message);
     }
 
-    // ===== Mensagem de erro =====
-    // Exibe mensagens de erro (usa o System.err para destacar)
+    // Exibe uma mensagem de erro no console de erros (System.err)
     public void showError(String message) {
-        System.err.println("\nERRO\n " + message); //Mensagem de operationResult
+        System.err.println("\nERRO: " + message);
     }
 
-  // ===== Exibir menu =====
+    // Exibe o cabeçalho e as opções de um menu
     public void showMenu(String title, String options) {
         System.out.println("\n==== " + title.toUpperCase() + " ====");
         System.out.println(options);
         System.out.print("Escolha uma opção");
     }
 
-    // ========================= PAUSA =========================
-    // Faz o sistema esperar o usuário pressionar ENTER
-    public void waitEnter() {
-        System.out.println("\nPressione ENTER para continuar...");
-        scanner.nextLine();     // espera o ENTER
-    }
 }

@@ -13,13 +13,16 @@ public enum PlanType {
         return optionValue;
     }
 
-    /* Alterar metodo*/
-    public static PlanType fromInt(int valor) {
-        for (PlanType tipo : PlanType.values()) {
-            if (tipo.getOptionValue() == valor) {
-                return tipo;
+    // Converte o valor numérico do menu para o enum correspondente.
+    // Usado em PlanMenu para mapear a escolha do usuário ao tipo de plano.
+    // Retorna null se o valor não corresponder a nenhuma opção.
+    public static PlanType fromOptionValue(int value) {
+        for (PlanType type : PlanType.values()) {
+            if (type.getOptionValue() == value) {
+                return type;
             }
         }
-        throw new IllegalArgumentException("Opção de plano inválida: " + valor);
+        return null;
     }
+
 }

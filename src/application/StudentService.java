@@ -148,6 +148,17 @@ public class StudentService {
         return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
     }
 
+        // Cópia dos dados do estudante atualizado
+        Student copy = new Student(
+                student.getName(),
+                student.getCpf(),
+                student.getContact(),
+                student.getEmail(),
+                student.getBirthDate()
+        );
+
+        return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
+    }
 
     // ================= REMOVER ALUNO =================
     // Remove o aluno definitivamente da lista
