@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 
 
-// Classe que faz a ponte entre a UI e os serviços
+// Classe que faz a ponte entre a UI e os serviços.
 public class FitManager {
 
 
