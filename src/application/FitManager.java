@@ -42,10 +42,10 @@ public class FitManager {
 
     // ================= ALUNOS =================
     // Cadastra um novo aluno
-    // Recebe strings puras da UI, limpa CPF e contato, converte a data e repassa ao serviço
     public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
-        String cleanCpf     = cpf.replaceAll("\\D", "");            // Remove qualquer caractere não numérico do CPF
-        String cleanContact = contact.replaceAll("\\D", "");         // Remove qualquer caractere não numérico do contato
+        String cleanCpf = cleanNumber(cpf);
+        String cleanContact = cleanNumber(contact);
+
 
         // Converte a string da data para LocalDate e retorna null se o formato for invalido
         LocalDate birthDate = parseDate(birthDateStr);
@@ -60,15 +60,15 @@ public class FitManager {
 
     // Busca um aluno pelo CPF e limpa o CPF antes de buscar
     public OperationResult findStudentByCpf(String cpf) {
-        String cleanCpf = cpf.replaceAll("\\D", "");
+        String cleanCpf = cleanNumber(cpf);
         return studentService.findByCpf(cleanCpf);
     }
 
 
     //Atualiza os dados de um aluno existente
     public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
-        String cleanCpf     = cpf.replaceAll("\\D", "");
-        String cleanContact = contact.replaceAll("\\D", "");
+        String cleanCpf = cleanNumber(cpf);
+        String cleanContact = cleanNumber(contact);
 
         LocalDate birthDate = parseDate(birthDateStr);
         if (birthDate == null) {
@@ -80,7 +80,7 @@ public class FitManager {
 
     // Inativa um aluno (sem remover da lista) e limpa o CPF para aceitar qualquer formato
     public OperationResult deleteStudent(String cpf) {
-        String cleanCpf = cpf.replaceAll("\\D", "");
+        String cleanCpf = cleanNumber(cpf);
         return studentService.deactivateStudent(cleanCpf);
     }
 
@@ -138,9 +138,10 @@ public class FitManager {
         return enrollmentService.cancel(code);
     }
 
+
     // Consulta a matrícula ativa de um aluno pelo CPF
     public OperationResult findActiveEnrollmentByStudent(String cpf) {
-        String cleanCpf = cpf.replaceAll("\\D", "");
+        String cleanCpf = cleanNumber(cpf);
         Enrollment enrollment = enrollmentService.findActiveByStudent(cleanCpf);
         if (enrollment == null) {
             return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
@@ -172,10 +173,12 @@ public class FitManager {
         return LocalDate.of(year, month, day);
     }
 
-
-
-
-
-
+    //limpa tudo que não é numero de uma string
+    private String cleanNumber(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("\\D", "");
+    }
 
 }
