@@ -128,7 +128,7 @@ public class Student {
     public void setBirthDate(LocalDate birthDate) {
 
         this.birthDate = birthDate;
-
+        return new OperationResult(true, "Data de nascimento atualizada com sucesso.");
     }
 
 }
