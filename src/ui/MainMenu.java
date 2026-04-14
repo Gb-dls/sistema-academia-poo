@@ -32,7 +32,7 @@ public class MainMenu {
     // ================= MENU PRINCIPAL =================
 
     // Inicia o loop do menu principal
-    // O sistema fica rodando nesse loop até o usuário escolher a opção de sair
+    // O sistema fica rodando nesse loop até o usuário escolher a opção de sair.
     public void start() {
 
         String option;
@@ -54,7 +54,7 @@ public class MainMenu {
 
                 case "2" -> planMenu.start();      // Se escolher "2", entra no menu de planos
 
-                case "3" -> enrollmentMenu.start(); // Se escolher "3", entra no menu de planos
+                case "3" -> enrollmentMenu.start(); // Se escolher "3", entra no menu de matriculas
 
                 case "4" -> ui.showMessage("Saindo..."); // Exibe mensagem de saída e encerra o loop
 
