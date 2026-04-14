@@ -153,7 +153,7 @@ public class PlanMenu {
 
     // ================= PRIVADOS =================
 
-    // Converte string para PlanType sem usar exceção
+    // Converte string para PlanType
     private PlanType parsePlanType(String input) {
         if (input == null || input.isBlank()) return null;
 
@@ -163,14 +163,14 @@ public class PlanMenu {
         return PlanType.fromOptionValue(value);
     }
 
-    // Converte string para int sem usar exceção
+    // Converte string para int
     private int parseInt(String input) {
         if (input == null || input.isBlank()) return -1;
         if (!input.matches("\\d+")) return -1;
         return Integer.parseInt(input);
     }
 
-    // Converte string para double sem usar exceção
+    // Converte string para double
     private double parseDouble(String input) {
         if (input == null || input.isBlank()) return -1;
         if (!input.matches("\\d+(\\.\\d+)?")) return -1;
