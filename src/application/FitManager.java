@@ -1,61 +1,132 @@
 package application;
 
 import domain.Student;
+import domain.Plan;
+import domain.PlanType;
 import application.StudentService;
+import application.PlanService;
 import application.OperationResult;
-
-
-import java.util.List;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 
-// Classe principal que centraliza as operações e conversa com os serviços
+
+// Classe que faz a ponte entre a UI e os serviços.
 public class FitManager {
 
-    // Serviço responsável por gerenciar alunos
+
+    // ================= ATRIBUTOS =================
+
+    // Serviço responsável pelas regras de negócio dos alunos
     private final StudentService studentService;
 
-    // Construtor que inicializa o serviço de alunos
+    // Serviço responsável pelas regras de negócio dos planos
+    private final PlanService planService;
+
+    // ================= CONSTRUTOR =================
+
+    // Inicializa os dois serviços o FitManager é quem cria os serviços
     public FitManager() {
         this.studentService = new StudentService();
+        this.planService = new PlanService();
     }
 
-    // =====ALUNOS=====
 
-    // Cadastra um novo aluno recebe um objeto Student já criado e repassa para o service
-    public OperationResult registerStudent(Student student) {
-        return studentService.registerStudent(student);
+
+    // ================= ALUNOS =================
+    // Cadastra um novo aluno
+    // Recebe strings puras da UI, limpa CPF e contato, converte a data e repassa ao serviço
+    public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
+        String cleanCpf     = cpf.replaceAll("\\D", "");            // Remove qualquer caractere não numérico do CPF
+        String cleanContact = contact.replaceAll("\\D", "");         // Remove qualquer caractere não numérico do contato
+
+        // Converte a string da data para LocalDate e retorna null se o formato for invalido
+        LocalDate birthDate = parseDate(birthDateStr);
+        if (birthDate == null) {
+            return new OperationResult(false, "\nData de nascimento inválida. Use o formato yyyy-MM-dd.\n");
+        }
+
+        // Monta o objeto Student com os dados já limpos e convertidos
+        Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
+        return studentService.registerStudent(student);      // Repassa ao serviço que vai validar e cadastrar
     }
 
-    // Busca um aluno pelo CPF retorna um OperationResult (pode conter o aluno ou erro)
+    // Busca um aluno pelo CPF e limpa o CPF antes de buscar
     public OperationResult findStudentByCpf(String cpf) {
-        return studentService.findByCpf(cpf);
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        return studentService.findByCpf(cleanCpf);
     }
 
-    // Atualiza os dados de um aluno existente recebe os novos dados e repassa para o service
-    public OperationResult updateStudent(String cpf, String name, String contact, String email, LocalDate birthDate) {
-        return studentService.updateStudent(cpf, name, contact, email, birthDate);
+
+    //Atualiza os dados de um aluno existente
+    public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
+        String cleanCpf     = cpf.replaceAll("\\D", "");
+        String cleanContact = contact.replaceAll("\\D", "");
+
+        LocalDate birthDate = parseDate(birthDateStr);
+        if (birthDate == null) {
+            return new OperationResult(false, "\nData de nascimento inválida. Use o formato yyyy-MM-dd.\n");
+        }
+
+        return studentService.updateStudent(cleanCpf, name, cleanContact, email, birthDate);
     }
 
-    // "Deleta" um aluno (na verdade, inativa)
+    // Inativa um aluno (sem remover da lista) e limpa o CPF para aceitar qualquer formato
     public OperationResult deleteStudent(String cpf) {
-         return studentService.deactivateStudent(cpf);
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        return studentService.deactivateStudent(cleanCpf);
     }
 
-    // Lista todos os alunos cadastrados
+    // Retorna a lista de todos os alunos cadastrados
     public OperationResult listStudents() {
         return studentService.listStudents();
     }
 
-    // =========================
-    // (FUTURO: PLANOS)
-    // =========================
 
-    // public OperationResult createPlan(...) { ... }
 
-    // =========================
-    // (FUTURO: MATRÍCULAS)
-    // =========================
+    // ================= PLANOS =================
 
-    // public OperationResult enrollStudent(...) { ... }
+    // Cadastra um novo plano repassando os dados diretamente ao serviço
+    public OperationResult registerPlan(String name, String description, PlanType type, int minDurationMonths, double pricePerMonth) {
+        return planService.registerPlan(name, description, type, minDurationMonths, pricePerMonth);
+    }
+
+    // Busca um plano pelo nome
+    public OperationResult findPlanByName(String name) {
+        Plan plan = planService.findByName(name);
+        if (plan == null) {
+            return new OperationResult(false, "Plano não encontrado.");
+        }
+        return new OperationResult(true, "Plano encontrado.", plan);
+    }
+
+    // Atualiza o preço mensal de um plano existente
+    public OperationResult updatePlanPrice(String name, double newPrice) {
+        return planService.updatePrice(name, newPrice);
+    }
+
+    // Retorna a lista de todos os planos cadastrados
+    public ArrayList<Plan> listPlans() {
+        return planService.listPlans();
+    }
+
+
+
+    // ================= PRIVADOS =================
+
+    // Converte uma string no formato "yyyy-MM-dd"
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+
+        if (!dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
+
+        int year  = Integer.parseInt(dateStr.substring(0, 4));
+        int month = Integer.parseInt(dateStr.substring(5, 7));
+        int day   = Integer.parseInt(dateStr.substring(8, 10));
+
+        if (month < 1 || month > 12) return null;
+        if (day < 1 || day > 31)     return null;
+
+        return LocalDate.of(year, month, day);
+    }
 }
