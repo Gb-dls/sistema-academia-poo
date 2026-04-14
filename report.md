@@ -65,31 +65,31 @@ O campo `data` é do tipo `Object` nesta etapa, permitindo retornar qualquer obj
 As classes `CpfValidator` e `ContactValidator` foram organizadas em um pacote separado `validators`, fora das três camadas principais. Poderíamos tê-las colocado no pacote `domain` ou `application`, mas optamos pelo pacote separado pois são utilitários reutilizáveis que não pertencem exclusivamente a nenhuma das camadas. O pacote `validators` é usado tanto pela camada de domínio (`Student`) quanto pela camada de aplicação (`StudentService`).
 
 ### 4.13 Pagamento inicial mínimo
-⚠️ PENDENTE — Gabriel deve documentar o que caracteriza o pagamento mínimo para efetivar a matrícula e onde essa regra reside no código.
+O pagamento mínimo para efetivar a matrícula foi definido como o valor exato da primeira parcela mensal. O cálculo ocorre na camada de aplicação, dentro do método enroll() do EnrollmentService. A lógica divide o valor total do contrato (com os devidos descontos do plano) pelo número de meses (plan.calculateTotalPrice(durationMonths) / durationMonths). Se o valor fornecido for menor que essa parcela, o serviço barra a criação do objeto e retorna um OperationResult de falha.
 
 ### 4.14 Data de término da matrícula
-⚠️ PENDENTE — Gabriel deve documentar onde o cálculo de `endDate` ocorre e como `LocalDate.plusMonths()` é utilizado.
+O cálculo da endDate ocorre de forma isolada dentro do construtor da classe de domínio Enrollment. O EnrollmentService não calcula datas, apenas repassa a startDate. O Domínio utiliza LocalDate, aplicando o método startDate.plusMonths(durationMonths) para definir com precisão absoluta o dia do vencimento final do contrato no momento exato em que ele é instanciado.
 
 ### 4.15 Atomicidade do fluxo de matrícula
-⚠️ PENDENTE — Gabriel deve documentar como o `EnrollmentService` se comporta se a criação do `Payment` falhar após o `Enrollment` já ter sido instanciado.
+A atomicidade é garantida pela ordem de execução dentro de EnrollmentService.enroll(). Embora as validações e a instanciação de Enrollment e Payment ocorram em etapas separadas, a persistência na memória (o this.enrollments.add()) é estritamente a última instrução executada. Se ocorrer qualquer falha nas validações anteriores ou na criação do pagamento, a execução é interrompida pelo retorno de um OperationResult de erro, impedindo que matrículas incompletas ou sem pagamento sejam salvas no sistema.
 
 ### 4.16 Quem verifica matrícula ativa
-⚠️ PENDENTE — Gabriel deve documentar se a verificação de matrícula ativa fica no `FitManager` ou dentro do `EnrollmentService.enroll()`.
+A responsabilidade por verificar a existência de matrícula ativa reside exclusivamente na camada de aplicação, dentro do EnrollmentService (através do método auxiliar hasActiveEnrollment()). O FitManager atua apenas como um orquestrador e não detém conhecimento sobre regras de unicidade. Ele repassa o CPF para o serviço, e o serviço decide se a operação prossegue ou não.
 
 ### 4.17 Quem cria o objeto `Payment`
-⚠️ PENDENTE — Gabriel deve documentar se o objeto `Payment` é criado no `EnrollmentService` ou dentro do método `registerPayment()` da classe `Enrollment`.
+A instanciação do objeto Payment ocorre dentro do EnrollmentService. O serviço atua como o controlador financeiro: ele recebe o valor e o PaymentType vindos do FitManager, instancia o Payment e então o injeta no domínio chamando o método registerPayment() da classe Enrollment.
 
 ### 4.18 Situação financeira após quitação
-⚠️ PENDENTE — Gabriel deve documentar se o sistema bloqueia novos pagamentos após quitação ou apenas informa o saldo.
+O sistema adota o bloqueio estrito de pagamentos excedentes. Dentro do EnrollmentService.registerPayment(), o sistema compara o valor da transação com o saldo devedor atual (flagEnrollment.calculateBalance()). Se a tentativa de pagamento for maior que a dívida, a operação é bloqueada com uma mensagem de erro, impedindo a geração de saldos negativos (créditos) para a academia.
 
 ### 4.19 Taxas de cancelamento
-⚠️ PENDENTE — Gabriel deve documentar se o sistema aplica taxas para cancelamentos antecipados e onde essa lógica reside.
+O grupo optou por manter a regra de negócio focada e não aplicar taxas punitivas para cancelamentos antecipados. A lógica de cancelamento (no EnrollmentService) altera o status do contrato para CANCELLED e gera um extrato informando o saldo devedor exato até o momento, sem acréscimo de multas, cessando a cobrança dos meses futuros.
 
 ### 4.20 Data e motivo do cancelamento
-⚠️ PENDENTE — Gabriel deve documentar se `Enrollment` terá os atributos `cancellationDate` e `cancellationReason`.
+Decidimos não implementar os atributos adicionais cancellationDate e cancellationReason na entidade Enrollment. A indicação de cancelamento é controlada puramente pelo enum EnrollmentStatus.CANCELLED, o que atende plenamente ao requisito de bloquear o acesso do aluno na catraca, mantendo a estrutura da classe de domínio limpa e coesa.
 
 ### 4.21 Pendências financeiras como critério de bloqueio
-⚠️ PENDENTE — Gabriel deve documentar se a remoção de alunos com matrículas canceladas e saldo pendente será bloqueada.
+A arquitetura definida exige que o StudentService consulte as regras financeiras antes de efetivar uma remoção. Alunos que possuam matrículas com status ativo, ou matrículas canceladas onde o calculateBalance() > 0, terão sua remoção bloqueada, garantindo a preservação do histórico de dívidas da academia.
 
 ### 4.22 Ordenação nas listagens
 ⚠️ PENDENTE — grupo deve documentar em qual camada fica a responsabilidade de ordenação das listagens e como evitar duplicação de código entre listagens similares.
