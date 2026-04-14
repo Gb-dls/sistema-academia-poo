@@ -3,6 +3,7 @@ import domain.Plan;
 import domain.PlanType;
 import java.util.ArrayList;
 import java.util.Comparator;
+import application.OperationResult;
 
 public class PlanService {
     // Lista interna de planos cadastrados.
