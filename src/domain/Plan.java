@@ -64,6 +64,15 @@ public class Plan {
 
      //PRINT
 
+     @Override
+     public String toString() {
+          return "Nome: " + name + "\n" +
+                  "Descrição: " + description + "\n" +
+                  "Tipo: " + type + "\n" +
+                  "Duração mínima: " + minDurationMonths + " meses\n" +
+                  "Preço mensal: R$ " + String.format("%.2f", pricePerMonth) + "\n" +
+                  "Preço total (com desconto): R$ " + String.format("%.2f", calculateTotalPrice(minDurationMonths)) + "\n";
+     }
      /*
      public void printPlan() {
           System.out.println("---------- DADOS DO PLANO ----------");
