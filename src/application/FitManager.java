@@ -3,8 +3,11 @@ package application;
 import domain.Student;
 import domain.Plan;
 import domain.PlanType;
+import domain.Enrollment;
+import domain.PaymentType;
 import application.StudentService;
 import application.PlanService;
+import application.EnrollmentService;
 import application.OperationResult;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,12 +26,16 @@ public class FitManager {
     // Serviço responsável pelas regras de negócio dos planos
     private final PlanService planService;
 
+    // Serviço responsável pelas regras de negócio das matrículas
+    private final EnrollmentService enrollmentService;
+
     // ================= CONSTRUTOR =================
 
     // Inicializa os dois serviços o FitManager é quem cria os serviços
     public FitManager() {
         this.studentService = new StudentService();
         this.planService = new PlanService();
+        this.enrollmentService = new EnrollmentService();
     }
 
 
@@ -112,6 +119,41 @@ public class FitManager {
 
 
 
+
+    // ================= MATRICULAS=================
+
+
+    // Realiza a matrícula de um aluno em um plano
+    public OperationResult enroll(Student student, Plan plan, LocalDate startDate, int durationMonths, double initialPayment, PaymentType paymentType) {
+        return enrollmentService.enroll(student, plan, startDate, durationMonths, initialPayment, paymentType);
+    }
+
+    // Registra um pagamento em uma matrícula existente
+    public OperationResult registerPayment(int enrollmentCode, double amount, PaymentType type, String description) {
+        return enrollmentService.registerPayment(enrollmentCode, amount, type, description);
+    }
+
+    // Cancela uma matrícula pelo código
+    public OperationResult cancelEnrollment(int code) {
+        return enrollmentService.cancel(code);
+    }
+
+    // Consulta a matrícula ativa de um aluno pelo CPF
+    public OperationResult findActiveEnrollmentByStudent(String cpf) {
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        Enrollment enrollment = enrollmentService.findActiveByStudent(cleanCpf);
+        if (enrollment == null) {
+            return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
+        }
+        return new OperationResult(true, "Matrícula ativa encontrada.", enrollment);
+    }
+
+    // Retorna a lista de todas as matrículas (histórico)
+    public ArrayList<Enrollment> listEnrollments() {
+        return enrollmentService.listEnrollments();
+    }
+
+
     // ================= PRIVADOS =================
 
     // Converte uma string no formato "yyyy-MM-dd"
@@ -129,4 +171,11 @@ public class FitManager {
 
         return LocalDate.of(year, month, day);
     }
+
+
+
+
+
+
+
 }
