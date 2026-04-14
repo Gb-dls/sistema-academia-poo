@@ -98,7 +98,7 @@ As classes `CpfValidator` e `ContactValidator` foram organizadas em um pacote se
 ⚠️ PENDENTE — Maria deve documentar a estratégia adotada para tratar entradas de tipo incorreto nos menus, como letras em campos numéricos.
 
 ### 4.24 Situação financeira como estado ou cálculo
-⚠️ PENDENTE — Gabriel deve documentar se a situação financeira é representada como enum de estado ou calculada dinamicamente via `calculateBalance()`.
+Toda verificação financeira é feita por um cálculo dinâmico em tempo real através do método calculateBalance() da entidade Enrollment, que subtrai a soma do histórico de pagamentos (calculateTotalPaid()) do valor total do contrato (totalPrice).
 
 ### 4.25 Pontos de extensão para próximas etapas
 O grupo identificou dois pontos principais de extensão já preparados nesta etapa. O primeiro é a evolução de `PlanType` para subclasses de `Plan` — o `if/else` em `calculateTotalPrice()` é temporário e será substituído, onde cada subclasse implementará sua própria regra de cálculo. O segundo é a conversão de `UserInterface` de classe concreta para interface Java, permitindo múltiplas implementações como terminal e interface gráfica. Os menus já referenciam `UserInterface` pelo tipo, o que facilita essa transição sem reescrita dos menus.
