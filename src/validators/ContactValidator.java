@@ -10,9 +10,6 @@ public class ContactValidator {
             return false;
         }
 
-        // remove tudo que não for número
-        contact = contact.replaceAll("\\D", "");
-
         // verifica se tem 10 ou 11 dígitos
         if (contact.length() < 10 || contact.length() > 11) {
             return false;
