@@ -99,4 +99,44 @@ public class Enrollment {
     public ArrayList<Payment> getPayments() {
         return payments;
     }
+
+
+    // ================= PRINT =================
+    @Override
+    public String toString() {
+        double totalPaid = calculateTotalPaid();        // Calcula o total ja pago pelo aluno
+        double balance   = calculateBalance();          // Calcula o saldo restante do quanto ainda falta pagar
+
+        // Armazena todas as informações formatadas
+        String result =
+                        "Código:       " + code + "\n" +
+                        "Aluno:        " + student.getName() + "\n" +
+                        "CPF:          " + student.getCpf() + "\n" +
+                        "Plano:        " + plan.getName() + "\n" +
+                        "Início:       " + startDate + "\n" +
+                        "Término:      " + endDate + "\n" +
+                        "Duração:      " + durationMonths + " meses\n" +
+                        "Status:       " + status + "\n" +
+                        "Total:        R$ " + String.format("%.2f", totalPrice) + "\n" +
+                        "Total pago:   R$ " + String.format("%.2f", totalPaid) + "\n";
+
+        // Verifica se ainda existe saldo pendente
+        if (balance > 0) {
+            result += "Saldo:        R$ " + String.format("%.2f", balance) + " (pendente)\n";
+        } else {
+            result += "Saldo:        Quitado\n";
+        }
+
+        // Verifica se existem pagamentos registrados na lista
+        if (!payments.isEmpty()) {
+            result += "Pagamentos:\n";
+            for (int i = 0; i < payments.size(); i++) {
+                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
+            }
+        }
+
+        return result;
+    }
 }
+
+
