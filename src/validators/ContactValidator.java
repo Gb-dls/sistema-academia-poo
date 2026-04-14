@@ -15,7 +15,7 @@ public class ContactValidator {
             return false;
         }
 
-        // verifica se todos os números são iguais
+        // verifica se todos os números são iguais.
         if (contact.matches("(\\d)\\1+"))  {
             return false;
         }
