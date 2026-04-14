@@ -3,9 +3,9 @@ package domain;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import validators.ContactValidator;
 
-import  application.OperationResult;
+
+
 
 public class Student {
     private String name;
@@ -33,9 +33,7 @@ public class Student {
 
     //Formata a saida do contato
     public String getContactFormatted() {
-        if (contact == null) {
-            return "Não informado";
-        }
+
 
         if (contact.length() == 11) {
             return contact.replaceAll("(\\d{2})(\\d{5})(\\d{4})", "($1) $2-$3");
@@ -109,45 +107,28 @@ public class Student {
     // ================= SETTERS =================
 
     //Altera o nome do estudante
-    public OperationResult setName(String name) {
-        if (name == null || name.isBlank()) {
-            return new OperationResult(false, "Nome inválido!");
-        }
-
+    public void setName(String name) {
         this.name = name;
-        return new OperationResult(true, "Nome atualizado com sucesso.");
+
     }
 
-    //Altera o contato e valida
-    public OperationResult setContact(String contact) {
-        ContactValidator validator = new ContactValidator();
-
-        if (!validator.isValidContact(contact)) {
-            return new OperationResult(false, "Telefone inválido!");
-        }
-
+    //Altera o contato
+    public void setContact(String contact) {
         this.contact = contact;
-        return new OperationResult(true, "Contato atualizado com sucesso.");
     }
 
     //Altera o email do estudante
-    public OperationResult setEmail(String email) {
-        if (email == null || email.isBlank()) {
-            return new OperationResult(false, "Email inválido!");
-        }
+    public void setEmail(String email) {
 
         this.email = email;
-        return new OperationResult(true, "Email atualizado com sucesso.");
+
     }
 
     //Altera o dia do nascimento do estudante
-    public OperationResult setBirthDate(LocalDate birthDate) {
-        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            return new OperationResult(false, "Data de nascimento inválida!");
-        }
+    public void setBirthDate(LocalDate birthDate) {
 
         this.birthDate = birthDate;
-        return new OperationResult(true, "Data de nascimento atualizada com sucesso.");
+
     }
 
 }

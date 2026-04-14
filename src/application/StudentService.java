@@ -3,6 +3,7 @@ package application;
 import domain.Student;
 import application.OperationResult;
 import validators.CpfValidator;
+import validators.ContactValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,23 +21,44 @@ public class StudentService {
     private CpfValidator cpfValidator = new CpfValidator();
 
     // ================= CADASTRAR ALUNO =================
-    // Recebe um objeto Student já montado pelo FitManager, valida o CPF, verifica duplicidade e adiciona na lista
+    // Recebe um objeto Student já montado pelo FitManager, valida o CPF, verifica duplicidade efaz as outras validações
     public OperationResult registerStudent(Student student) {
 
-        // valida CPF
+
+        if (student.getName() == null || student.getName().isBlank()) {
+            return new OperationResult(false, "Nome inválido!");
+        }
+
+        //Validação CPF
         if (!cpfValidator.isValidCpf(student.getCpf())) {
             return new OperationResult(false, "\nCPF inválido.\n");
         }
 
-        // verifica duplicidade de CPF
+        // Duplicidade de CPF
         if (cpfExists(student.getCpf())) {
             return new OperationResult(false, "\nCPF já cadastrado.\n");
         }
 
-        // adiciona o aluno na lista
+        // Contato
+        ContactValidator contactValidator = new ContactValidator();
+        if (!contactValidator.isValidContact(student.getContact())) {
+            return new OperationResult(false, "Telefone inválido!");
+        }
+
+        // Email
+        if (student.getEmail() == null || student.getEmail().isBlank()) {
+            return new OperationResult(false, "Email inválido!");
+        }
+
+        // Data de nascimento
+        if (student.getBirthDate() == null || student.getBirthDate().isAfter(LocalDate.now())) {
+            return new OperationResult(false, "Data de nascimento inválida!");
+        }
+
+       //insere na lista
         students.add(student);
 
-        // Retorna sucesso com dados do aluno em uma cópia
+
         Student copy = new Student(
                 student.getName(),
                 student.getCpf(),
@@ -44,6 +66,7 @@ public class StudentService {
                 student.getEmail(),
                 student.getBirthDate()
         );
+
         return new OperationResult(true, "\nAluno cadastrado com sucesso.\n", copy);
     }
 
@@ -78,7 +101,7 @@ public class StudentService {
     }
 
     // ================= ATUALIZAR ALUNO =================
-    // Atualiza os dados de um aluno existente campo por campo
+
     public OperationResult updateStudent(String cpf, String name, String contact, String email, LocalDate birthDate) {
 
         Student student = findEntityByCpf(cpf);
@@ -87,29 +110,43 @@ public class StudentService {
             return new OperationResult(false, "\nAluno não encontrado.\n");
         }
 
-        // Tenta atualizar o nome — retorna erro se for nulo ou vazio
-        OperationResult nameResult = student.setName(name);
-        if (!nameResult.isSuccess()) {
-            return nameResult;
+        // Nome
+        if (name == null || name.isBlank()) {
+            return new OperationResult(false, "Nome inválido!");
         }
 
-        // Tenta atualizar o contato — retorna erro se o formato for inválido
-        OperationResult contactResult = student.setContact(contact);
-        if (!contactResult.isSuccess()) {
-            return contactResult;
+        // Contato
+        ContactValidator contactValidator = new ContactValidator();
+        if (!contactValidator.isValidContact(contact)) {
+            return new OperationResult(false, "Telefone inválido!");
         }
 
-        // Tenta atualizar o email — retorna erro se for nulo ou vazio
-        OperationResult emailResult = student.setEmail(email);
-        if (!emailResult.isSuccess()) {
-            return emailResult;
+        // Email
+        if (email == null || email.isBlank()) {
+            return new OperationResult(false, "Email inválido!");
         }
 
-        // Tenta atualizar a data de nascimento — retorna erro se for nula ou futura
-        OperationResult birthResult = student.setBirthDate(birthDate);
-        if (!birthResult.isSuccess()) {
-            return birthResult;
+        // Data de nascimento
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
+            return new OperationResult(false, "Data de nascimento inválida!");
         }
+
+
+        student.setName(name);
+        student.setContact(contact);
+        student.setEmail(email);
+        student.setBirthDate(birthDate);
+
+        Student copy = new Student(
+                student.getName(),
+                student.getCpf(),
+                student.getContact(),
+                student.getEmail(),
+                student.getBirthDate()
+        );
+
+        return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
+    }
 
         // Cópia dos dados do estudante atualizado
         Student copy = new Student(
