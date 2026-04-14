@@ -12,17 +12,19 @@ public class MainMenu {
     private final FitManager fitManager;        // Gerenciador central que faz a ponte entre a UI e os serviços
     private final StudentMenu studentMenu;      // Menu específico para operações com alunos
     private final PlanMenu planMenu;            // Menu específico para operações com planos
+    private final EnrollmentMenu enrollmentMenu;    // Menu específico para operações com matrículas
 
 
 
 
     // ================= CONSTRUTOR =================
     // Recebe todas as dependências prontas (criadas no Main)
-    public MainMenu(UserInterface ui, FitManager fitManager, StudentMenu studentMenu, PlanMenu planMenu) {
+    public MainMenu(UserInterface ui, FitManager fitManager, StudentMenu studentMenu, PlanMenu planMenu, EnrollmentMenu enrollmentMenu) {
         this.ui = ui;
         this.fitManager = fitManager;
         this.studentMenu = studentMenu;
         this.planMenu = planMenu;
+        this.enrollmentMenu = enrollmentMenu;
     }
 
 
@@ -39,7 +41,8 @@ public class MainMenu {
                     """
                     1 - Gerenciar alunos
                     2 - Gerenciar planos
-                    3 - Sair
+                    3 - Gerenciar matrículas
+                    4 - Sair
                     """
             );
 
@@ -51,11 +54,13 @@ public class MainMenu {
 
                 case "2" -> planMenu.start();      // Se escolher "2", entra no menu de planos
 
-                case "3" -> ui.showMessage("Saindo..."); // Exibe mensagem de saída e encerra o loop
+                case "3" -> enrollmentMenu.start(); // Se escolher "3", entra no menu de planos
+
+                case "4" -> ui.showMessage("Saindo..."); // Exibe mensagem de saída e encerra o loop
 
                 default -> ui.showError("Opção inválida!"); // Qualquer outra opção é invalida
             }
 
-        } while (!option.equals("3"));  // Continua executando enquanto a opção não for a de saida
+        } while (!option.equals("4"));  // Continua executando enquanto a opção não for a de saida
     }
 }
