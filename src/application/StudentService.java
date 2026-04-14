@@ -3,122 +3,183 @@ package application;
 import domain.Student;
 import application.OperationResult;
 import validators.CpfValidator;
+import validators.ContactValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-
-// Classe responsável pela lógica de negócio dos alunos
+// Classe responsável pela lógica de negócio dos alunos, recebe objetos Student já montados pelo FitManager e aplica as regras do sistema
 public class StudentService {
 
-    // Lista que armazena os alunos em memória
+    // ================= ATRIBUTOS =================
+
+    // Lista que armazena todos os alunos cadastrados em memória
     private List<Student> students = new ArrayList<>();
 
-    // Validador de CPF
+    // Responsável por validar o CPF
     private CpfValidator cpfValidator = new CpfValidator();
 
-
     // ================= CADASTRAR ALUNO =================
+    // Recebe um objeto Student já montado pelo FitManager, valida o CPF, verifica duplicidade efaz as outras validações
     public OperationResult registerStudent(Student student) {
 
-        // valida CPF
+
+        if (student.getName() == null || student.getName().isBlank()) {
+            return new OperationResult(false, "Nome inválido!");
+        }
+
+        //Validação CPF
         if (!cpfValidator.isValidCpf(student.getCpf())) {
             return new OperationResult(false, "\nCPF inválido.\n");
         }
 
-        // verifica duplicidade de CPF
+        // Duplicidade de CPF
         if (cpfExists(student.getCpf())) {
             return new OperationResult(false, "\nCPF já cadastrado.\n");
         }
 
-        //adiciona o aluno na lista
+        // Contato
+        ContactValidator contactValidator = new ContactValidator();
+        if (!contactValidator.isValidContact(student.getContact())) {
+            return new OperationResult(false, "Telefone inválido!");
+        }
+
+        // Email
+        if (student.getEmail() == null || student.getEmail().isBlank()) {
+            return new OperationResult(false, "Email inválido!");
+        }
+
+        // Data de nascimento
+        if (student.getBirthDate() == null || student.getBirthDate().isAfter(LocalDate.now())) {
+            return new OperationResult(false, "Data de nascimento inválida!");
+        }
+
+       //insere na lista
         students.add(student);
 
-        // Retorna sucesso + dados do aluno
-        return new OperationResult(true, "\nAluno cadastrado com sucesso.\n", student);
+
+        Student copy = new Student(
+                student.getName(),
+                student.getCpf(),
+                student.getContact(),
+                student.getEmail(),
+                student.getBirthDate()
+        );
+
+        return new OperationResult(true, "\nAluno cadastrado com sucesso.\n", copy);
     }
 
     // ================= BUSCAR POR CPF =================
+    // Busca um aluno pelo CPF e retorna uma cópia do objeto
     public OperationResult findByCpf(String cpf) {
 
-        // Busca o aluno internamente
         Student student = findEntityByCpf(cpf);
 
         if (student != null) {
-            return new OperationResult(true, "\nAluno encontrado.\n", student); // Se encontrou, retorna sucesso + aluno
+            Student copy = new Student(
+                    student.getName(),
+                    student.getCpf(),
+                    student.getContact(),
+                    student.getEmail(),
+                    student.getBirthDate()
+            );
+            return new OperationResult(true, "\nAluno encontrado.\n", copy);
         }
-        return new OperationResult(false, "\nAluno não encontrado.\n");     // Caso contrário, menssagem de erro
+        return new OperationResult(false, "\nAluno não encontrado.\n");
     }
 
-
     // ================= LISTAR ALUNOS =================
+    // Retorna uma cópia da lista de alunos
     public OperationResult listStudents() {
 
-        // Se não tem alunos cadastrados
         if (students.isEmpty()) {
-            return new OperationResult(false, "\nNenhum aluno cadastrado.\n");
+            return new OperationResult(false, "Nenhum aluno cadastrado.");
         }
-        // Retorna a lista completa
-        return new OperationResult(true, "\nLista de alunos\n", students);
+
+        return new OperationResult(true, "Lista de alunos carregada.", new ArrayList<>(students));
     }
 
     // ================= ATUALIZAR ALUNO =================
+
     public OperationResult updateStudent(String cpf, String name, String contact, String email, LocalDate birthDate) {
 
-        // Busca o aluno
         Student student = findEntityByCpf(cpf);
 
         if (student == null) {
-            return new OperationResult(false, "\nAluno não encontrado.\n");  // Se não encontrar, retorna menssagem de erro
+            return new OperationResult(false, "\nAluno não encontrado.\n");
         }
 
-        try {
-            student.setName(name);
-            student.setContact(contact);
-            student.setEmail(email);
-            student.setBirthDate(birthDate);
-
-            return new OperationResult(true, "\nAluno atualizado com sucesso.\n", student);
-
-        } catch (IllegalArgumentException e) {
-            return new OperationResult(false, e.getMessage());
+        // Nome
+        if (name == null || name.isBlank()) {
+            return new OperationResult(false, "Nome inválido!");
         }
+
+        // Contato
+        ContactValidator contactValidator = new ContactValidator();
+        if (!contactValidator.isValidContact(contact)) {
+            return new OperationResult(false, "Telefone inválido!");
+        }
+
+        // Email
+        if (email == null || email.isBlank()) {
+            return new OperationResult(false, "Email inválido!");
+        }
+
+        // Data de nascimento
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
+            return new OperationResult(false, "Data de nascimento inválida!");
+        }
+
+
+        student.setName(name);
+        student.setContact(contact);
+        student.setEmail(email);
+        student.setBirthDate(birthDate);
+
+        Student copy = new Student(
+                student.getName(),
+                student.getCpf(),
+                student.getContact(),
+                student.getEmail(),
+                student.getBirthDate()
+        );
+
+        return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
     }
 
 
     // ================= REMOVER ALUNO =================
+    // Remove o aluno definitivamente da lista
     public OperationResult removeStudent(String cpf) {
 
-        // Busca o aluno
         Student student = findEntityByCpf(cpf);
 
-        if (student == null) {  // Se não encontrar retorna a menssagem de erro
+        if (student == null) {
             return new OperationResult(false, "Aluno não encontrado.");
         }
 
-        students.remove(student); // Remove da lista
+        students.remove(student);
         return new OperationResult(true, "Aluno removido com sucesso.");
     }
 
     // ================= INATIVAR ALUNO =================
+    // Marca o aluno como inativo sem removê-lo da lista
     public OperationResult deactivateStudent(String cpf) {
 
-        // Busca o aluno
         Student student = findEntityByCpf(cpf);
 
-        if (student == null) {      // Se não encontrar retorna a menssagem de erro
+        if (student == null) {
             return new OperationResult(false, "Aluno não encontrado.");
         }
 
-        // Marca o aluno como inativo (sem remover da lista)
         student.deactivate();
         return new OperationResult(true, "Aluno inativado com sucesso.");
     }
 
     // ================= MÉTODOS PRIVADOS =================
 
-    // Busca interna de aluno pelo CPF
+    // Percorre a lista procurando um aluno com o CPF informado
     private Student findEntityByCpf(String cpf) {
         for (int i = 0; i < students.size(); i++) {
             if (students.get(i).getCpf().equals(cpf)) {
