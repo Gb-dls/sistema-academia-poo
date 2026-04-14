@@ -118,13 +118,8 @@ public class Student {
         return new OperationResult(true, "Nome atualizado com sucesso.");
     }
 
-    //Altera o contato e valida do estudante
+    //Altera o contato e valida
     public OperationResult setContact(String contact) {
-        if (contact == null) {
-            this.contact = null;
-            return new OperationResult(true, "Contato removido.");
-        }
-
         ContactValidator validator = new ContactValidator();
 
         if (!validator.isValidContact(contact)) {
