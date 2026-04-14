@@ -9,17 +9,6 @@ public class Payment {
     private PaymentType type;
     private String description;
 
-    // Enum Payment Type
-    public enum PaymentType {
-        PIX(1), CREDIT_CARD(2), DEBIT_CARD(3), CASH(4);
-
-        public int value;
-
-        PaymentType(int value) {
-            this.value = value;
-        }
-    }
-
     // Constructor
     public Payment(double amount, PaymentType type, String description) {
         this.date = LocalDate.now();
