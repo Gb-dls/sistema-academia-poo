@@ -24,7 +24,7 @@ public class CpfValidator {
         return cpf != null && cpf.length() == 11;
     }
 
-    // Verifica se todos os números do CPF são iguais
+    // Verifica se todos os números do CPF são iguais.
     private boolean isRepeatedCpf(String cpf) {
         return cpf.matches("(\\d)\\1{10}");
     }
