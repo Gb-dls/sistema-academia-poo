@@ -3,7 +3,7 @@ package application;
 public class OperationResult {
     private boolean success;
     private String message;
-    private Object data;
+    private Object data; /*Permite retornar um objeto junto com o resultado. Será substituído por tipo genérico T nas etapas seguintes.*/
 
     public OperationResult(boolean success, String message) {
         this.success = success;
