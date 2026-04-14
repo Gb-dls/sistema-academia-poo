@@ -93,11 +93,11 @@ public class Student {
     public LocalDate getBirthDate() {
         return this.birthDate;
     }
+
     // ================= PRINT =================
     @Override
     public String toString() {
-        return "\n=== ALUNO ===\n" +
-                "Nome: " + name + "\n" +
+        return "Nome: " + name + "\n" +
                 "CPF: " + getCpfFormatted() + "\n" +
                 "Email: " + email + "\n" +
                 "Contato: " + getContactFormatted() + "\n" +
@@ -125,15 +125,13 @@ public class Student {
             return new OperationResult(true, "Contato removido.");
         }
 
-        String cleanedContact = contact.replaceAll("\\D", "");
-
         ContactValidator validator = new ContactValidator();
 
-        if (!validator.isValidContact(cleanedContact)) {
+        if (!validator.isValidContact(contact)) {
             return new OperationResult(false, "Telefone inválido!");
         }
 
-        this.contact = cleanedContact;
+        this.contact = contact;
         return new OperationResult(true, "Contato atualizado com sucesso.");
     }
 
