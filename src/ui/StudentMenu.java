@@ -122,23 +122,10 @@ public class StudentMenu {
     }
 
     // ================= LISTAR TODOS =================
-    /*private void listAll() {
-        var result = fitManager.listStudents();
-
-        if (result.isSuccess()) {
-            ui.showMessage(result.getMessage());
-            ui.showMessage(result.getData().toString());
-        } else {
-            ui.showError(result.getMessage());
-        }
-    }*/
-
-
     private void listAll() {
         var result = fitManager.listStudents();
 
         if (result.isSuccess()) {
-            // Converte o objeto para lista de Students
             List<Student> students = (List<Student>) result.getData();
 
             ui.showMessage("===== LISTA DE ALUNOS =====");
