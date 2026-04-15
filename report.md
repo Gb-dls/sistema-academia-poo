@@ -39,7 +39,6 @@ O grupo adotou a estratégia de inativação via `deactivate()`, sem remover o o
 A conversão e validação da data de nascimento é feita pelo método privado `parseDate(String)`, que fica na classe **FitManager** e é chamado nos métodos `registerStudent` e `updateStudent`.
 O método recebe a data como String e faz as checagens: verifica se a `string` não é nula ou vazia, depois confere se ela está no padrão `yyyy-MM-dd` usando uma expressão regular e extrai os valores de ano, mês e dia para garantir que o mês está entre 1 e 12 e o dia entre 1 e 31. Se qualquer uma dessas checagens falhar, o método retorna `null.`
 Quando o retorno é `null`, o fluxo é cortado na hora e o sistema devolve uma mensagem de erro: **"Data de nascimento inválida. Use o formato yyyy-MM-dd."** , somente quando a data passa por tudo isso é que o `LocalDate` é criado e o cadastro ou atualização segue em frente.
-
 ### 4.5 Seleção do tipo de plano
 Os valores de `PlanType` são apresentados ao usuário numerados no menu, e o número digitado é convertido para o enum via `PlanType.fromOptionValue()`. Consideramos aceitar a entrada como texto e converter para o enum, o que seria mais flexível, mas a abordagem numérica é mais robusta e evita erros de digitação. O mesmo padrão é adotado para `PaymentType`.
 
@@ -115,4 +114,35 @@ As seguintes regras estão pendentes de implementação por Gabriel: aluno com m
 
 ## 6. Dificuldades e aprendizados
 
-⚠️ PENDENTE — grupo deve descrever as principais dificuldades técnicas ou organizacionais encontradas durante o desenvolvimento e como foram resolvidas.
+O desenvolvimento desta etapa trouxe desafios em frentes distintas — técnicas e organizacionais — que o grupo enfrentou ao longo do processo.
+
+**Controle de versão com Git e GitHub**
+
+A maior dificuldade organizacional foi o uso correto do Git. No início do projeto, o grupo não tinha familiaridade suficiente com o fluxo de branches definido — criar branches a partir de `stage-1`, abrir pull requests e evitar commits diretos na `main`. Houve situações em que alterações foram feitas diretamente em branches erradas e conflitos de merge precisaram ser resolvidos manualmente. O processo de entender como integrar o trabalho de três pessoas em um único repositório sem sobrescrever o que o colega havia feito foi, na prática, mais desafiador do que o esperado. Com o tempo, o grupo foi se adaptando ao fluxo e os commits passaram a ser mais frequentes e direcionados — mas a curva de aprendizado com o Git foi real e tomou tempo que poderia ter sido dedicado à implementação.
+
+**Arquitetura em camadas**
+
+Outro ponto de dificuldade foi compreender, na prática, onde cada responsabilidade deveria residir. No início, o grupo começou implementando as classes de domínio sem ter clareza sobre como a comunicação entre as camadas funcionaria. Isso gerou retrabalho: algumas lógicas foram colocadas em lugares errados e precisaram ser movidas depois que a estrutura foi melhor compreendida. Entender que o menu coleta e exibe, que o `FitManager` coordena, e que os serviços validam e executam parece simples na teoria — mas exigiu revisão constante durante a implementação para não misturar responsabilidades. A separação de camadas foi o conceito que mais demandou atenção coletiva ao longo do desenvolvimento.
+
+**Tratamento de entradas e coordenação da interface**
+
+A parte técnica que mais gerou dificuldade foi o tratamento de entradas inválidas nos menus e a padronização das mensagens exibidas ao usuário. Dois problemas específicos se combinaram: tratar `NumberFormatException` quando o usuário digita letras em campos numéricos e garantir que todos os menus apresentassem feedback de forma consistente — sem que cada menu tivesse sua própria lógica de exibição. Centralizar as saídas em `UserInterface` e garantir que nenhum menu chamasse `System.out` diretamente foi mais trabalhoso do que o grupo antecipou, especialmente porque envolvia coordenação entre os três membros que desenvolveram menus distintos.
+
+**Divisão do trabalho**
+
+A coordenação entre os membros foi um ponto positivo desta etapa. A divisão por área de responsabilidade — alunos, planos, matrículas e pagamentos — funcionou bem e permitiu que o grupo trabalhasse em paralelo sem grandes conflitos de dependência. A comunicação foi constante e não houve impasses significativos na organização do trabalho em equipe.
+
+**O que faríamos diferente**
+
+Se o grupo começasse novamente, investiria mais tempo antes de escrever código: estudar o fluxo do Git com branches e pull requests, e desenhar com mais cuidado como as camadas se comunicam antes de implementar qualquer classe. A decisão de começar pelo domínio sem ter o diagrama completamente compreendido gerou retrabalho que poderia ter sido evitado. Planejar antes de codificar é uma lição que o grupo leva para as próximas etapas.
+
+---
+
+## 7. Referências
+
+Os seguintes materiais foram utilizados como apoio ao longo do desenvolvimento desta etapa:
+
+- **Slides das aulas** — material disponibilizado pelo professor ao longo da disciplina, consultado como referência principal para os conceitos de orientação a objetos, arquitetura em camadas e boas práticas de projeto.
+- **TURINI, Rodrigo. *Desbravando Java e Orientação a Objetos: Um guia para o iniciante da linguagem*.** Casa do Código. Utilizado como referência de apoio para conceitos de POO aplicados à linguagem Java.
+- ***Java — Ensinando o Básico*.** Material complementar consultado para revisão de sintaxe e recursos fundamentais da linguagem.
+- **Claude (Anthropic), ChatGPT (OpenAI) e Gemini (Google)** — ferramentas de IA utilizadas como auxílio durante o desenvolvimento, para tirar dúvidas pontuais sobre sintaxe, revisar lógica de implementação e apoiar a escrita da documentação.
