@@ -12,17 +12,21 @@ public class MainMenu {
     private final FitManager fitManager;        // Gerenciador central que faz a ponte entre a UI e os serviços
     private final StudentMenu studentMenu;      // Menu específico para operações com alunos
     private final PlanMenu planMenu;            // Menu específico para operações com planos
+    private final EnrollmentMenu enrollmentMenu;    // Menu específico para operações com matrículas
+    private final ReportsMenu reportsMenu;// Menu específico para operações com relatorios
 
 
 
 
     // ================= CONSTRUTOR =================
     // Recebe todas as dependências prontas (criadas no Main)
-    public MainMenu(UserInterface ui, FitManager fitManager, StudentMenu studentMenu, PlanMenu planMenu) {
+    public MainMenu(UserInterface ui, FitManager fitManager, StudentMenu studentMenu, PlanMenu planMenu, EnrollmentMenu enrollmentMenu, ReportsMenu reportsMenu) {
         this.ui = ui;
         this.fitManager = fitManager;
         this.studentMenu = studentMenu;
         this.planMenu = planMenu;
+        this.enrollmentMenu = enrollmentMenu;
+        this.reportsMenu = reportsMenu;
     }
 
 
@@ -30,7 +34,7 @@ public class MainMenu {
     // ================= MENU PRINCIPAL =================
 
     // Inicia o loop do menu principal
-    // O sistema fica rodando nesse loop até o usuário escolher a opção de sair
+    // O sistema fica rodando nesse loop até o usuário escolher a opção de sair.
     public void start() {
 
         String option;
@@ -39,7 +43,9 @@ public class MainMenu {
                     """
                     1 - Gerenciar alunos
                     2 - Gerenciar planos
-                    3 - Sair
+                    3 - Gerenciar matrículas
+                    4 - Relatórios/ listagens
+                    5 - Sair
                     """
             );
 
@@ -51,11 +57,15 @@ public class MainMenu {
 
                 case "2" -> planMenu.start();      // Se escolher "2", entra no menu de planos
 
-                case "3" -> ui.showMessage("Saindo..."); // Exibe mensagem de saída e encerra o loop
+                case "3" -> enrollmentMenu.start(); // Se escolher "3", entra no menu de matriculas
+
+                case "4" -> reportsMenu.start(); // Se escolher "", entra no menu de relatorios
+
+                case "5" -> ui.showMessage("Saindo..."); // Exibe mensagem de saída e encerra o loop
 
                 default -> ui.showError("Opção inválida!"); // Qualquer outra opção é invalida
             }
 
-        } while (!option.equals("3"));  // Continua executando enquanto a opção não for a de saida
+        } while (!option.equals("5"));  // Continua executando enquanto a opção não for a de saida
     }
 }

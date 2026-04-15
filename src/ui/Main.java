@@ -16,15 +16,21 @@ public class Main {
 
 
         // Cria o menu de alunos
-        // Recebe a UI: para exibir e coletar dados e o FitManager: para executar as operações
         StudentMenu studentMenu = new StudentMenu(ui, fitManager);
 
         // Cria o menu de planos
         PlanMenu planMenu = new PlanMenu(ui, fitManager);
 
+        //Cria o menu de matriculas
+        EnrollmentMenu enrollmentMenu = new EnrollmentMenu (ui, fitManager);
+
+        //Cria o menu de relatorio
+        ReportsMenu reportsMenu = new ReportsMenu(ui, fitManager);
 
         // Cria o menu principal do sistema e recebe todos os outros menus para poder navegar entre eles
-        MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu);
+        MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu, enrollmentMenu, reportsMenu);
+
+
 
         // Inicia o sistema pelo menu principal e fica rodando até o usuário escolher sair
         mainMenu.start();
