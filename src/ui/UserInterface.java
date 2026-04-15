@@ -41,7 +41,7 @@ public class UserInterface {
     public void showMenu(String title, String options) {
         System.out.println("\n==== " + title.toUpperCase() + " ====");
         System.out.println(options);
-        System.out.print("Escolha uma opção");
+        System.out.print("Escolha uma opção:");
     }
 
 }

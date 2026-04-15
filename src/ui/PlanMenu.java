@@ -59,8 +59,8 @@ public class PlanMenu {
     private void registerPlan() {
 
         // Coleta dados básicos do plano
-        String name        = ui.getInput("Nome do plano");
-        String description = ui.getInput("Descrição");
+        String name        = ui.getInput("Nome do plano:");
+        String description = ui.getInput("Descrição:");
 
         // Exibe opções de tipo de plano
         ui.showMessage(
@@ -73,7 +73,7 @@ public class PlanMenu {
                 """
         );
 
-        String typeInput = ui.getInput("Escolha o tipo");
+        String typeInput = ui.getInput("Escolha o tipo:");
 
         // Converte opção numérica para enum PlanType
         PlanType type = parsePlanType(typeInput);
@@ -83,8 +83,8 @@ public class PlanMenu {
             return;
         }
         // Coleta dados adicionais
-        String durationInput = ui.getInput("Duração mínima (em meses)");
-        String priceInput    = ui.getInput("Preço mensal (ex: 99.90)");
+        String durationInput = ui.getInput("Duração mínima (em meses):");
+        String priceInput    = ui.getInput("Preço mensal (ex: 99.90):");
 
         // Envia dados para a camada de negócio
         var result = fitManager.registerPlan(name, description, type, durationInput, priceInput);
@@ -102,7 +102,7 @@ public class PlanMenu {
     private void findByName() {
 
         // Solicita nome do plano
-        String name = ui.getInput("Nome do plano");
+        String name = ui.getInput("Nome do plano:");
 
         // Busca plano no sistema
         var result = fitManager.findPlanByName(name);
@@ -119,10 +119,10 @@ public class PlanMenu {
     private void updatePrice() {
 
         // Nome do plano a ser alterado
-        String name = ui.getInput("Nome do plano");
+        String name = ui.getInput("Nome do plano:");
 
         // Novo preço informado pelo usuário
-        String priceInput = ui.getInput("Novo preço mensal (ex: 99.90)");
+        String priceInput = ui.getInput("Novo preço mensal (ex: 99.90):");
 
         // Envia direto como String quem valida é o service
         var result = fitManager.updatePlanPrice(name, priceInput);

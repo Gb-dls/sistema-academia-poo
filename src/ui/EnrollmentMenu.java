@@ -71,7 +71,7 @@ public class EnrollmentMenu {
     // ================= REALIZAR MATRÍCULA =================
     private void enroll() {
         // Solicita CPF do aluno
-        String cpf = ui.getInput("CPF do aluno");
+        String cpf = ui.getInput("CPF do aluno:");
 
         // Busca aluno no sistema
         var studentResult = fitManager.findStudentByCpf(cpf);
@@ -85,7 +85,7 @@ public class EnrollmentMenu {
         Student student = (Student) studentResult.getData();
 
         // Solicita plano
-        String planName = ui.getInput("Nome do plano");
+        String planName = ui.getInput("Nome do plano:");
 
         // Busca plano no sistema
         var planResult = fitManager.findPlanByName(planName);
@@ -98,9 +98,9 @@ public class EnrollmentMenu {
         Plan plan = (Plan) planResult.getData();
 
         // Coleta dados da matrícula
-        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy)");
-        String durationInput = ui.getInput("Duração (em meses)");
-        String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90)");
+        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
+        String durationInput = ui.getInput("Duração (em meses):");
+        String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
 
         // Exibe opções de pagamento
         ui.showMessage("""
@@ -111,7 +111,7 @@ public class EnrollmentMenu {
             4 - PIX
             """);
 
-        String typeInput = ui.getInput("Escolha o tipo de pagamento");
+        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
 
         // Converte opção para enum PaymentType
         PaymentType paymentType = parsePaymentType(typeInput);
@@ -137,7 +137,7 @@ public class EnrollmentMenu {
     private void findActiveByStudent() {
 
         // Solicita o CPF do aluno
-        String cpf = ui.getInput("CPF do aluno");
+        String cpf = ui.getInput("CPF do aluno:");
 
         // Busca a matricula ativa do aluno pelo CPF
         var result = fitManager.findActiveEnrollmentByStudent(cpf);
@@ -154,8 +154,8 @@ public class EnrollmentMenu {
     private void registerPayment() {
 
         // Coleta dados do pagamento
-        String codeInput   = ui.getInput("Código da matrícula");
-        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90)");
+        String codeInput   = ui.getInput("Código da matrícula:");
+        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
 
         ui.showMessage("""
             Tipos de pagamento:
@@ -165,7 +165,7 @@ public class EnrollmentMenu {
             4 - PIX
             """);
 
-        String typeInput = ui.getInput("Escolha o tipo de pagamento");
+        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
 
         PaymentType paymentType = parsePaymentType(typeInput);
         if (paymentType == null) {
@@ -173,7 +173,7 @@ public class EnrollmentMenu {
             return;
         }
 
-        String description = ui.getInput("Descrição do pagamento");
+        String description = ui.getInput("Descrição do pagamento:");
 
         // Registra pagamento via FitManager
         var result = fitManager.registerPayment(codeInput, amountInput, paymentType, description);
@@ -191,7 +191,7 @@ public class EnrollmentMenu {
     private void cancel() {
 
         // Solicita código da matrícula
-        String codeInput = ui.getInput("Código da matrícula");
+        String codeInput = ui.getInput("Código da matrícula:");
 
         // Cancela matrícula
         var result = fitManager.cancelEnrollment(codeInput);
