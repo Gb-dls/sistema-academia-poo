@@ -5,6 +5,7 @@ import domain.Plan;
 import domain.PlanType;
 import domain.Enrollment;
 import domain.PaymentType;
+import domain.EnrollmentStatus;
 import application.StudentService;
 import application.PlanService;
 import application.EnrollmentService;
@@ -12,12 +13,9 @@ import application.OperationResult;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-
-
 // Classe que funciona como FACHADA do sistema (Facade Pattern)
 // Ela centraliza o acesso aos serviços e serve de ponte entre UI e regras de negócio
 public class FitManager {
-
 
     // ================= ATRIBUTOS ================
 
@@ -30,8 +28,6 @@ public class FitManager {
     // Serviço responsável pelas regras de negócio das matrículas
     private final EnrollmentService enrollmentService;
 
-
-
     // ================= CONSTRUTOR =================
 
     // Inicializa os dois serviços o FitManager é responsável por instanciar e conectar os serviços
@@ -40,8 +36,6 @@ public class FitManager {
         this.studentService = new StudentService(enrollmentService);
         this.planService = new PlanService();
     }
-
-
 
     // ================= ALUNOS =================
 
@@ -70,7 +64,6 @@ public class FitManager {
         return studentService.listStudents();
     }
 
-
     // ================= PLANOS =================
 
     // Cadastra um novo plano
@@ -97,11 +90,7 @@ public class FitManager {
         return planService.listPlans();
     }
 
-
-
     // ================= MATRICULAS=================
-<<<<<<< feature/reports
-
 
     // Realiza a matrícula de um aluno em um plano
     public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, PaymentType paymentType) {
@@ -118,7 +107,6 @@ public class FitManager {
         return enrollmentService.cancel(codeStr);
     }
 
-
     // Consulta a matrícula ativa de um aluno pelo CPF
     public OperationResult findActiveEnrollmentByStudent(String cpf) {
 
@@ -134,8 +122,6 @@ public class FitManager {
     public ArrayList<Enrollment> listEnrollments() {
         return enrollmentService.listEnrollments();
     }
-
-
 
     // ================= RELATORIOS =================
 
@@ -179,8 +165,6 @@ public class FitManager {
         // Retorna lista final de alunos ativos
         return activeStudents;
     }
-
-
 
     // Lista todos os alunos que possuem dívida pendentes
     public ArrayList<Student> listStudentsWithDebt() {
@@ -272,43 +256,4 @@ public class FitManager {
 
         return new OperationResult(true, sb.toString()); // // Retorna resultado de sucesso com a lista formatada
     }
-=======
-
-
-    // Realiza a matrícula de um aluno em um plano
-    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, PaymentType paymentType) {
-        return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentType);
-    }
-
-    // Registra um pagamento em uma matrícula existente
-    public OperationResult registerPayment(String codeStr, String amountStr, PaymentType type, String description) {
-        return enrollmentService.registerPayment(codeStr, amountStr, type, description);
-    }
-
-    // Cancela uma matrícula
-    public OperationResult cancelEnrollment(String codeStr) {
-        return enrollmentService.cancel(codeStr);
-    }
-
-
-    // Consulta a matrícula ativa de um aluno pelo CPF
-    public OperationResult findActiveEnrollmentByStudent(String cpf) {
-
-        Enrollment enrollment = enrollmentService.findActiveByStudent(cpf);
-
-        if (enrollment == null) {
-            return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
-        }
-        return new OperationResult(true, "Matrícula ativa encontrada.", enrollment);
-    }
-
-    // Retorna a lista de todas as matrículas (histórico)
-    public ArrayList<Enrollment> listEnrollments() {
-        return enrollmentService.listEnrollments();
-    }
-
-
-
->>>>>>> stage-1
-
 }

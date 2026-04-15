@@ -34,7 +34,7 @@ public class UserInterface {
 
     // Exibe uma mensagem de erro no console de erros (System.err)
     public void showError(String message) {
-        System.err.println("\nERRO: " + message);
+        System.out.println("\n\u001B[31mERRO: " + message + "\u001B[0m");
     }
 
     // Exibe o cabeçalho e as opções de um menu
