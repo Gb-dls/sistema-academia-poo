@@ -33,4 +33,10 @@ public class Payment {
     public String getDescription() {
         return description;
     }
+
+    // Printar os pagamentos
+    @Override
+    public String toString() {
+        return "Valor: R$ " + this.amount + " | Data: " + this.date;
+    }
 }
