@@ -91,8 +91,7 @@ Decidimos não implementar os atributos adicionais cancellationDate e cancellati
 A arquitetura definida exige que o StudentService consulte as regras financeiras antes de efetivar uma remoção. Alunos que possuam matrículas com status ativo, ou matrículas canceladas onde o calculateBalance() > 0, terão sua remoção bloqueada, garantindo a preservação do histórico de dívidas da academia.
 
 ### 4.22 Ordenação nas listagens
-⚠️ PENDENTE — grupo deve documentar em qual camada fica a responsabilidade de ordenação das listagens e como evitar duplicação de código entre listagens similares.
-
+A ordenação é tratada na camada de Aplicação (Services). Para evitar duplicação, a lógica de ordenação é executada imediatamente após operações de inserção ou atualização de dados, garantindo que as coleções em memória permaneçam consistentes. Além disso, utilizamos a API de Comparators do Java para manter o código conciso e reutilizável.
 ### 4.23 Tratamento de entrada numérica inválida
 ⚠️ PENDENTE — Maria deve documentar a estratégia adotada para tratar entradas de tipo incorreto nos menus, como letras em campos numéricos.
 
