@@ -93,7 +93,7 @@ A arquitetura definida exige que o StudentService consulte as regras financeiras
 ### 4.22 Ordenação nas listagens
 A ordenação é tratada na camada de Aplicação (Services). Para evitar duplicação, a lógica de ordenação é executada imediatamente após operações de inserção ou atualização de dados, garantindo que as coleções em memória permaneçam consistentes. Além disso, utilizamos a API de Comparators do Java para manter o código conciso e reutilizável.
 ### 4.23 Tratamento de entrada numérica inválida
-PENDENTE
+O tratamento de entradas com tipo incorreto é realizado de forma preventiva diretamente na camada de Aplicação (nos Services). A estratégia adotada consiste em receber os dados numéricos repassados pela interface como String e validá-los utilizando Expressões Regulares (ex: input.matches("\\d+")) antes de realizar a conversão real. Caso o formato seja inválido (como letras digitadas em campos de preço ou duração), o serviço bloqueia a operação imediatamente e retorna um OperationResult com uma mensagem de erro amigável. Essa abordagem garante que a aplicação nunca tente fazer o parse de dados corrompidos, evitando o encerramento do programa por exceções (como NumberFormatException) e mantendo o sistema estável
 
 ### 4.24 Situação financeira como estado ou cálculo
 Toda verificação financeira é feita por um cálculo dinâmico em tempo real através do método calculateBalance() da entidade Enrollment, que subtrai a soma do histórico de pagamentos (calculateTotalPaid()) do valor total do contrato (totalPrice).
@@ -105,9 +105,22 @@ O grupo identificou dois pontos principais de extensão já preparados nesta eta
 
 ## 5. Regras de negócio implementadas
 
-O CPF deve ser único no sistema — verificado em `StudentService.registerStudent()`. O CPF deve ser válido com verificação dos dígitos verificadores — implementado em `CpfValidator.isValidCpf()`. Todos os campos do aluno são obrigatórios — verificado em `StudentService.registerStudent()`. O nome do plano deve ser único — verificado em `PlanService.registerPlan()` via `nameExists()`. A duração mínima do plano deve ser maior que zero e o preço por mês deve ser positivo — ambos verificados em `PlanService.registerPlan()`. A alteração de preço não afeta matrículas existentes — garantida porque `totalPrice` é calculado e armazenado no momento da criação da matrícula via `plan.calculateTotalPrice(durationMonths)`. O tipo de plano deve ser válido — verificado em `PlanService.registerPlan()` via verificação de `null`.
+#### Regras de Alunos e Planos:
 
-As seguintes regras estão pendentes de implementação por Gabriel: aluno com matrícula ativa não pode ser removido; aluno não pode ter mais de uma matrícula ativa simultaneamente; duração da matrícula deve ser maior ou igual à duração mínima do plano; pagamento não pode ser registrado em matrícula cancelada; matrícula cancelada não pode voltar a ser ativa.
+- Unicidade do CPF: O CPF deve ser único no sistema — verificado em StudentService.registerStudent().
+- Validação do CPF: O CPF deve ser válido com verificação dos dígitos verificadores — implementado em CpfValidator.isValidCpf().
+- Campos Obrigatórios: Todos os campos do aluno são obrigatórios — verificado em StudentService.registerStudent().
+- Unicidade do Plano: O nome do plano deve ser único — verificado em PlanService.registerPlan() via nameExists().
+- Valores Positivos: A duração mínima do plano deve ser maior que zero e o preço por mês deve ser positivo — ambos verificados em PlanService.registerPlan().
+- Imutabilidade do Histórico: A alteração de preço não afeta matrículas existentes — garantida porque totalPrice é calculado e armazenado no momento da criação da matrícula via plan.calculateTotalPrice(durationMonths).
+- Validação de Tipo: O tipo de plano deve ser válido — verificado em PlanService.registerPlan() via verificação de null.
+
+#### Regras de Matrícula e Financeiras:
+- Bloqueio de Inativação: Um aluno com matrícula ativa ou dívida pendente não pode ser removido/inativado — verificado em StudentService.removeStudent() mediante consulta ao EnrollmentService.
+- Limite de Matrículas: Um aluno não pode ter mais de uma matrícula ativa simultaneamente — verificado em EnrollmentService.enroll().
+- Duração Mínima: A duração da matrícula escolhida pelo aluno deve ser maior ou igual à duração mínima exigida pelo plano — verificado em EnrollmentService.enroll().
+- Trava de Pagamento: Um pagamento não pode ser registrado em uma matrícula que já encontra-se cancelada — verificado em EnrollmentService.registerPayment().
+- Status Definitivo: Uma matrícula cancelada não pode voltar a ser ativa (não possui fluxo de reativação) — garantido pela arquitetura de encapsulamento e ausência de métodos de reversão de status na classe de domínio Enrollment.
 
 ---
 
