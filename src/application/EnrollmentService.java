@@ -4,6 +4,7 @@ import domain.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 // Classe responsável pela lógica de negócio das matrículas
 // Aqui ficam regras como: matrícula, pagamento, cancelamento e consultas
@@ -356,8 +357,33 @@ public class EnrollmentService {
         return new ArrayList<>(this.enrollments);
     }
 
+    // Retorna todas as matrículas de um aluno pelo CPF
+    public List<Enrollment> getEnrollmentsByStudent(String cpf) {
+        List<Enrollment> result = new ArrayList<>();
+        for (int i = 0; i < enrollments.size(); i++) {
+            if (enrollments.get(i).getStudent().getCpf().equals(cpf)) {
+                result.add(enrollments.get(i));
+            }
+        }
+        return result;
+    }
 
+    // Verifica se o aluno possui algum débito pendente
+    public boolean hasDebt(String cpf) {
 
+        // Busca todas as matrículas do aluno pelo CPF
+        List<Enrollment> studentEnrollments = getEnrollmentsByStudent(cpf);
+
+        // Percorre todas as matrículas encontradas
+        for (int i = 0; i < studentEnrollments.size(); i++) {
+
+            // Chama o calculateBalance() de cada matrícula e verifica se o aluno ainda tem valor a pagar
+            if (studentEnrollments.get(i).calculateBalance() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
 // ================= PRIVADOS =================
 
 

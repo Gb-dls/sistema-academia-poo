@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class FitManager {
 
 
-    // ================= ATRIBUTOS =================
+    // ================= ATRIBUTOS ================
 
     // Serviço responsável pelas regras de negócio dos alunos
     private final StudentService studentService;

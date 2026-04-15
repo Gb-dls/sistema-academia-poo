@@ -4,6 +4,7 @@ import domain.Student;
 import application.OperationResult;
 import validators.CpfValidator;
 import validators.ContactValidator;
+import domain.Enrollment;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -183,8 +184,9 @@ public class StudentService {
     // ================= INATIVAR ALUNO =================
     public OperationResult removeStudent(String cpf) {
 
+        String cleanCpf     = cleanNumber(cpf);
         // Busca aluno
-        Student student = findEntityByCpf(cpf);
+        Student student = findEntityByCpf(cleanCpf);
 
         if (student == null) {
             return new OperationResult(false, "Aluno não encontrado.");
@@ -196,8 +198,13 @@ public class StudentService {
         }
 
         // Verifica se possui matrícula ativa
-        if (enrollmentService.hasActiveEnrollment(cpf)) {
-            return new OperationResult(false, "Aluno possui matrícula ativa.");
+        if (enrollmentService.hasActiveEnrollment(cleanCpf)) {
+            return new OperationResult(false, "Aluno possui matrícula ativa, não pode ser inativado.");
+        }
+
+        // Verifica se possui débitos pendentes
+        if (enrollmentService.hasDebt(cleanCpf)) {
+            return new OperationResult(false, "Aluno possui débitos pendentes, não pode ser inativado.");
         }
 
         //Inativa o aluno
