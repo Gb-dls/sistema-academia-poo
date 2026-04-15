@@ -93,8 +93,7 @@ A arquitetura definida exige que o StudentService consulte as regras financeiras
 ### 4.22 Ordenação nas listagens
 A ordenação é tratada na camada de Aplicação (Services). Para evitar duplicação, a lógica de ordenação é executada imediatamente após operações de inserção ou atualização de dados, garantindo que as coleções em memória permaneçam consistentes. Além disso, utilizamos a API de Comparators do Java para manter o código conciso e reutilizável.
 ### 4.23 Tratamento de entrada numérica inválida
-⚠️ PENDENTE — Maria deve documentar a estratégia adotada para tratar entradas de tipo incorreto nos menus, como letras em campos numéricos.
-
+O tratamento de entradas de tipo incorreto é realizado de forma preventiva na camada de Aplicação (Services). A estratégia consiste em receber os dados da interface como String e processá-los através de métodos de conversão segura (parsing). Isso evita que falhas de digitação (como letras em campos numéricos) causem exceções fatais, permitindo que o sistema retorne um OperationResult com mensagens de erro amigáveis, garantindo assim a estabilidade e a integridade da aplicação.
 ### 4.24 Situação financeira como estado ou cálculo
 Toda verificação financeira é feita por um cálculo dinâmico em tempo real através do método calculateBalance() da entidade Enrollment, que subtrai a soma do histórico de pagamentos (calculateTotalPaid()) do valor total do contrato (totalPrice).
 
