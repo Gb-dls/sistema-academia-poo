@@ -99,4 +99,49 @@ public class Enrollment {
     public ArrayList<Payment> getPayments() {
         return payments;
     }
+    @Override
+    public String toString() {
+
+        // Calcula o total já pago pelo aluno
+        double totalPaid = calculateTotalPaid();
+
+        // Calcula o saldo restante do quanto ainda falta pagar
+        double balance   = calculateBalance();
+
+        // Armazena todas as informações formatadas
+        String result =
+
+                "Código:       " + code + "\n" +                  // Código do contrato
+                        "Aluno:        " + student.getName() + "\n" +     // Nome do aluno
+                        "CPF:          " + student.getCpf() + "\n" +      // CPF do aluno
+                        "Plano:        " + plan.getName() + "\n" +        // Nome do plano contratado
+                        "Início:       " + startDate + "\n" +             // Data de início
+                        "Término:      " + endDate + "\n" +               // Data de término
+                        "Duração:      " + durationMonths + " meses\n" +  // Duração em meses
+                        "Status:       " + status + "\n" +                // Status atual do contrato
+
+                        // Valores financeiros
+                        "Total:        R$ " + String.format("%.2f", totalPrice) + "\n" +
+                        "Total pago:   R$ " + String.format("%.2f", totalPaid) + "\n";
+
+        // Verifica se ainda existe saldo pendente
+        if (balance > 0) {
+
+            result += "Saldo:        R$ " + String.format("%.2f", balance) + " (pendente)\n";
+        } else {
+           o
+            result += "Saldo:        Quitado\n";
+        }
+
+        // Verifica se existem pagamentos registrados na lista
+        if (!payments.isEmpty()) {
+            result += "Pagamentos:\n"; // Título da seção de pagamentos
+
+            for (int i = 0; i < payments.size(); i++) {
+                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
+            }
+        }
+
+        return result;
+    }
 }
