@@ -20,7 +20,7 @@ Nesta primeira etapa, foi construída a base funcional do sistema — modelando 
 
 ## 3. Diagrama de classes final
 
-![Diagrama de Classes Etapa 01](./Diagrama 01.png)
+![Diagrama de Classes Etapa 01](./diagrama-final.png)
 
 ---
 
