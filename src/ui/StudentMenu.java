@@ -72,7 +72,7 @@ public class StudentMenu {
         String cpf     = ui.getInput("CPF");
         String contact = ui.getInput("Contato");
         String email   = ui.getInput("E-mail");
-        String birth   = ui.getInput("Data de nascimento (dd/MM/yyyy");
+        String birth   = ui.getInput("Data de nascimento (dd/MM/yyyy)");
 
         // Chama camada de negócio para cadastrar aluno
         var result = fitManager.registerStudent(name, cpf, contact, email, birth);
