@@ -21,7 +21,7 @@ public class UserInterface {
 
     // Exibe uma mensagem de instrução e retorna o que o usuário digitou
     public String getInput(String message) {
-        System.out.print(message + ": "); // exibe o rótulo do campo
+        System.out.print(message + " "); // exibe o rótulo do campo
         return scanner.nextLine();        // le tudo que o usuario digitou ate pressionar ENTER
     }
 
@@ -29,7 +29,7 @@ public class UserInterface {
 
     // Exibe uma mensagem comum no console
     public void showMessage(String message) {
-        System.out.println("\n\n" + message);
+        System.out.println("\n" + message);
     }
 
     // Exibe uma mensagem de erro no console de erros (System.err)

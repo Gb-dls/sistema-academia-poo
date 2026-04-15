@@ -54,11 +54,19 @@ public class StudentService {
         }
 
         if (!cpfValidator.isValidCpf(cleanCpf)) {
+<<<<<<< feature/reports
+            return new OperationResult(false, "CPF inválido.\n");
+        }
+
+        if (cpfExists(cleanCpf)) {
+            return new OperationResult(false, "CPF já cadastrado.\n");
+=======
             return new OperationResult(false, "\nCPF inválido.\n");
         }
 
         if (cpfExists(cleanCpf)) {
             return new OperationResult(false, "\nCPF já cadastrado.\n");
+>>>>>>> stage-1
         }
 
         if (!contactValidator.isValidContact(cleanContact)) {
@@ -91,7 +99,7 @@ public class StudentService {
                 student.getBirthDate()
         );
 
-        return new OperationResult(true, "\nAluno cadastrado com sucesso.\n", copy);
+        return new OperationResult(true, "Aluno cadastrado com sucesso.\n", copy);
     }
 
 
@@ -110,9 +118,9 @@ public class StudentService {
                     student.getEmail(),
                     student.getBirthDate()
             );
-            return new OperationResult(true, "\nAluno encontrado.\n", copy);
+            return new OperationResult(true, "Aluno encontrado.\n", copy);
         }
-        return new OperationResult(false, "\nAluno não encontrado.\n");
+        return new OperationResult(false, "Aluno não encontrado.\n");
     }
 
     // ================= LISTAR ALUNOS =================
@@ -139,7 +147,7 @@ public class StudentService {
 
         // Validações de atualização
         if (student == null) {
-            return new OperationResult(false, "\nAluno não encontrado.\n");
+            return new OperationResult(false, "Aluno não encontrado.\n");
         }
 
         if (name == null || name.isBlank()) {
@@ -176,7 +184,7 @@ public class StudentService {
                 student.getBirthDate()
         );
 
-        return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
+        return new OperationResult(true, "Aluno atualizado com sucesso.\n", copy);
     }
 
 
