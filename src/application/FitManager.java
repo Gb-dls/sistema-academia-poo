@@ -134,7 +134,4 @@ public class FitManager {
         return enrollmentService.listEnrollments();
     }
 
-
-
-
 }

@@ -1,11 +1,22 @@
 package ui;
 
 import application.FitManager;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 // Ponto de entrada do sistema, é aqui que o programa começa a executar
 public class Main {
 
     public static void main(String[] args) {
+
+
+        try {
+            System.setIn(new FileInputStream("test.txt"));
+            System.out.println("MODO DE TESTE: Lendo do arquivo test.txt...");
+        } catch (FileNotFoundException e) {
+            // Não faz nada, apenas segue o jogo usando o teclado normal
+        }
+
 
         // Cria a interface de interação com o usuário, responsável por toda entrada  e saída  de dados no console
         UserInterface ui = new UserInterface();

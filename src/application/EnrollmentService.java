@@ -25,46 +25,7 @@ public class EnrollmentService {
     }
 
 
-    // ================= MATRÍCULA =================
-
-    // Metodo enroll para cadastro de matricula
-
-    /*public OperationResult enroll(Student student, Plan plan, LocalDate startDate,
-                                  int durationMonths, double initialPayment, PaymentType paymentType) {
-        // Verifica se o aluno possui matricula ativa
-        if (hasActiveEnrollment(student.getCpf())) {
-            return new OperationResult(false, "O aluno já possui uma matrícula ativa no sistema.");
-        }
-
-        // Verifica se a duration de meses é menor que o minimo do plano
-        if (durationMonths < plan.getMinDurationMonths()) {
-            return new OperationResult(false, "A duração escolhida é menor que o mínimo exigido pelo plano (" + plan.getMinDurationMonths() + " meses).");
-        }
-        // Pagamento inicial é a primeira mensalidade cheia
-        double valuePerMonth = plan.calculateTotalPrice(durationMonths) / durationMonths;
-
-        if (initialPayment < valuePerMonth) {
-            //  String.format para deixar o dinheiro bonitinho com duas casas decimais
-            return new OperationResult(false, String.format("O pagamento inicial mínimo exigido é de R$ %.2f.", valuePerMonth));
-        }
-        // --- Efetivacao da Matricula ---
-
-        // Criando Matricula
-        Enrollment newEnrollment = new Enrollment(nextCode, student, plan, startDate, durationMonths);
-
-        // Registrando o pagamento
-        Payment firstPayment = new Payment(initialPayment, paymentType, "Pagamento da 1ª Mensalidade");
-        newEnrollment.registerPayment(firstPayment);
-
-        // Adicionando matricula no ArrayList
-        this.enrollments.add(newEnrollment);
-
-        // Subindo gerador de codigo automatico
-        nextCode++;
-
-        return new OperationResult(true, "Matrícula efetivada com sucesso!");
-    }*/
-
+    // ================= MATRICULA =================
     // Realiza a matrícula de um aluno em um plano
     public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String initialPaymentStr, PaymentType paymentType) {
 
@@ -120,49 +81,6 @@ public class EnrollmentService {
         return new OperationResult(true, "Matrícula efetivada com sucesso!");
     }
 
-    // Metodo registerPayment
-    /*public OperationResult registerPayment(int enrollmentCode, double amount, PaymentType type, String description) {
-
-        // Checando se o valor e valido
-        if (amount <= 0) {
-            return new OperationResult(false, "O valor do pagamento deve ser maior que zero.");
-        }
-
-        // Procurando a matricula com o codigo digitado
-        Enrollment flagEnrollment = findByCode(enrollmentCode);
-
-        // Se a variavel continua null, nao achou
-        if (flagEnrollment == null) {
-            return new OperationResult(false, "Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
-        }
-        // Nao e possivel fazer pagaento de uma matricula cancelada
-        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) {
-            return new OperationResult(false, "Não é possível registrar pagamentos em uma matrícula cancelada.");
-        }
-
-        // Não deixa o aluno pagar mais do que deve
-        if (amount > flagEnrollment.calculateBalance()) {
-            return new OperationResult(false, "O valor pago supera o saldo devedor. Pagamento máximo permitido: R$ " + flagEnrollment.calculateBalance());
-        }
-
-        // --- Efetivando pagamento ---
-
-        Payment newPayment = new Payment(amount, type, description);
-
-        // Guarda o pagamento na lista da matricula correspondente
-        flagEnrollment.registerPayment(newPayment);
-
-        // Calculos para verificar se a matricula foi quitada ou o que esta pendente
-        double balance = flagEnrollment.calculateBalance();
-        String statusFinanceiro;
-        if (balance > 0) {
-            statusFinanceiro = String.format(" Saldo pendente: R$ %.2f", balance);
-        } else {
-            statusFinanceiro = " Matrícula quitada!";
-        }
-        // Retorna a mensagem de sucesso e uma mensagem ( Saldo pendente: R$ xx,xx
-        return new OperationResult(true, "Pagamento registrado com sucesso!" + statusFinanceiro);
-    }*/
 
     // ================= PAGAMENTO =================
 

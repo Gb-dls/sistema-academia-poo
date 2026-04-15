@@ -73,16 +73,4 @@ public class Plan {
                   "Preço mensal: R$ " + String.format("%.2f", pricePerMonth) + "\n" +
                   "Preço total (com desconto): R$ " + String.format("%.2f", calculateTotalPrice(minDurationMonths)) + "\n";
      }
-     /*
-     public void printPlan() {
-          System.out.println("---------- DADOS DO PLANO ----------");
-          System.out.println("Nome: " + this.name);
-          System.out.println("Descrição: " + this.description);
-          System.out.println("Tipo: " + this.type); // 'plan' com p minúsculo
-          System.out.println("Duração Mínima: " + this.minDurationMonths + " meses");
-          System.out.println("Preço Mensal: R$ " + this.pricePerMonth);
-          // Aproveite para imprimir o valor com desconto!
-          System.out.println("Preço Total (com descontos): R$ " + calculateTotalPrice());
-          System.out.println("------------------------------------");
-     }*/
 }
