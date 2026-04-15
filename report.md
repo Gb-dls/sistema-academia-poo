@@ -61,7 +61,7 @@ Os menus são instanciados no início do programa, em `Main.java`, e passados co
 O campo `data` é do tipo `Object` nesta etapa, permitindo retornar qualquer objeto junto com o resultado da operação. Por exemplo, `registerPlan()` retorna o `Plan` criado para que o menu o exiba sem precisar buscá-lo novamente. Consideramos não incluir o campo nesta etapa, mas optamos por mantê-lo pois o documento prevê sua evolução para um tipo genérico `T` nas etapas seguintes, e já utilizá-lo agora prepara o sistema para essa transição.
 
 ### 4.12 Pacote `validators`
-As classes `CpfValidator` e `ContactValidator` foram organizadas em um pacote separado `validators`, fora das três camadas principais. Poderíamos tê-las colocado no pacote `domain` ou `application`, mas optamos pelo pacote separado pois são utilitários reutilizáveis que não pertencem exclusivamente a nenhuma das camadas. O pacote `validators` é usado tanto pela camada de domínio (`Student`) quanto pela camada de aplicação (`StudentService`).
+As classes CpfValidator e ContactValidator foram organizadas em um pacote separado validators, fora das três camadas principais. Optamos pelo pacote separado pois são utilitários reutilizáveis que não pertencem exclusivamente a nenhuma das camadas. Para manter a entidade de domínio (Student) pura e focada apenas em seus próprios dados, a responsabilidade de acionar o pacote validators foi delegada exclusivamente para a camada de aplicação, dentro do StudentService.
 
 ### 4.13 Pagamento inicial mínimo
 O pagamento mínimo para efetivar a matrícula foi definido como o valor exato da primeira parcela mensal. O cálculo ocorre na camada de aplicação, dentro do método enroll() do EnrollmentService. A lógica divide o valor total do contrato (com os devidos descontos do plano) pelo número de meses (plan.calculateTotalPrice(durationMonths) / durationMonths). Se o valor fornecido for menor que essa parcela, o serviço barra a criação do objeto e retorna um OperationResult de falha.
@@ -93,7 +93,8 @@ A arquitetura definida exige que o StudentService consulte as regras financeiras
 ### 4.22 Ordenação nas listagens
 A ordenação é tratada na camada de Aplicação (Services). Para evitar duplicação, a lógica de ordenação é executada imediatamente após operações de inserção ou atualização de dados, garantindo que as coleções em memória permaneçam consistentes. Além disso, utilizamos a API de Comparators do Java para manter o código conciso e reutilizável.
 ### 4.23 Tratamento de entrada numérica inválida
-O tratamento de entradas de tipo incorreto é realizado de forma preventiva na camada de Aplicação (Services). A estratégia consiste em receber os dados da interface como String e processá-los através de métodos de conversão segura (parsing). Isso evita que falhas de digitação (como letras em campos numéricos) causem exceções fatais, permitindo que o sistema retorne um OperationResult com mensagens de erro amigáveis, garantindo assim a estabilidade e a integridade da aplicação.
+PENDENTE
+
 ### 4.24 Situação financeira como estado ou cálculo
 Toda verificação financeira é feita por um cálculo dinâmico em tempo real através do método calculateBalance() da entidade Enrollment, que subtrai a soma do histórico de pagamentos (calculateTotalPaid()) do valor total do contrato (totalPrice).
 
