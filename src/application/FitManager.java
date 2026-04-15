@@ -100,6 +100,7 @@ public class FitManager {
 
 
     // ================= MATRICULAS=================
+<<<<<<< feature/reports
 
 
     // Realiza a matrícula de um aluno em um plano
@@ -271,5 +272,43 @@ public class FitManager {
 
         return new OperationResult(true, sb.toString()); // // Retorna resultado de sucesso com a lista formatada
     }
+=======
+
+
+    // Realiza a matrícula de um aluno em um plano
+    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, PaymentType paymentType) {
+        return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentType);
+    }
+
+    // Registra um pagamento em uma matrícula existente
+    public OperationResult registerPayment(String codeStr, String amountStr, PaymentType type, String description) {
+        return enrollmentService.registerPayment(codeStr, amountStr, type, description);
+    }
+
+    // Cancela uma matrícula
+    public OperationResult cancelEnrollment(String codeStr) {
+        return enrollmentService.cancel(codeStr);
+    }
+
+
+    // Consulta a matrícula ativa de um aluno pelo CPF
+    public OperationResult findActiveEnrollmentByStudent(String cpf) {
+
+        Enrollment enrollment = enrollmentService.findActiveByStudent(cpf);
+
+        if (enrollment == null) {
+            return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
+        }
+        return new OperationResult(true, "Matrícula ativa encontrada.", enrollment);
+    }
+
+    // Retorna a lista de todas as matrículas (histórico)
+    public ArrayList<Enrollment> listEnrollments() {
+        return enrollmentService.listEnrollments();
+    }
+
+
+
+>>>>>>> stage-1
 
 }

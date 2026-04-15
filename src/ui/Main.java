@@ -23,6 +23,7 @@ public class Main {
 
         //Cria o menu de matriculas
         EnrollmentMenu enrollmentMenu = new EnrollmentMenu (ui, fitManager);
+<<<<<<< feature/reports
 
         //Cria o menu de relatorio
         ReportsMenu reportsMenu = new ReportsMenu(ui, fitManager);
@@ -31,6 +32,11 @@ public class Main {
         MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu, enrollmentMenu, reportsMenu);
 
 
+=======
+
+        // Cria o menu principal do sistema e recebe todos os outros menus para poder navegar entre eles
+        MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu, enrollmentMenu);
+>>>>>>> stage-1
 
         // Inicia o sistema pelo menu principal e fica rodando até o usuário escolher sair
         mainMenu.start();
