@@ -137,7 +137,7 @@ public class Enrollment {
             result += "Pagamentos:\n"; // Título da seção de pagamentos
 
             for (int i = 0; i < payments.size(); i++) {
-                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
+                                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
             }
         }
 
