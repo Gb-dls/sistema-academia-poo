@@ -6,17 +6,21 @@ import application.FitManager;
 import application.OperationResult;
 import java.util.ArrayList;
 
+// Classe responsável pelo menu de PLANOS
+// Faz a interface entre o usuário e o FitManager (camada de serviço)
 public class PlanMenu {
 
+    // Interface responsável por entrada e saída de dados com o usuário
     private final UserInterface ui;
     private final FitManager fitManager;
 
+    // Construtor das dependências necessárias
     public PlanMenu(UserInterface ui, FitManager fitManager) {
         this.ui = ui;
         this.fitManager = fitManager;
     }
 
-    // Método principal do menu de planos
+    // ================= MENU PRINCIPAL =================
     public void start() {
 
         String option;
@@ -53,9 +57,12 @@ public class PlanMenu {
 
     // ================= CADASTRAR PLANO =================
     private void registerPlan() {
+
+        // Coleta dados básicos do plano
         String name        = ui.getInput("Nome do plano");
         String description = ui.getInput("Descrição");
 
+        // Exibe opções de tipo de plano
         ui.showMessage(
                 """
                 Tipos de plano:
@@ -67,31 +74,22 @@ public class PlanMenu {
         );
 
         String typeInput = ui.getInput("Escolha o tipo");
+
+        // Converte opção numérica para enum PlanType
         PlanType type = parsePlanType(typeInput);
 
         if (type == null) {
             ui.showError("Tipo de plano inválido!");
             return;
         }
-
+        // Coleta dados adicionais
         String durationInput = ui.getInput("Duração mínima (em meses)");
-        int minDuration = parseInt(durationInput);
+        String priceInput    = ui.getInput("Preço mensal (ex: 99.90)");
 
-        if (minDuration <= 0) {
-            ui.showError("Duração mínima inválida!");
-            return;
-        }
+        // Envia dados para a camada de negócio
+        var result = fitManager.registerPlan(name, description, type, durationInput, priceInput);
 
-        String priceInput = ui.getInput("Preço mensal (ex: 99.90)");
-        double price = parseDouble(priceInput);
-
-        if (price <= 0) {
-            ui.showError("Preço inválido!");
-            return;
-        }
-
-        var result = fitManager.registerPlan(name, description, type, minDuration, price);
-
+        // Exibe resultado da operação
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
             ui.showMessage(result.getData().toString());
@@ -102,7 +100,11 @@ public class PlanMenu {
 
     // ================= CONSULTAR POR NOME =================
     private void findByName() {
+
+        // Solicita nome do plano
         String name = ui.getInput("Nome do plano");
+
+        // Busca plano no sistema
         var result = fitManager.findPlanByName(name);
 
         if (result.isSuccess()) {
@@ -115,17 +117,15 @@ public class PlanMenu {
 
     // ================= ALTERAR PREÇO =================
     private void updatePrice() {
+
+        // Nome do plano a ser alterado
         String name = ui.getInput("Nome do plano");
 
+        // Novo preço informado pelo usuário
         String priceInput = ui.getInput("Novo preço mensal (ex: 99.90)");
-        double newPrice = parseDouble(priceInput);
 
-        if (newPrice <= 0) {
-            ui.showError("Preço inválido!");
-            return;
-        }
-
-        var result = fitManager.updatePlanPrice(name, newPrice);
+        // Envia direto como String quem valida é o service
+        var result = fitManager.updatePlanPrice(name, priceInput);
 
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
@@ -136,6 +136,8 @@ public class PlanMenu {
 
     // ================= LISTAR TODOS =================
     private void listAll() {
+
+        // Busca todos os planos cadastrados
         ArrayList<Plan> plans = fitManager.listPlans();
 
         if (plans.isEmpty()) {
@@ -144,6 +146,7 @@ public class PlanMenu {
         }
 
         ui.showMessage("===== LISTA DE PLANOS =====");
+        // Percorre e exibe todos os planos
         for (int i = 0; i < plans.size(); i++) {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(plans.get(i).toString());
@@ -153,27 +156,19 @@ public class PlanMenu {
 
     // ================= PRIVADOS =================
 
-    // Converte string para PlanType
+    // Converte string para PlanType continua aqui pois é responsabilidade do menu converter a opção numérica digitada para o enum PlanType
     private PlanType parsePlanType(String input) {
-        if (input == null || input.isBlank()) return null;
+        if (input == null || input.isBlank()){
+            return null;
+        }
 
-        if (!input.matches("\\d+")) return null;
+        if (!input.matches("\\d+")) {
+            return null;
+        }
 
         int value = Integer.parseInt(input);
         return PlanType.fromOptionValue(value);
     }
 
-    // Converte string para int
-    private int parseInt(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+")) return -1;
-        return Integer.parseInt(input);
-    }
 
-    // Converte string para double
-    private double parseDouble(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+(\\.\\d+)?")) return -1;
-        return Double.parseDouble(input);
-    }
 }

@@ -8,57 +8,80 @@ import validators.ContactValidator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
-// Classe responsável pela lógica de negócio dos alunos, recebe objetos Student já montados pelo FitManager e aplica as regras do sistema
+
+// Classe responsável pela lógica de negócio dos alunos
+// Aqui ficam as regras do sistema (validações, criação, atualização, busca)
 public class StudentService {
 
     // ================= ATRIBUTOS =================
 
-    // Lista que armazena todos os alunos cadastrados em memória
+    // Lista em memória que armazena todos os alunos cadastrados
     private List<Student> students = new ArrayList<>();
 
-    // Responsável por validar o CPF
+    // Validador responsável por regras de CPF
     private CpfValidator cpfValidator = new CpfValidator();
 
+    // Validador responsável por regras de contato/telefone
+    private ContactValidator contactValidator = new ContactValidator();
+
+    // Serviço responsável por matrículas (para validações relacionadas a aluno)
+    private EnrollmentService enrollmentService;
+
+    // Construtor da dependência do EnrollmentService
+    public StudentService(EnrollmentService enrollmentService) {
+        this.enrollmentService = enrollmentService;
+    }
+
+
+
     // ================= CADASTRAR ALUNO =================
-    // Recebe um objeto Student já montado pelo FitManager, valida o CPF, verifica duplicidade efaz as outras validações
-    public OperationResult registerStudent(Student student) {
 
+    public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
 
-        if (student.getName() == null || student.getName().isBlank()) {
+        // Remove caracteres não numéricos do CPF e telefone
+        String cleanCpf     = cleanNumber(cpf);
+        String cleanContact = cleanNumber(contact);
+
+        // Converte string de data para LocalDate
+        LocalDate birthDate = parseDate(birthDateStr);
+
+        // Validações de regra de negócio
+        if (name == null || name.isBlank()) {
             return new OperationResult(false, "Nome inválido!");
         }
 
-        //Validação CPF
-        if (!cpfValidator.isValidCpf(student.getCpf())) {
+        if (!cpfValidator.isValidCpf(cleanCpf)) {
             return new OperationResult(false, "\nCPF inválido.\n");
         }
 
-        // Duplicidade de CPF
-        if (cpfExists(student.getCpf())) {
+        if (cpfExists(cleanCpf)) {
             return new OperationResult(false, "\nCPF já cadastrado.\n");
         }
 
-        // Contato
-        ContactValidator contactValidator = new ContactValidator();
-        if (!contactValidator.isValidContact(student.getContact())) {
+        if (!contactValidator.isValidContact(cleanContact)) {
             return new OperationResult(false, "Telefone inválido!");
         }
 
-        // Email
-        if (student.getEmail() == null || student.getEmail().isBlank()) {
+        if (email == null || email.isBlank()) {
             return new OperationResult(false, "Email inválido!");
         }
 
-        // Data de nascimento
-        if (student.getBirthDate() == null || student.getBirthDate().isAfter(LocalDate.now())) {
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
             return new OperationResult(false, "Data de nascimento inválida!");
         }
 
-       //insere na lista
+        // Criação do objeto aluno após validações
+        Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
+
+        // Adiciona aluno na lista em memória
         students.add(student);
 
+        // Mantém lista ordenada por nome (ordem alfabética)
+        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER)); //ordena a lista por ordem alfabética
 
+        // Cria uma cópia para não expor o objeto original
         Student copy = new Student(
                 student.getName(),
                 student.getCpf(),
@@ -70,12 +93,14 @@ public class StudentService {
         return new OperationResult(true, "\nAluno cadastrado com sucesso.\n", copy);
     }
 
+
     // ================= BUSCAR POR CPF =================
-    // Busca um aluno pelo CPF e retorna uma cópia do objeto
     public OperationResult findByCpf(String cpf) {
 
+        // Busca entidade real na lista
         Student student = findEntityByCpf(cpf);
 
+        // Retorna cópia do aluno encontrado
         if (student != null) {
             Student copy = new Student(
                     student.getName(),
@@ -90,53 +115,58 @@ public class StudentService {
     }
 
     // ================= LISTAR ALUNOS =================
-    // Retorna uma cópia da lista de alunos
     public OperationResult listStudents() {
 
+        // Verifica se não há alunos cadastrados
         if (students.isEmpty()) {
             return new OperationResult(false, "Nenhum aluno cadastrado.");
         }
-
+        // Retorna cópia da lista para evitar alteração externa
         return new OperationResult(true, "Lista de alunos carregada.", new ArrayList<>(students));
     }
 
     // ================= ATUALIZAR ALUNO =================
+    public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
 
-    public OperationResult updateStudent(String cpf, String name, String contact, String email, LocalDate birthDate) {
+        // Normaliza entrada
+        String cleanCpf     = cleanNumber(cpf);
+        String cleanContact = cleanNumber(contact);
+        LocalDate birthDate = parseDate(birthDateStr);
 
-        Student student = findEntityByCpf(cpf);
+        // Busca aluno existente
+        Student student = findEntityByCpf(cleanCpf);
 
+        // Validações de atualização
         if (student == null) {
             return new OperationResult(false, "\nAluno não encontrado.\n");
         }
 
-        // Nome
         if (name == null || name.isBlank()) {
             return new OperationResult(false, "Nome inválido!");
         }
 
-        // Contato
-        ContactValidator contactValidator = new ContactValidator();
-        if (!contactValidator.isValidContact(contact)) {
+        if (!contactValidator.isValidContact(cleanContact)) {
             return new OperationResult(false, "Telefone inválido!");
         }
 
-        // Email
         if (email == null || email.isBlank()) {
             return new OperationResult(false, "Email inválido!");
         }
 
-        // Data de nascimento
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
             return new OperationResult(false, "Data de nascimento inválida!");
         }
 
-
+        // Atualiza dados do aluno existente
         student.setName(name);
-        student.setContact(contact);
+        student.setContact(cleanContact);
         student.setEmail(email);
         student.setBirthDate(birthDate);
 
+        // Reordena lista após atualização
+        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
+
+        // Cria cópia para retorno com os dados do aluno atualizados
         Student copy = new Student(
                 student.getName(),
                 student.getCpf(),
@@ -148,43 +178,31 @@ public class StudentService {
         return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
     }
 
-        // Cópia dos dados do estudante atualizado
-        Student copy = new Student(
-                student.getName(),
-                student.getCpf(),
-                student.getContact(),
-                student.getEmail(),
-                student.getBirthDate()
-        );
 
-        return new OperationResult(true, "\nAluno atualizado com sucesso.\n", copy);
-    }
-
-    // ================= REMOVER ALUNO =================
-    // Remove o aluno definitivamente da lista
-    public OperationResult removeStudent(String cpf) {
-
-        Student student = findEntityByCpf(cpf);
-
-        if (student == null) {
-            return new OperationResult(false, "Aluno não encontrado.");
-        }
-
-        students.remove(student);
-        return new OperationResult(true, "Aluno removido com sucesso.");
-    }
 
     // ================= INATIVAR ALUNO =================
-    // Marca o aluno como inativo sem removê-lo da lista
-    public OperationResult deactivateStudent(String cpf) {
+    public OperationResult removeStudent(String cpf) {
 
+        // Busca aluno
         Student student = findEntityByCpf(cpf);
 
         if (student == null) {
             return new OperationResult(false, "Aluno não encontrado.");
         }
 
+        // Verifica se já está inativo
+        if (!student.isActive()) {
+            return new OperationResult(false, "Aluno já está inativo.");
+        }
+
+        // Verifica se possui matrícula ativa
+        if (enrollmentService.hasActiveEnrollment(cpf)) {
+            return new OperationResult(false, "Aluno possui matrícula ativa.");
+        }
+
+        //Inativa o aluno
         student.deactivate();
+
         return new OperationResult(true, "Aluno inativado com sucesso.");
     }
 
@@ -204,4 +222,34 @@ public class StudentService {
     private boolean cpfExists(String cpf) {
         return findEntityByCpf(cpf) != null;
     }
+
+    // Converte string de data (dd/MM/yyyy) para LocalDate
+    private LocalDate parseDate(String input) {
+
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+        if (!input.matches("\\d{2}/\\d{2}/\\d{4}")) {
+            return null;
+        }
+
+        int day   = Integer.parseInt(input.substring(0, 2));
+        int month = Integer.parseInt(input.substring(3, 5));
+        int year  = Integer.parseInt(input.substring(6, 10));
+
+        if (month < 1 || month > 12) return null;
+        if (day < 1 || day > 31)     return null;
+
+        return LocalDate.of(year, month, day);
+    }
+
+    //limpa tudo que não é numero de uma string
+    private String cleanNumber(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceAll("\\D", "");
+    }
+
+
 }

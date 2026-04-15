@@ -129,8 +129,7 @@ public class Enrollment {
 
             result += "Saldo:        R$ " + String.format("%.2f", balance) + " (pendente)\n";
         } else {
-           o
-            result += "Saldo:        Quitado\n";
+           result += "Saldo:        Quitado\n";
         }
 
         // Verifica se existem pagamentos registrados na lista

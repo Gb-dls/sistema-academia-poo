@@ -10,10 +10,13 @@ import java.util.List;
 // Classe responsável pelo menu de gerenciamento de alunos
 public class StudentMenu {
 
-    private final UserInterface ui;      // Interface para interação com o usuário
-    private final FitManager fitManager;    // Classe que contém a lógica do sistema
+    // Interface responsável pela comunicação com o usuário (entrada/saída)
+    private final UserInterface ui;
 
-    // Construtor que  recebe os .java necessarios
+    // Classe principal de regras de negócio do sistema
+    private final FitManager fitManager;
+
+    // Construtor: recebe as dependências necessárias para o menu funcionar
     public StudentMenu(UserInterface ui, FitManager fitManager) {
         this.ui = ui;
         this.fitManager = fitManager;
@@ -63,14 +66,18 @@ public class StudentMenu {
 
     // ================= CADASTRAR ALUNO =================
     private void registerStudent() {
+
+        // Coleta dados do usuário
         String name    = ui.getInput("Nome");
         String cpf     = ui.getInput("CPF");
         String contact = ui.getInput("Contato");
         String email   = ui.getInput("E-mail");
-        String birth   = ui.getInput("Data de nascimento (yyyy-MM-dd)");
+        String birth   = ui.getInput("Data de nascimento (dd/MM/yyyy");
 
+        // Chama camada de negócio para cadastrar aluno
         var result = fitManager.registerStudent(name, cpf, contact, email, birth);
 
+        // Exibe resultado da operação
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
         } else {
@@ -80,9 +87,14 @@ public class StudentMenu {
 
     // ================= BUSCAR POR CPF =================
     private void findByCpf() {
+
+        // Solicita CPF ao usuário
         String cpf = ui.getInput("CPF");
+
+        // Busca aluno no sistema
         var result = fitManager.findStudentByCpf(cpf);
 
+        // Exibe resultado
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
             ui.showMessage(result.getData().toString());
@@ -93,14 +105,18 @@ public class StudentMenu {
 
     // ================= ATUALIZAR ALUNO =================
     private void updateStudent() {
+
+        // Coleta novos dados do aluno
         String cpf     = ui.getInput("CPF do aluno");
         String name    = ui.getInput("Novo nome");
         String contact = ui.getInput("Novo contato");
         String email   = ui.getInput("Novo e-mail");
-        String birth   = ui.getInput("Nova data de nascimento (yyyy-MM-dd)");
+        String birth   = ui.getInput("Nova data de nascimento (dd/MM/yyyy)");
 
+        // Atualiza aluno no sistema
         var result = fitManager.updateStudent(cpf, name, contact, email, birth);
 
+        // Exibe resultado
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
             ui.showMessage(result.getData().toString());
@@ -111,9 +127,14 @@ public class StudentMenu {
 
     // ================= EXCLUIR (INATIVAR) =================
     private void deleteStudent() {
-        String cpf = ui.getInput("CPF");
-        var result = fitManager.deleteStudent(cpf);
 
+        // Solicita CPF do aluno
+        String cpf = ui.getInput("CPF");
+
+        // Inativa aluno no sistema
+        var result = fitManager.removeStudent(cpf);
+
+        // Exibe resultado
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
         } else {
@@ -123,12 +144,16 @@ public class StudentMenu {
 
     // ================= LISTAR TODOS =================
     private void listAll() {
+
+        // Busca todos os alunos cadastrados
         var result = fitManager.listStudents();
 
+        // Converte retorno para lista de alunos
         if (result.isSuccess()) {
             List<Student> students = (List<Student>) result.getData();
 
             ui.showMessage("===== LISTA DE ALUNOS =====");
+            // Percorre e exibe cada aluno
             for (int i = 0; i < students.size(); i++) {
                 ui.showMessage("---------- " + (i + 1) + " ----------");
                 ui.showMessage(students.get(i).toString());
