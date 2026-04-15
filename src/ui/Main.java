@@ -2,43 +2,27 @@ package ui;
 
 import application.FitManager;
 
-// Ponto de entrada do sistema, é aqui que o programa começa a executar
+// Ponto de entrada do sistema
 public class Main {
 
     public static void main(String[] args) {
 
-        // Cria a interface de interação com o usuário, responsável por toda entrada  e saída  de dados no console
+        // Interface de interação com o usuário
         UserInterface ui = new UserInterface();
 
-
-        // Cria o gerenciador central do sistema, ele que recebe os dados da UI, limpa, converte e repassa para os serviços
+        // Gerenciador central do sistema
         FitManager fitManager = new FitManager();
 
-
-        // Cria o menu de alunos
+        // Instanciação dos menus específicos
         StudentMenu studentMenu = new StudentMenu(ui, fitManager);
-
-        // Cria o menu de planos
         PlanMenu planMenu = new PlanMenu(ui, fitManager);
-
-        //Cria o menu de matriculas
-        EnrollmentMenu enrollmentMenu = new EnrollmentMenu (ui, fitManager);
-<<<<<<< feature/reports
-
-        //Cria o menu de relatorio
+        EnrollmentMenu enrollmentMenu = new EnrollmentMenu(ui, fitManager);
         ReportsMenu reportsMenu = new ReportsMenu(ui, fitManager);
 
-        // Cria o menu principal do sistema e recebe todos os outros menus para poder navegar entre eles
+        // Menu principal recebendo todas as dependências, incluindo o novo menu de relatórios
         MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu, enrollmentMenu, reportsMenu);
 
-
-=======
-
-        // Cria o menu principal do sistema e recebe todos os outros menus para poder navegar entre eles
-        MainMenu mainMenu = new MainMenu(ui, fitManager, studentMenu, planMenu, enrollmentMenu);
->>>>>>> stage-1
-
-        // Inicia o sistema pelo menu principal e fica rodando até o usuário escolher sair
+        // Inicia o sistema
         mainMenu.start();
     }
 }

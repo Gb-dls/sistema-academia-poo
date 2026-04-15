@@ -54,20 +54,13 @@ public class StudentService {
         }
 
         if (!cpfValidator.isValidCpf(cleanCpf)) {
-<<<<<<< feature/reports
             return new OperationResult(false, "CPF inválido.\n");
         }
 
         if (cpfExists(cleanCpf)) {
             return new OperationResult(false, "CPF já cadastrado.\n");
-=======
-            return new OperationResult(false, "\nCPF inválido.\n");
         }
 
-        if (cpfExists(cleanCpf)) {
-            return new OperationResult(false, "\nCPF já cadastrado.\n");
->>>>>>> stage-1
-        }
 
         if (!contactValidator.isValidContact(cleanContact)) {
             return new OperationResult(false, "Telefone inválido!");
