@@ -20,7 +20,7 @@ Nesta primeira etapa, foi construída a base funcional do sistema — modelando 
 
 ## 3. Diagrama de classes final
 
-> ⚠️ TODO — inserir diagrama atualizado refletindo o sistema conforme implementado.
+![Diagrama de Classes Etapa 01](./Diagrama 01.png)
 
 ---
 
