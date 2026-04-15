@@ -12,17 +12,23 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
+// Classe responsável pelo menu de MATRÍCULAS
+// Faz a interface entre o usuário e o FitManager
 public class EnrollmentMenu {
 
+    // Interface de comunicação com o usuário (entrada/saída)
     private final UserInterface ui;
+
+    // Fachada do sistema (encaminha para os services)
     private final FitManager fitManager;
 
+    // Construtor das dependências necessárias
     public EnrollmentMenu(UserInterface ui, FitManager fitManager) {
         this.ui = ui;
         this.fitManager = fitManager;
     }
 
-    // Método principal do menu de matriculas
+    // ================= MENU PRINCIPAL =================
     public void start() {
 
         String option;
@@ -64,109 +70,72 @@ public class EnrollmentMenu {
 
     // ================= REALIZAR MATRÍCULA =================
     private void enroll() {
-
-        // Solicita o CPF do aluno
+        // Solicita CPF do aluno
         String cpf = ui.getInput("CPF do aluno");
 
-        // Busca o aluno pelo CPF
+        // Busca aluno no sistema
         var studentResult = fitManager.findStudentByCpf(cpf);
 
-        // Verifica se a busca foi bem-sucedida
         if (!studentResult.isSuccess()) {
             ui.showError(studentResult.getMessage());
             return;
         }
 
-        // Recupera o objeto Student do resultado
+        // Converte retorno para Student
         Student student = (Student) studentResult.getData();
 
-        // Solicita o nome do plano
+        // Solicita plano
         String planName = ui.getInput("Nome do plano");
 
-        // Busca o plano pelo nome
+        // Busca plano no sistema
         var planResult = fitManager.findPlanByName(planName);
-
-        // Verifica se o plano foi encontrado
         if (!planResult.isSuccess()) {
-            ui.showError(planResult.getMessage()); // Exibe erro caso não encontre
+            ui.showError(planResult.getMessage());
             return;
         }
 
-        // Recupera o objeto Plan do resultado
+        // Converte retorno para Plan
         Plan plan = (Plan) planResult.getData();
 
-        // Solicita a data de inicio da matricula
-        String dateInput = ui.getInput("Data de início (dd/MM/yyyy)");
-
-        // Converte a string para LocalDate
-        LocalDate startDate = parseDate(dateInput);
-
-        // Valida se a data foi convertida corretamente
-        if (startDate == null) {
-            ui.showError("Data inválida! Use o formato dd/MM/yyyy.");
-            return;
-        }
-
-        // Solicita a duração do plano em meses
+        // Coleta dados da matrícula
+        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy)");
         String durationInput = ui.getInput("Duração (em meses)");
+        String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90)");
 
-        // Converte para inteiro
-        int durationMonths = parseInt(durationInput);
+        // Exibe opções de pagamento
+        ui.showMessage("""
+            Tipos de pagamento:
+            1 - Dinheiro
+            2 - Cartão de débito
+            3 - Cartão de crédito
+            4 - PIX
+            """);
 
-        // Valida se a duração é válida
-        if (durationMonths <= 0) {
-            ui.showError("Duração inválida!");
-            return;
-        }
-
-        // Solicita o valor do pagamento inicial
-        String paymentInput = ui.getInput("Valor do pagamento inicial (ex: 99.90)");
-
-        // Converte o pagamento inicial para double
-        double initialPayment = parseDouble(paymentInput);
-
-        // Valida se o valor é valido
-        if (initialPayment <= 0) {
-            ui.showError("Valor inválido!");
-            return;
-        }
-
-        // Exibe as opções de tipo de pagamento
-        ui.showMessage(
-                """
-                Tipos de pagamento:
-                1 - Dinheiro
-                2 - Cartão de débito
-                3 - Cartão de crédito
-                4 - PIX
-                """
-        );
-
-        // Solicita o tipo de pagamento
         String typeInput = ui.getInput("Escolha o tipo de pagamento");
 
-        // Converte a opção para enum PaymentType
+        // Converte opção para enum PaymentType
         PaymentType paymentType = parsePaymentType(typeInput);
 
-        // Valida se o tipo de pagamento é válido
         if (paymentType == null) {
             ui.showError("Tipo de pagamento inválido!");
             return;
         }
 
-        // Realiza a matrícula com os dados coletados
-        var result = fitManager.enroll(student, plan, startDate, durationMonths, initialPayment, paymentType
-        );
+        // Executa matrícula via FitManager
+        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, paymentType);
 
-        // Verifica se a matrícula foi realizada com sucesso
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-        } else {
+        }
+        else {
             ui.showError(result.getMessage());
         }
     }
+
+
     // ================= CONSULTAR MATRÍCULA ATIVA =================
     private void findActiveByStudent() {
+
         // Solicita o CPF do aluno
         String cpf = ui.getInput("CPF do aluno");
 
@@ -184,40 +153,21 @@ public class EnrollmentMenu {
     // ================= REGISTRAR PAGAMENTO =================
     private void registerPayment() {
 
-        // Solicita o código da matrícula
-        String codeInput = ui.getInput("Código da matrícula");
-
-        int code = parseInt(codeInput);
-
-        if (code <= 0) {
-            ui.showError("Código inválido!");
-            return;
-        }
-
-        // Solicita o valor do pagamento
+        // Coleta dados do pagamento
+        String codeInput   = ui.getInput("Código da matrícula");
         String amountInput = ui.getInput("Valor do pagamento (ex: 99.90)");
-        double amount = parseDouble(amountInput);
 
-        if (amount <= 0) {
-            ui.showError("Valor inválido!");
-            return;
-        }
-
-        // Exibe os tipos de pagamento disponíveis
-        ui.showMessage(
-                """
-                Tipos de pagamento:
-                1 - Dinheiro
-                2 - Cartão de débito
-                3 - Cartão de crédito
-                4 - PIX
-                """
-        );
+        ui.showMessage("""
+            Tipos de pagamento:
+            1 - Dinheiro
+            2 - Cartão de débito
+            3 - Cartão de crédito
+            4 - PIX
+            """);
 
         String typeInput = ui.getInput("Escolha o tipo de pagamento");
-        // Converte para enum PaymentType
-        PaymentType paymentType = parsePaymentType(typeInput);
 
+        PaymentType paymentType = parsePaymentType(typeInput);
         if (paymentType == null) {
             ui.showError("Tipo de pagamento inválido!");
             return;
@@ -225,39 +175,38 @@ public class EnrollmentMenu {
 
         String description = ui.getInput("Descrição do pagamento");
 
-        // Registra o pagamento no sistema
-        var result = fitManager.registerPayment(code, amount, paymentType, description);
+        // Registra pagamento via FitManager
+        var result = fitManager.registerPayment(codeInput, amountInput, paymentType, description);
 
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-        } else {
+        }
+        else {
             ui.showError(result.getMessage());
         }
     }
 
     // ================= CANCELAR MATRÍCULA =================
+
     private void cancel() {
 
-        // Solicita o codigo da matricula
+        // Solicita código da matrícula
         String codeInput = ui.getInput("Código da matrícula");
-        int code = parseInt(codeInput);
 
-        if (code <= 0) {
-            ui.showError("Código inválido!");
-            return;
-        }
-        // Solicita o cancelamento da matricula
-        var result = fitManager.cancelEnrollment(code);
-
+        // Cancela matrícula
+        var result = fitManager.cancelEnrollment(codeInput);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-        } else {
-            ui.showError(result.getMessage());
         }
+        else {
+            ui.showError(result.getMessage()); }
     }
+
 
     // ================= LISTAR HISTÓRICO =================
     private void listAll() {
+
+        // Busca todas as matrículas
         ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
 
         if (enrollments.isEmpty()) {
@@ -266,6 +215,7 @@ public class EnrollmentMenu {
         }
 
         ui.showMessage("===== HISTÓRICO DE MATRÍCULAS =====");
+        // Percorre e exibe todas as matrículas
         for (int i = 0; i < enrollments.size(); i++) {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(enrollments.get(i).toString());
@@ -275,30 +225,6 @@ public class EnrollmentMenu {
 
     // ================= PRIVADOS =================
 
-    // Converte string para int
-    private int parseInt(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+")) return -1;
-        return Integer.parseInt(input);
-    }
-
-    // Converte string para double
-    private double parseDouble(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+(\\.\\d+)?")) return -1;
-        return Double.parseDouble(input);
-    }
-
-    // Converte string para LocalDate
-    private LocalDate parseDate(String input) {
-        if (input == null || input.isBlank()) return null;
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            return LocalDate.parse(input, formatter);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     // Converte string para PaymentType
     private PaymentType parsePaymentType(String input) {

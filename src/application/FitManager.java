@@ -14,7 +14,8 @@ import java.util.ArrayList;
 
 
 
-// Classe que faz a ponte entre a UI e os serviços.
+// Classe que funciona como FACHADA do sistema (Facade Pattern)
+// Ela centraliza o acesso aos serviços e serve de ponte entre UI e regras de negócio
 public class FitManager {
 
 
@@ -29,76 +30,55 @@ public class FitManager {
     // Serviço responsável pelas regras de negócio das matrículas
     private final EnrollmentService enrollmentService;
 
+
+
     // ================= CONSTRUTOR =================
 
-    // Inicializa os dois serviços o FitManager é quem cria os serviços
+    // Inicializa os dois serviços o FitManager é responsável por instanciar e conectar os serviços
     public FitManager() {
-        this.studentService = new StudentService();
-        this.planService = new PlanService();
         this.enrollmentService = new EnrollmentService();
+        this.studentService = new StudentService(enrollmentService);
+        this.planService = new PlanService();
     }
 
 
 
     // ================= ALUNOS =================
-    // Cadastra um novo aluno
+
+    // Cadastra um aluno
     public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
-        String cleanCpf = cleanNumber(cpf);
-        String cleanContact = cleanNumber(contact);
-
-
-        // Converte a string da data para LocalDate e retorna null se o formato for invalido
-        LocalDate birthDate = parseDate(birthDateStr);
-        if (birthDate == null) {
-            return new OperationResult(false, "\nData de nascimento inválida. Use o formato yyyy-MM-dd.\n");
-        }
-
-        // Monta o objeto Student com os dados já limpos e convertidos
-        Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
-        return studentService.registerStudent(student);      // Repassa ao serviço que vai validar e cadastrar
+        return studentService.registerStudent(name, cpf, contact, email, birthDateStr);
     }
 
-    // Busca um aluno pelo CPF e limpa o CPF antes de buscar
+    // Busca aluno pelo CPF
     public OperationResult findStudentByCpf(String cpf) {
-        String cleanCpf = cleanNumber(cpf);
-        return studentService.findByCpf(cleanCpf);
+        return studentService.findByCpf(cpf);
     }
 
-
-    //Atualiza os dados de um aluno existente
+    // Atualiza dados de um aluno
     public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
-        String cleanCpf = cleanNumber(cpf);
-        String cleanContact = cleanNumber(contact);
-
-        LocalDate birthDate = parseDate(birthDateStr);
-        if (birthDate == null) {
-            return new OperationResult(false, "\nData de nascimento inválida. Use o formato yyyy-MM-dd.\n");
-        }
-
-        return studentService.updateStudent(cleanCpf, name, cleanContact, email, birthDate);
+        return studentService.updateStudent(cpf, name, contact, email, birthDateStr);
     }
 
-    // Inativa um aluno (sem remover da lista) e limpa o CPF para aceitar qualquer formato
-    public OperationResult deleteStudent(String cpf) {
-        String cleanCpf = cleanNumber(cpf);
-        return studentService.deactivateStudent(cleanCpf);
+    // Inativa um aluno
+    public OperationResult removeStudent(String cpf) {
+        return studentService.removeStudent(cpf);
     }
 
-    // Retorna a lista de todos os alunos cadastrados
+    // Lista todos os alunos cadastrados
     public OperationResult listStudents() {
         return studentService.listStudents();
     }
 
 
-
     // ================= PLANOS =================
 
-    // Cadastra um novo plano repassando os dados diretamente ao serviço
-    public OperationResult registerPlan(String name, String description, PlanType type, int minDurationMonths, double pricePerMonth) {
-        return planService.registerPlan(name, description, type, minDurationMonths, pricePerMonth);
+    // Cadastra um novo plano
+    public OperationResult registerPlan(String name, String description, PlanType type, String minDuration, String price) {
+        return planService.registerPlan(name, description, type, minDuration, price);
     }
 
-    // Busca um plano pelo nome
+    // Busca  plano pelo nome
     public OperationResult findPlanByName(String name) {
         Plan plan = planService.findByName(name);
         if (plan == null) {
@@ -107,16 +87,15 @@ public class FitManager {
         return new OperationResult(true, "Plano encontrado.", plan);
     }
 
-    // Atualiza o preço mensal de um plano existente
-    public OperationResult updatePlanPrice(String name, double newPrice) {
+    // Atualiza o preço de um plano
+    public OperationResult updatePlanPrice(String name, String newPrice) {
         return planService.updatePrice(name, newPrice);
     }
 
-    // Retorna a lista de todos os planos cadastrados
+    // Lista todos os planos
     public ArrayList<Plan> listPlans() {
         return planService.listPlans();
     }
-
 
 
 
@@ -124,25 +103,26 @@ public class FitManager {
 
 
     // Realiza a matrícula de um aluno em um plano
-    public OperationResult enroll(Student student, Plan plan, LocalDate startDate, int durationMonths, double initialPayment, PaymentType paymentType) {
-        return enrollmentService.enroll(student, plan, startDate, durationMonths, initialPayment, paymentType);
+    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, PaymentType paymentType) {
+        return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentType);
     }
 
     // Registra um pagamento em uma matrícula existente
-    public OperationResult registerPayment(int enrollmentCode, double amount, PaymentType type, String description) {
-        return enrollmentService.registerPayment(enrollmentCode, amount, type, description);
+    public OperationResult registerPayment(String codeStr, String amountStr, PaymentType type, String description) {
+        return enrollmentService.registerPayment(codeStr, amountStr, type, description);
     }
 
-    // Cancela uma matrícula pelo código
-    public OperationResult cancelEnrollment(int code) {
-        return enrollmentService.cancel(code);
+    // Cancela uma matrícula
+    public OperationResult cancelEnrollment(String codeStr) {
+        return enrollmentService.cancel(codeStr);
     }
 
 
     // Consulta a matrícula ativa de um aluno pelo CPF
     public OperationResult findActiveEnrollmentByStudent(String cpf) {
-        String cleanCpf = cleanNumber(cpf);
-        Enrollment enrollment = enrollmentService.findActiveByStudent(cleanCpf);
+
+        Enrollment enrollment = enrollmentService.findActiveByStudent(cpf);
+
         if (enrollment == null) {
             return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
         }
@@ -155,30 +135,6 @@ public class FitManager {
     }
 
 
-    // ================= PRIVADOS =================
 
-    // Converte uma string no formato "yyyy-MM-dd"
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isBlank()) return null;
-
-        if (!dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
-
-        int year  = Integer.parseInt(dateStr.substring(0, 4));
-        int month = Integer.parseInt(dateStr.substring(5, 7));
-        int day   = Integer.parseInt(dateStr.substring(8, 10));
-
-        if (month < 1 || month > 12) return null;
-        if (day < 1 || day > 31)     return null;
-
-        return LocalDate.of(year, month, day);
-    }
-
-    //limpa tudo que não é numero de uma string
-    private String cleanNumber(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.replaceAll("\\D", "");
-    }
 
 }
