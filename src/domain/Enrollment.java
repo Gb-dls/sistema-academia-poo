@@ -1,6 +1,8 @@
 package domain;
 
 // Imports
+import domain.payment.Payment;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 

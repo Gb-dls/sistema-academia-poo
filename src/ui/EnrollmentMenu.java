@@ -1,14 +1,11 @@
 package ui;
 
 import domain.Enrollment;
-import domain.PaymentType;
+import domain.payment.PaymentType;
 import domain.Plan;
 import domain.Student;
 import application.FitManager;
-import application.OperationResult;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 

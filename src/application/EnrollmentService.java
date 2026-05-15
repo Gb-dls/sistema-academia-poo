@@ -1,6 +1,8 @@
 package application;
 
 import domain.*;
+import domain.payment.Payment;
+import domain.payment.PaymentType;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

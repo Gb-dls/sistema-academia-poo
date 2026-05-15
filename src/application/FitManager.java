@@ -4,13 +4,9 @@ import domain.Student;
 import domain.Plan;
 import domain.PlanType;
 import domain.Enrollment;
-import domain.PaymentType;
+import domain.payment.PaymentType;
 import domain.EnrollmentStatus;
-import application.StudentService;
-import application.PlanService;
-import application.EnrollmentService;
-import application.OperationResult;
-import java.time.LocalDate;
+
 import java.util.ArrayList;
 
 // Classe que funciona como FACHADA do sistema (Facade Pattern)

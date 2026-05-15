@@ -1,4 +1,4 @@
-package domain;
+package domain.payment;
 
 public enum PaymentType {
     PIX(1), CREDIT_CARD(2), DEBIT_CARD(3), CASH(4);
@@ -23,3 +23,7 @@ public enum PaymentType {
         return null;
     }
 }
+
+// ACREDITO QUE O ENUM NAO TEM MAIS NENHUMA UTILIZADE JA QUE OS CONCEITOS DE POLIMORFISMO E HERANÇA
+// SAO EXATAMENTE PRA RESOLVER O PROBLEMA DE LIDAR COM DIFERENTES COMPORTAMENTOS PARA UMA MESMA CLASSE
+// Vou deixar aqui so pra ter certeza ao longo do projeto
