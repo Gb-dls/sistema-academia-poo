@@ -3,6 +3,7 @@ package domain;
 // Imports
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 
 
 // Class Enrollment
@@ -142,5 +143,11 @@ public class Enrollment {
         }
 
         return result;
+    }
+
+    // Calcula quantos meses inteiros se passaram desde o startDate até HOJE
+    public int getMonthsActive() {
+        long months = ChronoUnit.MONTHS.between(this.startDate, LocalDate.now());
+        return (int) months;
     }
 }
