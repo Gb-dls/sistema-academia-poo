@@ -37,6 +37,6 @@ public class Payment {
     // Printar os pagamentos
     @Override
     public String toString() {
-        return "Valor: R$ " + this.amount + " | Data: " + this.date;
+        return "Valor: R$ " + String.format("%.2f", this.amount).replace(".", ",") + " | Data: " + this.date;
     }
 }
