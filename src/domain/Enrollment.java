@@ -1,6 +1,8 @@
 package domain;
 
 // Imports
+import domain.plan.Plan;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.time.temporal.ChronoUnit;

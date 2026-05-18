@@ -1,6 +1,5 @@
 package application;
-import domain.Plan;
-import domain.PlanType;
+import domain.plan.Plan;
 import java.util.ArrayList;
 import java.util.Comparator;
 import application.OperationResult;
@@ -71,7 +70,7 @@ public class PlanService {
         }
 
         // Criação do plano após validações
-        Plan newPlan = new Plan(name, description, type, minDurationMonths, pricePerMonth);
+        Plan newPlan = new Plan(name, description, minDurationMonths, pricePerMonth);
 
         // Adiciona na lista
         plans.add(newPlan);

@@ -1,6 +1,7 @@
 package application;
 
 import domain.*;
+import domain.plan.Plan;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

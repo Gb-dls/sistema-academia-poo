@@ -2,7 +2,7 @@ package ui;
 
 import domain.Enrollment;
 import domain.PaymentType;
-import domain.Plan;
+import domain.plan.Plan;
 import domain.Student;
 import application.FitManager;
 import application.OperationResult;

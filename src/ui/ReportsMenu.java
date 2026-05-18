@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import domain.Student;
 import domain.Enrollment;
 import domain.EnrollmentStatus;
-import domain.Plan;
+import domain.plan.Plan;
 
 
 // Classe responsável pelo menu de gerenciamento dos relatorios

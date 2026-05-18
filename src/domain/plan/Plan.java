@@ -1,16 +1,16 @@
-package domain;
+package domain.plan;
+
+import domain.Enrollment;
 
 public abstract class Plan {
      private String name;
      private String description;
-     private PlanType type;
      private int minDurationMonths;
      private double pricePerMonth;
 
-     public Plan(String name, String description, PlanType type, int minDurationMonths, double pricePerMonth) {
+     public Plan(String name, String description, int minDurationMonths, double pricePerMonth) {
           this.name = name;
           this.description = description;
-          this.type = type;
           this.minDurationMonths = minDurationMonths;
           this.pricePerMonth = pricePerMonth;
      }
@@ -42,11 +42,18 @@ public abstract class Plan {
 
      public abstract double getCancellationFee(Enrollment enrollment);
 
+     // Calcula a taxa baseada em porcentagem se o tempo mínimo de contrato não foi atingido
+     protected double calculatePercentageFee(Enrollment enrollment, double percentage) {
+          if (enrollment.getMonthsActive() < getMinDurationMonths()) {
+               return enrollment.getTotalPrice() * percentage;
+          }
+          return 0.0;
+     }
+
      @Override
      public String toString() {
           return "Nome: " + name + "\n" +
                   "Descrição: " + description + "\n" +
-                  "Tipo: " + type + "\n" +
                   "Duração mínima: " + minDurationMonths + " meses\n" +
                   "Preço mensal: R$ " + String.format("%.2f", pricePerMonth) + "\n" +
                   "Preço total (com desconto): R$ " + String.format("%.2f", calculateTotalPrice(minDurationMonths)) + "\n";

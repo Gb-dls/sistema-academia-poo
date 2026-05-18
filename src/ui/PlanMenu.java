@@ -1,7 +1,7 @@
 package ui;
 
 import domain.PlanType;
-import domain.Plan;
+import domain.plan.Plan;
 import application.FitManager;
 import application.OperationResult;
 import java.util.ArrayList;
