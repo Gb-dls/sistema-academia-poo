@@ -1,11 +1,11 @@
 package domain;
 
-// Imports
+import domain.plan.Plan;
+import domain.payment.Payment;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 
-
-// Class Enrollment
 public class Enrollment {
 
     private int code;
@@ -18,9 +18,9 @@ public class Enrollment {
     private EnrollmentStatus status;
     private ArrayList<Payment> payments;
 
-    // Constructor
+    // Construtor //
     public Enrollment(int code, Student student, Plan plan, LocalDate startDate, int durationMonths) {
-        this.code = code;   // vem de nextCode de Enrollment Service
+        this.code = code;
         this.student = student;
         this.plan = plan;
         this.startDate = startDate;
@@ -31,39 +31,7 @@ public class Enrollment {
         this.payments = new ArrayList<>();
     }
 
-    // Methods
-
-    // Method registerPayment - Add payment no ArrayList
-    public void registerPayment(Payment payment) {
-        this.payments.add(payment);
-    }
-
-    // Method calculateTotalPaid - Calcula o valor total pago ate o momento
-    public double calculateTotalPaid() {
-        double total = 0;
-        for (Payment p : payments) {
-            total += p.getAmount();
-        }
-
-        return total;
-    }
-
-    // Method calculateBalance - Calcula o que o falta a ser pago de acordo com o total do contrato
-    public double calculateBalance() {
-        double balance = this.totalPrice;
-        double totalPaid = calculateTotalPaid();
-
-        return (balance - totalPaid);
-    }
-
-    // Method cancel - Cancela uma matrícula ativa
-    public void cancel() {
-        if(this.status == EnrollmentStatus.ACTIVE) {
-           this.status = EnrollmentStatus.CANCELLED;
-        }
-    }
-
-    // Getters
+    // Getters //
     public int getCode() {
         return code;
     }
@@ -99,6 +67,54 @@ public class Enrollment {
     public ArrayList<Payment> getPayments() {
         return payments;
     }
+
+    // Métodos //
+
+    /*
+    @ registerPayment
+    @ Objetivo: Adicionar um pagamento a lista
+    */
+    public void registerPayment(Payment payment) {
+        this.payments.add(payment);
+    }
+
+    /*
+    @ calculateTotalPaid
+    @ Objetivo: Calcula o valor total efetivamente abatido da dívida, descontando taxas de processamento
+    */
+    public double calculateTotalPaid() {
+        double total = 0;
+        for (Payment p : payments) {
+            total += (p.getAmount() - p.getProcessingFee());
+        }
+        return total;
+    }
+
+    /*
+    @ calculateBalance
+    @ Objetivo: Calcula o restante a ser pago de acordo com o total do contrato
+    */
+    public double calculateBalance() {
+        double balance = this.totalPrice;
+        double totalPaid = calculateTotalPaid();
+
+        return Math.max(0.0, balance - totalPaid);
+    }
+
+    /*
+    @ cancel
+    @ Objetivo: Cancela uma matrícula ativa
+    */
+    public void cancel() {
+        if(this.status == EnrollmentStatus.ACTIVE) {
+           this.status = EnrollmentStatus.CANCELLED;
+        }
+    }
+
+    /*
+    @ toString
+    @ Objetivo: Produzir uma representação textual completa dos detalhes da matrícula e seu histórico financeiro
+    */
     @Override
     public String toString() {
 
@@ -111,7 +127,7 @@ public class Enrollment {
         // Armazena todas as informações formatadas
         String result =
 
-                "Código:       " + code + "\n" +                  // Código do contrato
+                        "Código:       " + code + "\n" +                  // Código do contrato
                         "Aluno:        " + student.getName() + "\n" +     // Nome do aluno
                         "CPF:          " + student.getCpf() + "\n" +      // CPF do aluno
                         "Plano:        " + plan.getName() + "\n" +        // Nome do plano contratado
@@ -126,10 +142,9 @@ public class Enrollment {
 
         // Verifica se ainda existe saldo pendente
         if (balance > 0) {
-
             result += "Saldo:        R$ " + String.format("%.2f", balance) + " (pendente)\n";
         } else {
-           result += "Saldo:        Quitado\n";
+            result += "Saldo:        Quitado\n";
         }
 
         // Verifica se existem pagamentos registrados na lista
@@ -137,10 +152,17 @@ public class Enrollment {
             result += "Pagamentos:\n"; // Título da seção de pagamentos
 
             for (int i = 0; i < payments.size(); i++) {
-                                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
+                // Aqui o polimorfismo do Payment.toString() brilha!
+                result += "  " + (i + 1) + ". " + payments.get(i) + "\n";
             }
         }
 
         return result;
+    }
+
+    // Calcula quantos meses inteiros se passaram desde o startDate até HOJE
+    public int getMonthsActive() {
+        long months = ChronoUnit.MONTHS.between(this.startDate, LocalDate.now());
+        return (int) months;
     }
 }

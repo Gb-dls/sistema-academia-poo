@@ -1,19 +1,12 @@
 package application;
 
 import domain.Student;
-import domain.Plan;
-import domain.PlanType;
+import domain.plan.Plan;
 import domain.Enrollment;
-import domain.PaymentType;
 import domain.EnrollmentStatus;
-import application.StudentService;
-import application.PlanService;
-import application.EnrollmentService;
-import application.OperationResult;
-import java.time.LocalDate;
 import java.util.ArrayList;
 
-// Ela centraliza o acesso aos serviços e serve de ponte entre UI e regras de negócio
+// Classe que centraliza o acesso aos serviços e serve de ponte entre a UI e as regras de negócio
 public class FitManager {
 
     // ================= ATRIBUTOS ================
@@ -29,7 +22,7 @@ public class FitManager {
 
     // ================= CONSTRUTOR =================
 
-    // Inicializa os dois serviços o FitManager é responsável por instanciar e conectar os serviços
+    // Inicializa e conecta todos os serviços do sistema
     public FitManager() {
         this.enrollmentService = new EnrollmentService();
         this.studentService = new StudentService(enrollmentService);
@@ -66,11 +59,11 @@ public class FitManager {
     // ================= PLANOS =================
 
     // Cadastra um novo plano
-    public OperationResult registerPlan(String name, String description, PlanType type, String minDuration, String price) {
+    public OperationResult registerPlan(String name, String description, String type, String minDuration, String price) {
         return planService.registerPlan(name, description, type, minDuration, price);
     }
 
-    // Busca  plano pelo nome
+    // Busca plano pelo nome
     public OperationResult findPlanByName(String name) {
         Plan plan = planService.findByName(name);
         if (plan == null) {
@@ -89,16 +82,22 @@ public class FitManager {
         return planService.listPlans();
     }
 
-    // ================= MATRICULAS=================
+    // ================= MATRÍCULAS =================
 
-    // Realiza a matrícula de um aluno em um plano
-    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, PaymentType paymentType) {
-        return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentType);
+    /*
+    @ enroll
+    @ Objetivo: Repassar a solicitação de matrícula com os parâmetros de pagamento expandidos para o Service
+    */
+    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, int paymentOption, String extra1, String extra2, String extra3) {
+        return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentOption, extra1, extra2, extra3);
     }
 
-    // Registra um pagamento em uma matrícula existente
-    public OperationResult registerPayment(String codeStr, String amountStr, PaymentType type, String description) {
-        return enrollmentService.registerPayment(codeStr, amountStr, type, description);
+    /*
+    @ registerPayment
+    @ Objetivo: Repassar o registro do pagamento avulso com dados expandidos para o Service
+    */
+    public OperationResult registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
+        return enrollmentService.registerPayment(codeStr, amountStr, paymentOption, extra1, extra2, extra3);
     }
 
     // Cancela uma matrícula
@@ -108,9 +107,7 @@ public class FitManager {
 
     // Consulta a matrícula ativa de um aluno pelo CPF
     public OperationResult findActiveEnrollmentByStudent(String cpf) {
-
         Enrollment enrollment = enrollmentService.findActiveByStudent(cpf);
-
         if (enrollment == null) {
             return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
         }
@@ -122,34 +119,20 @@ public class FitManager {
         return enrollmentService.listEnrollments();
     }
 
-
-
-
-    // ================= RELATORIOS =================
+    // ================= RELATÓRIOS =================
 
     // Lista todos os alunos que possuem matrícula ativa no sistema
     public ArrayList<Student> listActiveStudents() {
-
-        // Busca todas as matrículas cadastradas
         ArrayList<Enrollment> enrollments = listEnrollments();
-
-        // Lista que vai armazenar alunos ativos
         ArrayList<Student> activeStudents = new ArrayList<>();
 
-        // Percorre todas as matrículas
         for (int i = 0; i < enrollments.size(); i++) {
-
             Enrollment e = enrollments.get(i);
 
-            // Verifica se a matrícula está ativa
             if (e.getStatus() == EnrollmentStatus.ACTIVE)  {
-
-                // Pega o aluno da matrícula
                 Student student = e.getStudent();
+                boolean exists = false;
 
-                boolean exists = false;     // evita duplicação de alunos na lista
-
-                // Verifica se o aluno já foi adicionado
                 for (int j = 0; j < activeStudents.size(); j++) {
                     if (activeStudents.get(j).getCpf().equals(student.getCpf())) {
                         exists = true;
@@ -157,191 +140,72 @@ public class FitManager {
                     }
                 }
 
-                // Se ainda não existe na lista, adiciona
                 if (!exists) {
                     activeStudents.add(student);
                 }
             }
         }
-
-        // Retorna lista final de alunos ativos
         return activeStudents;
     }
 
-    // Lista todos os alunos que possuem dívida pendentes
-    /*public ArrayList<Student> listStudentsWithDebt() {
-
-        // Busca todos os alunos cadastrados no sistema
-        ArrayList<Student> students = (ArrayList<Student>) studentService.listStudents().getData();
-
-        // Lista que armazenará alunos com dívida
-        ArrayList<Student> result = new ArrayList<>();
-
-        // Se não houver alunos cadastrados, retorna lista vazia
-        if (students == null || students.isEmpty()) {
-            return result;
-        }
-
-        // Percorre todos os alunos
-        for (int i = 0; i < students.size(); i++) {
-
-            Student s = students.get(i);
-
-            // Verifica se o aluno existe e se possui dívida
-            if (s != null && enrollmentService.hasDebt(s.getCpf())) {
-                result.add(s);
-            }
-        }
-
-        // Retorna lista de alunos com pendencias
-        return result;
-    }*/
+    // Lista todos os alunos que possuem dívidas pendentes
     public ArrayList<Student> listStudentsWithDebt() {
-
         OperationResult result = studentService.listStudents();
 
-        // Se não encontrou alunos, retorna lista vazia
         if (!result.isSuccess() || result.getData() == null) {
             return new ArrayList<>();
         }
 
-        // Verifica se o dado retornado é uma lista antes de fazer o cast
         if (!(result.getData() instanceof ArrayList)) {
             return new ArrayList<>();
         }
 
-        // Faz o cast do objeto retornado para ArrayList<Student>
         ArrayList<Student> students = (ArrayList<Student>) result.getData();
-
-        // Lista que armazenara os alunos com debito
         ArrayList<Student> withDebt = new ArrayList<>();
 
-        // Percorre todos os alunos cadastrados
         for (int i = 0; i < students.size(); i++) {
             Student s = students.get(i);
-
-            if (s != null && enrollmentService.hasDebt(s.getCpf())) {  // Verifica se o aluno não é nulo e se possui debito no enrollmentService
-                withDebt.add(s);    // Adiciona o aluno na lista de devedores
+            if (s != null && enrollmentService.hasDebt(s.getCpf())) {
+                withDebt.add(s);
             }
         }
-
-        return withDebt;    // Retorna a lista final de alunos com debito
+        return withDebt;
     }
 
-
-
-
-   /* // Lista matrículas que possuem saldo pendente
+    // Lista matrículas que possuem saldo pendente
     public OperationResult listPendingEnrollments() {
-
-        // Obtém alunos com dívida
         ArrayList<Student> studentsWithDebt = listStudentsWithDebt();
 
         if (studentsWithDebt.isEmpty()) {
             return new OperationResult(false, "Nenhum aluno com dívida encontrado.");
         }
 
-        // Busca todas as matrículas
         ArrayList<Enrollment> enrollments = listEnrollments();
 
-        if (enrollments == null || enrollments.isEmpty()) {   // caso não tenha matrículas cadastradas
-            return new OperationResult(false, "Nenhuma matrícula cadastrada.");
-        }
-
-        // Lista que armazenará matrículas pendentes
-        ArrayList<Enrollment> pending = new ArrayList<>();
-
-        for (int i = 0; i < enrollments.size(); i++) {
-
-            Enrollment e = enrollments.get(i);
-
-            if (e == null || e.getStudent() == null) {
-                continue;
-            }
-
-            // Verifica se essa matrícula pertence a um aluno com dívida
-            for (int j = 0; j < studentsWithDebt.size(); j++) {
-
-                Student s = studentsWithDebt.get(j);
-
-                if (s == null) {
-                    continue;
-                }
-                // Confere se é o mesmo aluno e se ainda há saldo pendente
-                if (e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0) {
-
-                    pending.add(e);         // adiciona matrícula pendente
-                    break;
-                }
-            }
-        }
-
-        // Se não encontrou nenhuma matrícula pendente
-        if (pending.isEmpty()) {
-            return new OperationResult(false, "Nenhuma matrícula com saldo pendente encontrada.");
-        }
-
-        // Monta o texto de saída formatado
-        StringBuilder sb = new StringBuilder();
-        sb.append("===== MATRÍCULAS PENDENTES =====\n\n");
-
-        for (int i = 0; i < pending.size(); i++) {
-            sb.append(pending.get(i)).append("\n\n");
-        }
-
-        return new OperationResult(true, sb.toString()); // Retorna resultado de sucesso com a lista formatada
-    }*/
-
-    public OperationResult listPendingEnrollments() {
-
-        // Pega a lista de alunos que possuem divida
-        ArrayList<Student> studentsWithDebt = listStudentsWithDebt();
-
-
-        // Se nenhum aluno com divida for encontrado, retorna mensagem de erro
-        if (studentsWithDebt.isEmpty()) {
-            return new OperationResult(false, "Nenhum aluno com dívida encontrado.");
-        }
-
-        // Pega todas as matriculas cadastradas
-        ArrayList<Enrollment> enrollments = listEnrollments();
-
-        // Verifica se existem matriculas cadastradas
         if (enrollments == null || enrollments.isEmpty()) {
             return new OperationResult(false, "Nenhuma matrícula cadastrada.");
         }
 
-        ArrayList<Enrollment> pending = new ArrayList<>();       // Lista que armazenara as matriculas pendentes
+        ArrayList<Enrollment> pending = new ArrayList<>();
 
-        // Percorre todas as matriculas
         for (int i = 0; i < enrollments.size(); i++) {
-
             Enrollment e = enrollments.get(i);
 
-            if (e != null && e.getStudent() != null && e.getStatus() == EnrollmentStatus.ACTIVE) {      // Verifica se a matricula não é nulla se tem aluno associado e se está ativa
-
+            if (e != null && e.getStudent() != null && e.getStatus() == EnrollmentStatus.ACTIVE) {
                 for (int j = 0; j < studentsWithDebt.size(); j++) {
-
                     Student s = studentsWithDebt.get(j);
-
-                    if (s != null && e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0) {  // Verifica se o aluno não é nulo, se o CPF é o mesmo do que deve e se existe debitos
-                        pending.add(e);       // Adiciona a matricula na lista de pendentes
+                    if (s != null && e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0) {
+                        pending.add(e);
                         break;
                     }
                 }
             }
         }
 
-        // Se nenhuma matricula com saldo pendente for encontrada
         if (pending.isEmpty()) {
             return new OperationResult(false, "Nenhuma matrícula ativa com saldo pendente encontrada.");
         }
 
-        return new OperationResult(true, "Matrículas pendentes encontradas.", pending);     // Retorna  a lista de matriculas com saldos pendentes
+        return new OperationResult(true, "Matrículas pendentes encontradas.", pending);
     }
-
-
-
-
-
 }
