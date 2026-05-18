@@ -3,6 +3,7 @@ package application;
 import domain.*;
 import domain.plan.Plan;
 
+import formatters.DateFormatter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,8 @@ public class EnrollmentService {
     public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String initialPaymentStr, PaymentType paymentType) {
 
         // Converte e valida data de início
-        LocalDate startDate = parseDate(startDateStr);
+        /*LocalDate startDate = parseDate(startDateStr);*/
+        LocalDate startDate = DateFormatter.parseDate(startDateStr);
         if (startDate == null) {
             return new OperationResult(false, "Data de início inválida! Use o formato dd/MM/yyyy.");
         }
@@ -224,8 +226,8 @@ public class EnrollmentService {
     // Metodo que devolve a matricula por uma busca por cpf do aluno
     public Enrollment findActiveByStudent(String cpf) {
 
-        String cleanCpf = cleanNumber(cpf);
-
+        /*String cleanCpf = cleanNumber(cpf);*/
+        String cleanCpf     = DateFormatter.cleanNumber(cpf);
         for (Enrollment e : enrollments) {
 
             if (e.getStudent().getCpf().equals(cleanCpf)
@@ -285,7 +287,7 @@ public class EnrollmentService {
         return Double.parseDouble(input);
     }
 
-    // Converte String para LocalDate (dd/MM/yyyy)
+    /*// Converte String para LocalDate (dd/MM/yyyy)
     private LocalDate parseDate(String input) {
         if (input == null || input.isBlank()) return null;
         if (!input.matches("\\d{2}/\\d{2}/\\d{4}")) return null;
@@ -304,7 +306,7 @@ public class EnrollmentService {
     private String cleanNumber(String input) {
         if (input == null) return "";
         return input.replaceAll("\\D", "");
-    }
+    }*/
 
 
 }

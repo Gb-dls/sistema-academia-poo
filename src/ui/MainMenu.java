@@ -39,7 +39,7 @@ public class MainMenu {
 
         String option;
         do {
-            ui.showMenu("==== FITMANAGER ====",
+            ui.showMenu("FITMANAGER",
                     """
                     1 - Gerenciar alunos
                     2 - Gerenciar planos
