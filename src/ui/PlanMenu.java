@@ -1,9 +1,8 @@
 package ui;
 
-import domain.PlanType;
 import domain.plan.Plan;
 import application.FitManager;
-import application.OperationResult;
+
 import java.util.ArrayList;
 
 // Classe responsável pelo menu de PLANOS
@@ -75,19 +74,12 @@ public class PlanMenu {
 
         String typeInput = ui.getInput("Escolha o tipo:");
 
-        // Converte opção numérica para enum PlanType
-        PlanType type = parsePlanType(typeInput);
-
-        if (type == null) {
-            ui.showError("Tipo de plano inválido!");
-            return;
-        }
         // Coleta dados adicionais
         String durationInput = ui.getInput("Duração mínima (em meses):");
         String priceInput    = ui.getInput("Preço mensal (ex: 99.90):");
 
         // Envia dados para a camada de negócio
-        var result = fitManager.registerPlan(name, description, type, durationInput, priceInput);
+        var result = fitManager.registerPlan(name, description, typeInput, durationInput, priceInput);
 
         // Exibe resultado da operação
         if (result.isSuccess()) {
@@ -153,22 +145,5 @@ public class PlanMenu {
         }
         ui.showMessage("===========================");
     }
-
-    // ================= PRIVADOS =================
-
-    // Converte string para PlanType continua aqui pois é responsabilidade do menu converter a opção numérica digitada para o enum PlanType
-    private PlanType parsePlanType(String input) {
-        if (input == null || input.isBlank()){
-            return null;
-        }
-
-        if (!input.matches("\\d+")) {
-            return null;
-        }
-
-        int value = Integer.parseInt(input);
-        return PlanType.fromOptionValue(value);
-    }
-
 
 }

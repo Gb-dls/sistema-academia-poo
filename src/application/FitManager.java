@@ -1,16 +1,11 @@
 package application;
 
 import domain.Student;
-import domain.Plan;
-import domain.PlanType;
+import domain.plan.Plan;
 import domain.Enrollment;
 import domain.PaymentType;
 import domain.EnrollmentStatus;
-import application.StudentService;
-import application.PlanService;
-import application.EnrollmentService;
-import application.OperationResult;
-import java.time.LocalDate;
+
 import java.util.ArrayList;
 
 // Classe que funciona como FACHADA do sistema (Facade Pattern)
@@ -67,7 +62,7 @@ public class FitManager {
     // ================= PLANOS =================
 
     // Cadastra um novo plano
-    public OperationResult registerPlan(String name, String description, PlanType type, String minDuration, String price) {
+    public OperationResult registerPlan(String name, String description, String type, String minDuration, String price) {
         return planService.registerPlan(name, description, type, minDuration, price);
     }
 

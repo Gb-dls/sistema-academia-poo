@@ -3,12 +3,10 @@ package ui;
 
 
 import application.FitManager;
-import ui.UserInterface;
 import application.OperationResult;
 import java.util.ArrayList;
 import domain.Student;
 import domain.Enrollment;
-import domain.EnrollmentStatus;
 import domain.plan.Plan;
 
 

@@ -5,10 +5,7 @@ import domain.PaymentType;
 import domain.plan.Plan;
 import domain.Student;
 import application.FitManager;
-import application.OperationResult;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
