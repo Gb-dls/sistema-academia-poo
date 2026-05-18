@@ -3,16 +3,17 @@ package domain.payment;
 public class CreditCardPayment extends Payment {
 
     private static final double fee_PERCENTAGE = 0.025;     // Taxa de processamento de 2.5%
-    private int installments;   // Número de parcelas
+    private String cardHolderName;     // Nome do titular do cartão
+    private int installments;          // Número de parcelas
     private String lastCardNumbers;    // Últimos quatro dígitos do cartão
 
-
     // Construtor //
-    /* Super para atribuir os campos necessários da superclasse */
-    public CreditCardPayment(double amount, int installments, String lastCardNumbers) {
+    /* Super para atribuir os campos necessários da superclasse e mapeamento dos dados do cartão */
+    public CreditCardPayment(double amount, String cardHolderName, String lastCardNumbers, int installments) {
         super(amount);
-        this.installments = installments;
+        this.cardHolderName = cardHolderName;
         this.lastCardNumbers = lastCardNumbers;
+        this.installments = installments;
     }
 
     // Métodos obrigatórios da superclasse //
@@ -33,7 +34,8 @@ public class CreditCardPayment extends Payment {
     */
     @Override
     public String getPaymentSummary() {
-        return String.format("Tipo: Crédito | Cartão final: %s | Parcelas: %dx",
+        return String.format("Tipo: Crédito | Titular: %s | Cartão final: %s | Parcelas: %dx",
+                this.cardHolderName,
                 this.lastCardNumbers,
                 this.installments);
     }

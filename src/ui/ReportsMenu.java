@@ -13,7 +13,7 @@ import domain.plan.Plan;
 // Classe responsável pelo menu de gerenciamento dos relatorios
 public class ReportsMenu {
 
-    // Interface responsável pela comunicação com o usuário (entrada/saída)
+    // 'Interface' responsável pela comunicação com o utilizador (entrada/saída)
     private final UserInterface ui;
 
     // Classe principal de regras de negócio do sistema
@@ -30,7 +30,7 @@ public class ReportsMenu {
 
         String option;
 
-        // Loop que mantém o menu ativo até o usuário escolher sair
+        // Looping que mantém o menu ativo até o utilizador escolher sair
         do {
             ui.showMenu(
                     "RELATÓRIOS",
@@ -46,7 +46,7 @@ public class ReportsMenu {
                     """
             );
 
-            option = ui.getInput("");       // Le a opção do usuário
+            option = ui.getInput("");       // Le a opção do utilizador
 
             switch (option) {
 
@@ -165,7 +165,7 @@ public class ReportsMenu {
 
 
 
-    // Busca um aluno pelo CPF informado pelo usuário
+    // Busca um aluno pelo CPF informado pelo utilizador
     private void findStudentByCpf() {
 
         String cpf = ui.getInput("Digite o CPF do aluno:");
@@ -182,7 +182,7 @@ public class ReportsMenu {
         ui.showMessage(student.toString());
     }
 
-    // Busca um plano pelo nome informado pelo usuário
+    // Busca um plano pelo nome informado pelo utilizador
     private void findPlanByName() {
 
         String name = ui.getInput("Digite o nome do plano:");
