@@ -1,8 +1,8 @@
 package ui;
 
 import domain.Enrollment;
-import domain.PaymentType;
 import domain.plan.Plan;
+import domain.payment.PaymentType;
 import domain.Student;
 import application.FitManager;
 

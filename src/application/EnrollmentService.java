@@ -2,7 +2,8 @@ package application;
 
 import domain.*;
 import domain.plan.Plan;
-
+import domain.payment.Payment;
+import domain.payment.PaymentType;
 import formatters.DateFormatter;
 import java.time.LocalDate;
 import java.util.ArrayList;

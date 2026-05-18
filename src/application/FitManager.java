@@ -3,7 +3,7 @@ package application;
 import domain.Student;
 import domain.plan.Plan;
 import domain.Enrollment;
-import domain.PaymentType;
+import domain.payment.PaymentType;
 import domain.EnrollmentStatus;
 
 import java.util.ArrayList;
