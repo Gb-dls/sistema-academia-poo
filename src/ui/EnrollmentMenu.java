@@ -17,6 +17,10 @@ public class EnrollmentMenu {
         this.fitManager = fitManager;
     }
 
+    /*
+    @ start
+    @ Objetivo: Iniciar e gerenciar o loop principal do menu de matrículas, direcionando as escolhas do usuário
+    */
     public void start() {
         String option;
         do {
@@ -42,60 +46,29 @@ public class EnrollmentMenu {
     }
 
     /*
-    @ enroll
-    @ Objetivo: Coletar os dados da matrícula e escolher o tipo de pagamento
+    @ preparePaymentDetails
+    @ Objetivo: Centralizar a captura de dados de pagamento dinâmicos de enroll() e registerPayment()
+    @ Retorna: Um array onde [0]=opcao, [1]=extra1, [2]=extra2, [3]=extra3. Retorna null se for inválido.
     */
-    private void enroll() {
-        // Solicita CPF do aluno
-        String cpf = ui.getInput("CPF do aluno:");
-
-        // Usa o tipo explícito OperationResult no lugar do 'var'
-        OperationResult studentResult = fitManager.findStudentByCpf(cpf);
-
-        if (!studentResult.isSuccess()) {
-            ui.showError(studentResult.getMessage());
-            return;
-        }
-
-        // Converte retorno para Student
-        Student student = (Student) studentResult.getData();
-
-        // Solicita plano
-        String planName = ui.getInput("Nome do plano:");
-
-        // Usa o tipo explícito OperationResult no lugar do 'var'
-        OperationResult planResult = fitManager.findPlanByName(planName);
-
-        if (!planResult.isSuccess()) {
-            ui.showError(planResult.getMessage());
-            return;
-        }
-
-        // Converte retorno para Plan
-        Plan plan = (Plan) planResult.getData();
-
-        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
-        String durationInput = ui.getInput("Duração (em meses):");
-        String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
-
+    private String[] preparePaymentDetails() {
         ui.showMessage("""
-            Tipos de pagamento:
-            1 - Dinheiro
-            2 - Cartão de débito
-            3 - Cartão de crédito
-            4 - PIX
-            """);
+        Tipos de pagamento:
+        1 - Dinheiro
+        2 - Cartão de débito
+        3 - Cartão de crédito
+        4 - PIX
+        """);
 
         String typeInput = ui.getInput("Escolha o tipo de pagamento:");
         if (!typeInput.matches("[1-4]")) {
             ui.showError("Tipo de pagamento inválido!");
-            return;
+            return null;
         }
-        int option = Integer.parseInt(typeInput);
 
-        // Coleta de dados dinâmicos baseados na escolha do usuário
+        String option = typeInput;
         String extra1 = "", extra2 = "", extra3 = "";
-        switch (option) {
+
+        switch (Integer.parseInt(option)) {
             case 1 -> extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
             case 2 -> {
                 extra1 = ui.getInput("Nome do titular do cartão de débito:");
@@ -109,7 +82,40 @@ public class EnrollmentMenu {
             case 4 -> extra1 = ui.getInput("Informe a chave PIX utilizada:");
         }
 
-        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, extra1, extra2, extra3);
+        return new String[]{option, extra1, extra2, extra3};
+    }
+
+    /*
+    @ enroll
+    @ Objetivo: Coletar os dados da matrícula
+    */
+    private void enroll() {
+        String cpf = ui.getInput("CPF do aluno:");
+        OperationResult studentResult = fitManager.findStudentByCpf(cpf);
+        if (!studentResult.isSuccess()) {
+            ui.showError(studentResult.getMessage());
+            return;
+        }
+        Student student = (Student) studentResult.getData();
+
+        String planName = ui.getInput("Nome do plano:");
+        OperationResult planResult = fitManager.findPlanByName(planName);
+        if (!planResult.isSuccess()) {
+            ui.showError(planResult.getMessage());
+            return;
+        }
+        Plan plan = (Plan) planResult.getData();
+
+        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
+        String durationInput = ui.getInput("Duração:");
+        String paymentInput  = ui.getInput("Valor do pagamento inicial:");
+
+        String[] paymentData = preparePaymentDetails();
+        if (paymentData == null) return;
+
+        int option = Integer.parseInt(paymentData[0]);
+
+        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, paymentData[1], paymentData[2], paymentData[3]);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
     }
@@ -119,44 +125,23 @@ public class EnrollmentMenu {
     @ Objetivo: Coletar os dados de pagamentos adicionais avulsos capturando as especificidades de cada subclasse
     */
     private void registerPayment() {
-        String codeInput   = ui.getInput("Código da matrícula:");
-        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
+        String codeInput = ui.getInput("Código da matrícula:");
+        String amountInput = ui.getInput("Valor do pagamento:");
 
-        ui.showMessage("""
-            Tipos de pagamento:
-            1 - Dinheiro
-            2 - Cartão de débito
-            3 - Cartão de crédito
-            4 - PIX
-            """);
+        String[] paymentData = preparePaymentDetails();
+        if (paymentData == null) return;
 
-        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
-        if (!typeInput.matches("[1-4]")) {
-            ui.showError("Tipo de pagamento inválido!");
-            return;
-        }
-        int option = Integer.parseInt(typeInput);
+        int option = Integer.parseInt(paymentData[0]);
 
-        String extra1 = "", extra2 = "", extra3 = "";
-        switch (option) {
-            case 1 -> extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente:");
-            case 2 -> {
-                extra1 = ui.getInput("Nome do titular do cartão de débito:");
-                extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
-            }
-            case 3 -> {
-                extra1 = ui.getInput("Nome do titular do cartão de crédito:");
-                extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
-                extra3 = ui.getInput("Quantidade de parcelas:");
-            }
-            case 4 -> extra1 = ui.getInput("Informe a chave PIX:");
-        }
-
-        var result = fitManager.registerPayment(codeInput, amountInput, option, extra1, extra2, extra3);
+        var result = fitManager.registerPayment(codeInput, amountInput, option, paymentData[1], paymentData[2], paymentData[3]);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
     }
 
+    /*
+    @ findActiveByStudent
+    @ Objetivo: Solicitar a busca e exibir os dados completos da matrícula ativa de acordo com o Cpf informado
+    */
     private void findActiveByStudent() {
         String cpf = ui.getInput("CPF do aluno:");
         var result = fitManager.findActiveEnrollmentByStudent(cpf);
@@ -168,6 +153,10 @@ public class EnrollmentMenu {
         }
     }
 
+    /*
+    @ cancel
+    @ Objetivo: Capturar o código de uma matrícula para solicitar o seu cancelamento e exibir o resumo financeiro
+    */
     private void cancel() {
         String codeInput = ui.getInput("Código da matrícula:");
         var result = fitManager.cancelEnrollment(codeInput);
@@ -175,6 +164,10 @@ public class EnrollmentMenu {
         else ui.showError(result.getMessage());
     }
 
+    /*
+    @ listAll
+    @ Objetivo: Recuperar e listar o histórico de matrículas cadastradas no sistema da academia
+    */
     private void listAll() {
         ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
         if (enrollments.isEmpty()) {
