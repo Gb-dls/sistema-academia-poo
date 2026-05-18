@@ -2,15 +2,15 @@ package domain.payment;
 
 public class DebitCardPayment extends Payment {
 
+    private String cardHolderName;     // Nome do titular
     private String lastCardNumbers;    // Últimos quatro dígitos do cartão
 
-    // Construtor //
-    /* Super para atribuir os campos necessários da superclasse */
-    public DebitCardPayment(double amount, String lastCardNumbers) {
+    // Construtor atualizado para receber os 3 parâmetros //
+    public DebitCardPayment(double amount, String cardHolderName, String lastCardNumbers) {
         super(amount);
+        this.cardHolderName = cardHolderName;
         this.lastCardNumbers = lastCardNumbers;
     }
-
 
     // Métodos obrigatórios da superclasse //
 
@@ -29,8 +29,7 @@ public class DebitCardPayment extends Payment {
     */
     @Override
     public String getPaymentSummary() {
-        return String.format("Tipo: Débito | Cartão com final: %s",
-                this.lastCardNumbers);
-    }
+        return String.format("Tipo: Débito | Titular: %s | Cartão com final: %s",
+                this.cardHolderName, this.lastCardNumbers);
     }
 }

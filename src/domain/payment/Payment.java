@@ -35,10 +35,14 @@ public abstract class Payment {
     /* Exibição de detalhes do pagamento */
     @Override
     public String toString() {
-        return String.format("Data: %s | Valor: R$ %.2f | Taxa: R$ %.2f | %s",
+        // Formata os números separados e já troca o ponto por vírgula
+        String formattedAmount = String.format("%.2f", this.amount).replace(".", ",");
+        String formattedFee = String.format("%.2f", this.getProcessingFee()).replace(".", ",");
+
+        return String.format("Data: %s | Valor: R$ %s | Taxa: R$ %s | %s",
                 this.date,
-                this.amount,
-                this.getProcessingFee(),
+                formattedAmount,
+                formattedFee,
                 this.getPaymentSummary());
     }
 }
