@@ -96,20 +96,27 @@ public class ReportsMenu {
         ui.showMessage("======================================");
     }
 
-
     // Lista matrículas que possuem saldo pendente
     private void listPendingEnrollments() {
 
         OperationResult result = fitManager.listPendingEnrollments();
 
         if (!result.isSuccess()) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showError(result.getMessage());
             return;
         }
 
-        ui.showMessage(result.getMessage());
-    }
+        ArrayList<Enrollment> pending = (ArrayList<Enrollment>) result.getData();
 
+        ui.showMessage("===== MATRÍCULAS PENDENTES =====");
+
+        for (int i = 0; i < pending.size(); i++) {
+            ui.showMessage(pending.get(i).toString());
+        }
+
+        ui.showMessage("Total: " + pending.size() + " matrícula(s) pendente(s).");
+        ui.showMessage("================================");
+    }
 
     // Lista todas as matrículas cadastradas no sistema
     private void listAllEnrollments() {

@@ -5,7 +5,7 @@ import application.OperationResult;
 import validators.CpfValidator;
 import validators.ContactValidator;
 import domain.Enrollment;
-
+import formatters.DateFormatter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,11 +42,14 @@ public class StudentService {
     public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
 
         // Remove caracteres não numéricos do CPF e telefone
-        String cleanCpf     = cleanNumber(cpf);
+        /*String cleanCpf     = cleanNumber(cpf);
         String cleanContact = cleanNumber(contact);
 
         // Converte string de data para LocalDate
-        LocalDate birthDate = parseDate(birthDateStr);
+        LocalDate birthDate = parseDate(birthDateStr);*/
+        String cleanCpf     = DateFormatter.cleanNumber(cpf);
+        String cleanContact = DateFormatter.cleanNumber(contact);
+        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
 
         // Validações de regra de negócio
         if (name == null || name.isBlank()) {
@@ -130,10 +133,14 @@ public class StudentService {
     // ================= ATUALIZAR ALUNO =================
     public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
 
-        // Normaliza entrada
+        /*// Normaliza entrada
         String cleanCpf     = cleanNumber(cpf);
         String cleanContact = cleanNumber(contact);
-        LocalDate birthDate = parseDate(birthDateStr);
+        LocalDate birthDate = parseDate(birthDateStr);*/
+
+        String cleanCpf     = DateFormatter.cleanNumber(cpf);
+        String cleanContact = DateFormatter.cleanNumber(contact);
+        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
 
         // Busca aluno existente
         Student student = findEntityByCpf(cleanCpf);
@@ -185,7 +192,7 @@ public class StudentService {
     // ================= INATIVAR ALUNO =================
     public OperationResult removeStudent(String cpf) {
 
-        String cleanCpf     = cleanNumber(cpf);
+        String cleanCpf = DateFormatter.cleanNumber(cpf);
         // Busca aluno
         Student student = findEntityByCpf(cleanCpf);
 
@@ -231,7 +238,7 @@ public class StudentService {
         return findEntityByCpf(cpf) != null;
     }
 
-    // Converte string de data (dd/MM/yyyy) para LocalDate
+    /*// Converte string de data (dd/MM/yyyy) para LocalDate
     private LocalDate parseDate(String input) {
 
         if (input == null || input.isBlank()) {
@@ -257,7 +264,7 @@ public class StudentService {
             return null;
         }
         return value.replaceAll("\\D", "");
-    }
+    }*/
 
 
 }
