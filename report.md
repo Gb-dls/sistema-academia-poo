@@ -158,3 +158,51 @@ Os seguintes materiais foram utilizados como apoio ao longo do desenvolvimento d
 - **TURINI, Rodrigo. *Desbravando Java e Orientação a Objetos: Um guia para o iniciante da linguagem*.** Casa do Código. Utilizado como referência de apoio para conceitos de POO aplicados à linguagem Java.
 - ***Java — Ensinando o Básico*.** Material complementar consultado para revisão de sintaxe e recursos fundamentais da linguagem.
 - **Claude (Anthropic), ChatGPT (OpenAI) e Gemini (Google)** — ferramentas de IA utilizadas como auxílio durante o desenvolvimento, para tirar dúvidas pontuais sobre sintaxe, revisar lógica de implementação e apoiar a escrita da documentação.
+
+
+------------------------
+
+## 1. Introdução da etapa 2
+Nesta etapa, o sistema FitManager foi refatorado para aplicar os conceitos fundamentais de Programação Orientada a Objetos: herança, classes abstratas, polimorfismo e interfaces. As estruturas genéricas de `Plan`, `Payment` e `UserInterface` foram transformadas em hierarquias e contratos, permitindo que o sistema aplique regras de negócio específicas sem o uso excessivo de estruturas condicionais, melhorando a coesão e preparando o projeto para evoluções futuras.
+
+## 2. Diagrama de classes atualizado
+*Pendente inserção do diagrama*
+## 3. Decisões de projeto da etapa 2
+*   **Enum PlanType:**
+    Decidimos **remover** o enum `PlanType`. Com a introdução das subclasses (`MonthlyPlan`, `QuarterlyPlan`, etc.), o enum se tornou redundante e adicionava complexidade desnecessária. A escolha do usuário no `PlanMenu` passou a ser repassada como um número inteiro (`type`), assumindo o papel de direcionar a criação do plano correto no serviço.
+*   **Instanciação da subclasse correta no serviço:**
+    No `PlanService`, decidimos utilizar uma estrutura condicional (`if/else`) baseada na escolha numérica (`type`) repassada pelo menu para determinar qual subclasse de `Plan` instanciar. Essa abordagem foi considerada a mais adequada para o momento do projeto, isolando a regra de criação e mantendo o menu alheio às classes de domínio.
+*   **Atributos comuns e a duração mínima (minDurationMonths):**
+    Decidimos não fixar a duração mínima nos construtores das subclasses (como `super(..., 3, ...)` no Trimestral). Em vez disso, o `minDurationMonths` continua sendo configurável pelo usuário na criação do plano e passado por parâmetro para o `super()`. Isso garante liberdade para a academia criar, por exemplo, um plano "Anual" com duração exigida de apenas 6 meses, mas que ainda aplique a lógica de descontos do `AnnualPlan`.
+
+* *(Espaço reservado: Adicionar reflexões sobre a hierarquia de Pagamentos - ex: quem absorve a taxa de processamento, e se vão manter o enum `PaymentType`)*.
+*   *(Espaço reservado: Adicionar reflexões sobre a `UserInterface` - ex: como trataram o retorno `null` do JOptionPane e como a escolha inicial é feita no `main`)*.
+
+### 4. Como o polimorfismo simplificou o código
+Antes, a aplicação de regras financeiras exigiria verificação constante de tipos, resultando em códigos como:
+```java
+// Como seria sem polimorfismo (Etapa 1):
+if (plan.getType() == PlanType.ANNUAL) {
+    taxa = enrollment.getTotalPrice() * 0.20;
+} else { ... }
+```
+Com a refatoração, o `EnrollmentService` e as lógicas de cancelamento chamam diretamente `enrollment.getPlan().calculateTotalPrice(months)` e `enrollment.getPlan().getCancellationFee(enrollment)`. O polimorfismo delega a matemática para a subclasse concreta apropriada, eliminando totalmente os `ifs` baseados no tipo do plano e limpando a camada de serviço.
+
+### 5. Regras de negócio implementadas nesta etapa
+*   **Aplicação estrita de Descontos:** A regra de desconto (5% para Trimestral, 10% Semestral, 15% Anual) foi implementada estritamente quando a duração contratada for **maior** que a duração mínima (`months > minDurationMonths`). Contratos com tempo exatamente igual ao mínimo pagam o valor bruto.
+*   *(Espaço reservado: Adicionar a regra de negócio da taxa de processamento do cartão de crédito quando implementarem os Pagamentos)*.
+
+### 6. Funcionalidades extras
+
+**Nova Política de Taxa de Cancelamento (Multa Progressiva):**
+*   **O que foi implementado e alterado:** Em vez de usar a regra padrão (apenas o plano anual cobra 20%, o resto isento), substituímos por uma regra onde **todos** os planos com quebra de tempo mínimo aplicam multa. A multa foi definida sendo **5% maior que o desconto concedido** pelo plano (Trimestral = 10%, Semestral = 15%, Anual = 20%). Criamos um método protegido `calculatePercentageFee` na superclasse abstrata `Plan` para calcular a lógica de quebra de tempo, e as subclasses informam apenas sua porcentagem específica através de `super` ou na chamada desse método.
+*   **Respostas obrigatórias:**
+    1.  *Agrega valor ao domínio?* Sim, protege o negócio (a academia) de alunos que contratam planos longos apenas pelo desconto mensal e cancelam rapidamente sem qualquer compensação administrativa.
+    2.  *Aplica conceitos da etapa?* Sim. Fez uso intensivo de **Herança** e **Polimorfismo**. As subclasses de `Plan` sobrescrevem `getCancellationFee`, reaproveitando matematicamente o método protegido da superclasse, evitando duplicação de código.
+    3.  *Está bem posicionada na arquitetura?* Sim, o cálculo complexo está isolado nas próprias entidades de domínio (nos planos), o serviço (`EnrollmentService`) apenas chama o método abstrato, sem precisar de `instanceof` para saber quanto cobrar.
+    4.  *Há impacto em classes existentes?* Sim, essa decisão **altera intencionalmente o comportamento base esperado para esta etapa**, que seria não cobrar taxa dos outros planos. Nenhuma outra classe fora do pacote `domain.plan` foi impactada negativamente.
+
+### 7. Dificuldades e aprendizados da etapa 2
+*Pendente*
+***
+
