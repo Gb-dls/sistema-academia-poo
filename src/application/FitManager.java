@@ -9,8 +9,6 @@ import java.util.ArrayList;
 // Classe que centraliza o acesso aos serviços e serve de ponte entre a UI e as regras de negócio
 public class FitManager {
 
-    // ================= ATRIBUTOS ================
-
     // Serviço responsável pelas regras de negócio dos alunos
     private final StudentService studentService;
 
@@ -20,7 +18,7 @@ public class FitManager {
     // Serviço responsável pelas regras de negócio das matrículas
     private final EnrollmentService enrollmentService;
 
-    // ================= CONSTRUTOR =================
+    // Construtor //
 
     // Inicializa e conecta todos os serviços do sistema
     public FitManager() {

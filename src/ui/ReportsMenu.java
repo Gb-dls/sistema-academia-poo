@@ -122,7 +122,7 @@ public class ReportsMenu {
         ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
 
         if (enrollments.isEmpty()) {
-            ui.showMessage("ERRO: Nenhuma matrícula cadastrada.");
+            ui.showMessage("Nenhuma matrícula cadastrada.");
             return;
         }
 
@@ -146,7 +146,7 @@ public class ReportsMenu {
         ArrayList<Plan> plans = fitManager.listPlans();
 
         if (plans.isEmpty()) {
-            ui.showMessage("ERRO: Nenhum plano cadastrado.");
+            ui.showMessage("Nenhum plano cadastrado.");
             return;
         }
 
@@ -173,7 +173,7 @@ public class ReportsMenu {
         OperationResult result = fitManager.findStudentByCpf(cpf);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 
@@ -190,7 +190,7 @@ public class ReportsMenu {
         OperationResult result = fitManager.findPlanByName(name);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 
@@ -207,7 +207,7 @@ public class ReportsMenu {
         OperationResult result = fitManager.findActiveEnrollmentByStudent(cpf);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 

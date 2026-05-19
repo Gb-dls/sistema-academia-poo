@@ -20,26 +20,31 @@ public class EnrollmentService {
     /*
     @ enroll
     @ Objetivo: Realizar a matrícula de um aluno em um plano instanciando a subclasse de pagamento correta
+    @ Retorna: Um OperationResult indicando o sucesso da operação ou o motivo da falha na validação
     */
     public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String initialPaymentStr, int paymentOption, String extra1, String extra2, String extra3) {
 
         LocalDate startDate = DateFormatter.parseDate(startDateStr);
         if (startDate == null) {
-            return new OperationResult(false, "Data de início inválida! Use o formato dd/MM/yyyy.");
+            return new OperationResult(false, "Data inválida! Use o formato dd/MM/yyyy.");
         }
 
         int durationMonths = parseInt(durationStr);
         if (durationMonths <= 0) {
-            return new OperationResult(false, "Duração inválida!");
+            return new OperationResult(false, "Duração inválida.");
         }
 
         double initialPayment = parseDouble(initialPaymentStr);
         if (initialPayment <= 0) {
-            return new OperationResult(false, "Valor de pagamento inválido!");
+            return new OperationResult(false, "Valor de pagamento inválido.");
         }
 
         if (hasActiveEnrollment(student.getCpf())) {
             return new OperationResult(false, "O aluno já possui uma matrícula ativa no sistema.");
+        }
+
+        if (hasDebt(student.getCpf())) {
+            return new OperationResult(false, "Matrícula recusada! O aluno possui débitos pendentes em contratos anteriores.");
         }
 
         if (durationMonths < plan.getMinDurationMonths()) {
@@ -58,7 +63,7 @@ public class EnrollmentService {
             case 1 -> { // Dinheiro
                 double received = parseDouble(extra1);
                 if (received < initialPayment) {
-                    return new OperationResult(false, "Erro: O valor entregue em dinheiro é menor que o valor a ser pago.");
+                    return new OperationResult(false, "O valor entregue em dinheiro é menor que o valor a ser pago.");
                 }
                 firstPayment = new CashPayment(initialPayment, received);
             }
@@ -87,23 +92,24 @@ public class EnrollmentService {
         enrollments.add(newEnrollment);
         nextCode++;
 
-        return new OperationResult(true, "Matrícula efetivada com sucesso!");
+        return new OperationResult(true, "Matrícula efetivada com sucesso.");
     }
 
     /*
     @ registerPayment
-    @ Objetivo: Registra um pagamento polimórfico em uma matrícula existente validando limites e regras de negócio
+    @ Objetivo: Registra um pagamento em uma matrícula existente validando limites e regras de negócio
+    @ Retorna: Um OperationResult contendo o status de sucesso e a atualização do saldo devedor ou quitação da matrícula
     */
     public OperationResult registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
 
         int enrollmentCode = parseInt(codeStr);
         if (enrollmentCode <= 0) {
-            return new OperationResult(false, "Código de matrícula inválido!");
+            return new OperationResult(false, "Código de matrícula inválido.");
         }
 
         double amount = parseDouble(amountStr);
         if (amount <= 0) {
-            return new OperationResult(false, "O valor do pagamento deve ser maior que zero.");
+            return new OperationResult(false, "Valor de pagamento inválido.");
         }
 
         Enrollment flagEnrollment = findByCode(enrollmentCode);
@@ -111,8 +117,8 @@ public class EnrollmentService {
             return new OperationResult(false, "Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
         }
 
-        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) {
-            return new OperationResult(false, "Não é possível registrar pagamentos em uma matrícula cancelada.");
+        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED && flagEnrollment.calculateBalance() <= 0) {
+            return new OperationResult(false, "Não é possível registrar pagamentos. Esta matrícula já está cancelada e quitada.");
         }
 
         if (amount > flagEnrollment.calculateBalance()) {
@@ -125,7 +131,7 @@ public class EnrollmentService {
             case 1 -> {
                 double received = parseDouble(extra1);
                 if (received < amount) {
-                    return new OperationResult(false, "Erro: O valor entregue em dinheiro é insuficiente.");
+                    return new OperationResult(false, "O valor entregue em dinheiro é insuficiente.");
                 }
                 newPayment = new CashPayment(amount, received);
             }
@@ -151,29 +157,66 @@ public class EnrollmentService {
 
         flagEnrollment.registerPayment(newPayment);
         double balance = flagEnrollment.calculateBalance();
-        String statusFinanceiro = (balance > 0) ? String.format(" Saldo pendente: R$ %.2f", balance) : " Matrícula quitada!";
+        String statusFinanceiro = (balance > 0) ? String.format(" Saldo pendente: R$ %.2f", balance) : " Matrícula quitada.";
 
-        return new OperationResult(true, "Pagamento registrado com sucesso!" + statusFinanceiro);
+        String changeMessage = "";
+        if (newPayment instanceof CashPayment cash) {
+            double troco = cash.getChange();
+            if (troco > 0) {
+                changeMessage = String.format(" | Troco a devolver: R$ %.2f", troco);
+            }
+        }
+
+        return new OperationResult(true, "Pagamento registrado com sucesso." + statusFinanceiro + changeMessage);
     }
 
+    /*
+    @ cancel
+    @ Objetivo: Solicitar o cancelamento de uma matrícula e retornar o extrato financeiro final recalculado.
+    */
     public OperationResult cancel(String codeStr) {
         int code = parseInt(codeStr);
-        if (code <= 0) return new OperationResult(false, "Código de matrícula inválido!");
+
+        if (code <= 0) return new OperationResult(false, "Código de matrícula inválido.");
         Enrollment flagEnrollment = findByCode(code);
         if (flagEnrollment == null) return new OperationResult(false, "Matrícula não encontrada no sistema.");
         if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) return new OperationResult(false, "A matrícula informada já está cancelada.");
 
-        flagEnrollment.cancel();
-        double totalContract = flagEnrollment.getTotalPrice();
-        double totalPaid = flagEnrollment.calculateTotalPaid();
-        double balance = flagEnrollment.calculateBalance();
+        // Guarda os valores de antes do cancelamento apenas para o relatório técnico
+        double originalContract = flagEnrollment.getTotalPrice();
 
-        String resumo = String.format("Matrícula cancelada com sucesso!\n--- RESUMO FINANCEIRO ---\nValor Total do Contrato: R$ %.2f\nTotal Já Pago: R$ %.2f\n", totalContract, totalPaid);
-        resumo += (balance > 0) ? String.format("Valor Pendente: R$ %.2f", balance) : "O valor foi pago corretamente.";
+        // Aqui a matrícula muda o status para cancelado, calcula os meses ativos, aplica a multa e atualiza o totalPrice
+        flagEnrollment.cancel();
+
+        // calculateBalance() vai retornar o acerto de contas final (Proporcional + Multa - O que já foi pago)
+        double finalDebit = flagEnrollment.calculateBalance();
+        double totalPaid = flagEnrollment.calculateTotalPaid();
+
+        String resumo = String.format(
+                "Matrícula CANCELADA com sucesso!\n" +
+                        "--- RESUMO DE ENCERRAMENTO (AJUSTADO) ---\n" +
+                        "Valor do Contrato Original: R$ %.2f\n" +
+                        "Novo Valor Total Devido (Proporcional + Multa): R$ %.2f\n" +
+                        "Total Pago pelo Aluno Até Hoje: R$ %.2f\n" +
+                        "-----------------------------------------\n",
+                originalContract, flagEnrollment.getTotalPrice(), totalPaid
+        );
+
+        if (finalDebit > 0) {
+            resumo += String.format("DÉBITO PENDENTE TOTAL A QUITAR: R$ %.2f\n" +
+                    "O aluno deve realizar o pagamento avulso no menu 2 para regularizar a situação.", finalDebit);
+        } else {
+            resumo += "Contrato encerrado sem pendências financeiras. Situação regularizada.";
+        }
 
         return new OperationResult(true, resumo);
     }
 
+    /*
+    @ findByCode
+    @ Objetivo: Buscar e retornar uma matrícula específica dentro do histórico geral utilizando o código identificador
+    @ Retorna: O objeto Enrollment correspondente ao código informado ou null caso não seja localizado
+    */
     public Enrollment findByCode(int code) {
         for (Enrollment e : enrollments) {
             if (e.getCode() == code) return e;
@@ -181,10 +224,20 @@ public class EnrollmentService {
         return null;
     }
 
+    /*
+    @ hasActiveEnrollment
+    @ Objetivo: Verificar se um determinado aluno possui um contrato com o status ativo no momento
+    @ Retorna: Um valor booleano (true se houver matrícula ativa, false caso contrário)
+    */
     public boolean hasActiveEnrollment(String cpf) {
         return findActiveByStudent(cpf) != null;
     }
 
+    /*
+    @ findActiveByStudent
+    @ Objetivo: Localizar o objeto de matrícula que esteja atualmente ativo no sistema utilizando o CPF do aluno
+    @ Retorna: O objeto Enrollment ativo correspondente ao aluno ou null se não houver nenhum contrato ativo
+    */
     public Enrollment findActiveByStudent(String cpf) {
         String cleanCpf = DateFormatter.cleanNumber(cpf);
         for (Enrollment e : enrollments) {
@@ -195,18 +248,38 @@ public class EnrollmentService {
         return null;
     }
 
+    /*
+    @ listEnrollments
+    @ Objetivo: Fornecer uma cópia de segurança da lista global para fins de listagem, preservando a coleção original
+    @ Retorna: Um ArrayList contendo todas as matrículas registradas no sistema
+    */
     public ArrayList<Enrollment> listEnrollments() {
         return new ArrayList<>(this.enrollments);
     }
 
+    /*
+    @ getEnrollmentsByStudent
+    @ Objetivo: Filtrar histórico de contratos vinculados ao CPF de um aluno.
+    */
     public List<Enrollment> getEnrollmentsByStudent(String cpf) {
         List<Enrollment> result = new ArrayList<>();
+        // Remove pontos e traços para garantir que a comparação seja apenas dos números
+        String cleanCpf = cpf.replaceAll("\\D", "");
+
         for (Enrollment e : enrollments) {
-            if (e.getStudent().getCpf().equals(cpf)) result.add(e);
+            String studentCleanCpf = e.getStudent().getCpf().replaceAll("\\D", "");
+            if (studentCleanCpf.equals(cleanCpf)) {
+                result.add(e);
+            }
         }
         return result;
     }
 
+    /*
+    @ hasDebt
+    @ Objetivo: Analisar o histórico de um cliente para identificar se ele possui parcela ou saldo devedor em aberto
+    @ Retorna: Um valor booleano indicando se há débitos pendentes.
+    */
     public boolean hasDebt(String cpf) {
         List<Enrollment> studentEnrollments = getEnrollmentsByStudent(cpf);
         for (Enrollment e : studentEnrollments) {
@@ -215,11 +288,21 @@ public class EnrollmentService {
         return false;
     }
 
+    /*
+    @ parseInt
+    @ Objetivo: Realizar o tratamento e a conversão segura de dados textuais para números inteiros
+    @ Retorna: O valor numérico convertido ou -1 caso o formato do texto seja inválido.
+    */
     private int parseInt(String input) {
         if (input == null || input.isBlank() || !input.matches("\\d+")) return -1;
         return Integer.parseInt(input);
     }
 
+    /*
+    @ parseDouble
+    @ Objetivo: Tratar e converter valores monetários textuais em tipos numéricos flutuantes
+    @ Retorna: O valor em double convertido ou -1 se a string não for um número válido
+    */
     private double parseDouble(String input) {
         if (input == null || input.isBlank() || !input.matches("\\d+(\\.\\d+)?")) return -1;
         return Double.parseDouble(input);
