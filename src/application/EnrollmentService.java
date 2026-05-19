@@ -43,6 +43,10 @@ public class EnrollmentService {
             return new OperationResult(false, "O aluno já possui uma matrícula ativa no sistema.");
         }
 
+        if (hasDebt(student.getCpf())) {
+            return new OperationResult(false, "Matrícula recusada! O aluno possui débitos pendentes em contratos anteriores.");
+        }
+
         if (durationMonths < plan.getMinDurationMonths()) {
             return new OperationResult(false, "A duração escolhida é menor que o mínimo exigido pelo plano (" + plan.getMinDurationMonths() + " meses).");
         }
@@ -113,8 +117,8 @@ public class EnrollmentService {
             return new OperationResult(false, "Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
         }
 
-        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) {
-            return new OperationResult(false, "Não é possível registrar pagamentos em uma matrícula cancelada.");
+        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED && flagEnrollment.calculateBalance() <= 0) {
+            return new OperationResult(false, "Não é possível registrar pagamentos. Esta matrícula já está cancelada e quitada.");
         }
 
         if (amount > flagEnrollment.calculateBalance()) {
@@ -160,11 +164,9 @@ public class EnrollmentService {
 
     /*
     @ cancel
-    @ Objetivo: Efetuar o cancelamento de uma matrícula ativa desde que não haja nenhuma pendência financeira ou saldo devedor
-    @ Retorna: Um OperationResult com a mensagem de erro ou com o relatório do resumo financeiro do contrato encerrado
+    @ Objetivo: Solicitar o cancelamento de uma matrícula e retornar o extrato financeiro final recalculado.
     */
     public OperationResult cancel(String codeStr) {
-
         int code = parseInt(codeStr);
 
         if (code <= 0) return new OperationResult(false, "Código de matrícula inválido.");
@@ -172,18 +174,32 @@ public class EnrollmentService {
         if (flagEnrollment == null) return new OperationResult(false, "Matrícula não encontrada no sistema.");
         if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) return new OperationResult(false, "A matrícula informada já está cancelada.");
 
-        // ================================Vou mexer nisso aqui //
-        if (flagEnrollment.calculateBalance() > 0) {
-            return new OperationResult(false, String.format("Não é possível cancelar matrícula. O aluno possui um saldo devedor de R$ %.2f.", flagEnrollment.calculateBalance()));
-        }
+        // Guarda os valores de antes do cancelamento apenas para o relatório técnico
+        double originalContract = flagEnrollment.getTotalPrice();
 
+        // Aqui a matrícula muda o status para cancelado, calcula os meses ativos, aplica a multa e atualiza o totalPrice
         flagEnrollment.cancel();
-        double totalContract = flagEnrollment.getTotalPrice();
-        double totalPaid = flagEnrollment.calculateTotalPaid();
-        double balance = flagEnrollment.calculateBalance();
 
-        String resumo = String.format("Matrícula cancelada com sucesso!\n--- RESUMO FINANCEIRO ---\nValor Total do Contrato: R$ %.2f\nTotal Já Pago: R$ %.2f\n", totalContract, totalPaid);
-        resumo += (balance > 0) ? String.format("Valor Pendente: R$ %.2f", balance) : "O valor foi pago corretamente.";
+        // calculateBalance() vai retornar o acerto de contas final (Proporcional + Multa - O que já foi pago)
+        double finalDebit = flagEnrollment.calculateBalance();
+        double totalPaid = flagEnrollment.calculateTotalPaid();
+
+        String resumo = String.format(
+                "Matrícula CANCELADA com sucesso!\n" +
+                        "--- RESUMO DE ENCERRAMENTO (AJUSTADO) ---\n" +
+                        "Valor do Contrato Original: R$ %.2f\n" +
+                        "Novo Valor Total Devido (Proporcional + Multa): R$ %.2f\n" +
+                        "Total Pago pelo Aluno Até Hoje: R$ %.2f\n" +
+                        "-----------------------------------------\n",
+                originalContract, flagEnrollment.getTotalPrice(), totalPaid
+        );
+
+        if (finalDebit > 0) {
+            resumo += String.format("DÉBITO PENDENTE TOTAL A QUITAR: R$ %.2f\n" +
+                    "O aluno deve realizar o pagamento avulso no menu 2 para regularizar a situação.", finalDebit);
+        } else {
+            resumo += "Contrato encerrado sem pendências financeiras. Situação regularizada.";
+        }
 
         return new OperationResult(true, resumo);
     }
@@ -235,13 +251,18 @@ public class EnrollmentService {
 
     /*
     @ getEnrollmentsByStudent
-    @ Objetivo: Filtrar o histórico de contratos (ativos ou cancelados) vinculados ao CPF de um aluno específico
-    @ Retorna: Uma List contendo as matrículas associadas ao estudante informado
+    @ Objetivo: Filtrar histórico de contratos vinculados ao CPF de um aluno.
     */
     public List<Enrollment> getEnrollmentsByStudent(String cpf) {
         List<Enrollment> result = new ArrayList<>();
+        // Remove pontos e traços para garantir que a comparação seja apenas dos números
+        String cleanCpf = cpf.replaceAll("\\D", "");
+
         for (Enrollment e : enrollments) {
-            if (e.getStudent().getCpf().equals(cpf)) result.add(e);
+            String studentCleanCpf = e.getStudent().getCpf().replaceAll("\\D", "");
+            if (studentCleanCpf.equals(cleanCpf)) {
+                result.add(e);
+            }
         }
         return result;
     }

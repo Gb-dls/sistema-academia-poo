@@ -103,11 +103,32 @@ public class Enrollment {
 
     /*
     @ cancel
-    @ Objetivo: Cancela uma matrícula ativa
+    @ Objetivo: Cancela a matrícula ativa, ajusta o preço total para o proporcional dos meses utilizados e aplica a multa rescisória do plano.
     */
     public void cancel() {
-        if(this.status == EnrollmentStatus.ACTIVE) {
-           this.status = EnrollmentStatus.CANCELLED;
+        if (this.status == EnrollmentStatus.ACTIVE) {
+            this.status = EnrollmentStatus.CANCELLED;
+
+            // Calcula o valor de 1 mês avulso do plano
+            double pricePerMonth = this.plan.getPricePerMonth();
+
+            // Descobre quantos meses ele usou de verdade (mínimo 1 mês para não zerar se ele cancelar no primeiro dia)
+            int monthsUsed = Math.max(1, getMonthsActive());
+
+            // Se ele usou mais meses do que a duração original por algum motivo, limita ao total do contrato
+            if (monthsUsed > durationMonths) monthsUsed = durationMonths;
+
+            // Calcula o proporcional usado
+            double proportionalPrice = pricePerMonth * monthsUsed;
+
+            // Pega a multa de carência do plano
+            double penaltyFee = this.plan.getCancellationFee(this);
+
+            // O novo preço total é a proporcional aos meses que usou + multa
+            this.totalPrice = proportionalPrice + penaltyFee;
+
+            // Ajusta a data de término para o dia do cancelamento real
+            this.endDate = LocalDate.now();
         }
     }
 

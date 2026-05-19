@@ -122,10 +122,28 @@ public class EnrollmentMenu {
 
     /*
     @ registerPayment
-    @ Objetivo: Coletar os dados de pagamentos adicionais avulsos capturando as especificidades de cada subclasse
+    @ Objetivo: Capturar o CPF do aluno, localizar contrato com débito pendente e registrar um pagamento.
     */
     private void registerPayment() {
-        String codeInput = ui.getInput("Código da matrícula:");
+        String cpf = ui.getInput("CPF do aluno:");
+
+        // Tenta buscar a matrícula ativa primeiro
+        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        String codeInput;
+
+        if (activeResult.isSuccess()) {
+            Enrollment enrollment = (Enrollment) activeResult.getData();
+            codeInput = String.valueOf(enrollment.getCode());
+            ui.showMessage("Matrícula ATIVA localizada! Código: " + codeInput);
+        } else {
+            // Se não achar ativa, o aluno pode estar tentando pagar a taxa de uma matrícula CANCELADA.
+            // Pede o código direto ou listar para que ele digite o ID do contrato que restou o débito.
+            ui.showMessage("Nenhuma matrícula ATIVA encontrada. Se for um acerto de contas de cancelamento:");
+            codeInput = ui.getInput("Digite o código da matrícula que deseja pagar:");
+        }
+
+        if (codeInput.isBlank()) return;
+
         String amountInput = ui.getInput("Valor do pagamento:");
 
         String[] paymentData = preparePaymentDetails();
@@ -155,10 +173,23 @@ public class EnrollmentMenu {
 
     /*
     @ cancel
-    @ Objetivo: Capturar o código de uma matrícula para solicitar o seu cancelamento e exibir o resumo financeiro
+    @ Objetivo: Encontrar a matrícula ativa automaticamente por Cpf e solicitar o cancelamento.
     */
     private void cancel() {
-        String codeInput = ui.getInput("Código da matrícula:");
+        String cpf = ui.getInput("CPF do aluno para cancelamento:");
+
+        // Busca a matrícula ativa por Cpf
+        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        if (!activeResult.isSuccess()) {
+            ui.showError(activeResult.getMessage());
+            return;
+        }
+
+        Enrollment enrollment = (Enrollment) activeResult.getData();
+        String codeInput = String.valueOf(enrollment.getCode());
+
+        ui.showMessage("Matrícula ativa localizada! Encerrando contrato código: " + codeInput);
+
         var result = fitManager.cancelEnrollment(codeInput);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
