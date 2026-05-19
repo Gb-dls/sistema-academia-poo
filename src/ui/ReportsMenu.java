@@ -91,7 +91,7 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + activeStudents.size() + " aluno(s).");
-        ui.showMessage("======================================");
+
     }
 
     // Lista matrículas que possuem saldo pendente
@@ -113,7 +113,7 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + pending.size() + " matrícula(s) pendente(s).");
-        ui.showMessage("================================");
+
     }
 
     // Lista todas as matrículas cadastradas no sistema
@@ -137,7 +137,7 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + enrollments.size());
-        ui.showMessage("================================");
+
     }
 
     // Lista todos os planos disponíveis no sistema
@@ -160,7 +160,7 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + plans.size());
-        ui.showMessage("============================");
+
     }
 
 
@@ -169,6 +169,10 @@ public class ReportsMenu {
     private void findStudentByCpf() {
 
         String cpf = ui.getInput("Digite o CPF do aluno:");
+        if(cpf.isEmpty()){
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findStudentByCpf(cpf);
 
@@ -186,6 +190,10 @@ public class ReportsMenu {
     private void findPlanByName() {
 
         String name = ui.getInput("Digite o nome do plano:");
+        if(name.isEmpty()){
+            ui.showError("Nome não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findPlanByName(name);
 
@@ -203,6 +211,10 @@ public class ReportsMenu {
     private void findActiveEnrollmentByCpf() {
 
         String cpf = ui.getInput("Digite o CPF do aluno:");
+        if(cpf.isEmpty()){
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findActiveEnrollmentByStudent(cpf);
 
