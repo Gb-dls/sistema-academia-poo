@@ -159,7 +159,15 @@ public class EnrollmentService {
         double balance = flagEnrollment.calculateBalance();
         String statusFinanceiro = (balance > 0) ? String.format(" Saldo pendente: R$ %.2f", balance) : " Matrícula quitada.";
 
-        return new OperationResult(true, "Pagamento registrado com sucesso." + statusFinanceiro);
+        String changeMessage = "";
+        if (newPayment instanceof CashPayment cash) {
+            double troco = cash.getChange();
+            if (troco > 0) {
+                changeMessage = String.format(" | Troco a devolver: R$ %.2f", troco);
+            }
+        }
+
+        return new OperationResult(true, "Pagamento registrado com sucesso." + statusFinanceiro + changeMessage);
     }
 
     /*
