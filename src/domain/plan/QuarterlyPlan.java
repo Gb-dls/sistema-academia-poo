@@ -12,8 +12,8 @@ public class QuarterlyPlan extends Plan {
     public double calculateTotalPrice(int months) {
         double basePrice = getPricePerMonth() * months;
 
-        // Regra: desconto de 5% apenas se contratado MAIS que o mínimo
-        if (months > getMinDurationMonths()) {
+        // Regra: desconto de 5%
+        if (months >= getMinDurationMonths()) {
             return basePrice * 0.95;
         }
 

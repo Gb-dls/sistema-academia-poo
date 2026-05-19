@@ -27,7 +27,7 @@ public class TerminalUI implements UserInterface {
     // Exibe uma mensagem de erro
     @Override
     public void showError(String message) {
-        System.out.println("\nERRO: " + message);
+        System.out.println("\n" + message);
     }
 
     // Exibe o menu no terminal
