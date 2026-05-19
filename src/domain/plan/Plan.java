@@ -52,11 +52,18 @@ public abstract class Plan {
 
      @Override
      public String toString() {
+          // Calcula o valor bruto total sem nenhum desconto
+          double totalWithoutDiscount = pricePerMonth * minDurationMonths;
+
+          // Chama o metodo polimorfico que trara o valor com desconto da subclasse
+          double totalWithDiscount = calculateTotalPrice(minDurationMonths);
+
           return "Nome: " + name + "\n" +
                   "Descrição: " + description + "\n" +
                   "Duração mínima: " + minDurationMonths + " meses\n" +
                   "Preço mensal: R$ " + String.format("%.2f", pricePerMonth) + "\n" +
-                  "Preço total (com desconto): R$ " + String.format("%.2f", calculateTotalPrice(minDurationMonths)) + "\n";
+                  "Preço total (sem desconto): R$ " + String.format("%.2f", totalWithoutDiscount) + "\n" +
+                  "Preço total (com desconto): R$ " + String.format("%.2f", totalWithDiscount) + "\n";
      }
 
 }

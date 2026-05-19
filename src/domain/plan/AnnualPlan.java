@@ -13,7 +13,7 @@ public class AnnualPlan extends Plan {
         double basePrice = getPricePerMonth() * months;
 
         // Regra: desconto de 15% apenas se contratado MAIS que o mínimo
-        if (months > getMinDurationMonths()) {
+        if (months >= getMinDurationMonths()) {
             return basePrice * 0.85;
         }
         return basePrice;
