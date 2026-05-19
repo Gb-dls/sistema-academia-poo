@@ -48,6 +48,11 @@ public class EnrollmentMenu {
     private void enroll() {
         // Solicita CPF do aluno
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Matrícula cancelada.");
+            return;
+        }
+
 
         // Usa o tipo explícito OperationResult no lugar do 'var'
         OperationResult studentResult = fitManager.findStudentByCpf(cpf);
@@ -62,6 +67,11 @@ public class EnrollmentMenu {
 
         // Solicita plano
         String planName = ui.getInput("Nome do plano:");
+        if (planName.isEmpty()) {
+            ui.showError("Nome do plano não informado. Matrícula cancelada.");
+            return;
+        }
+
 
         // Usa o tipo explícito OperationResult no lugar do 'var'
         OperationResult planResult = fitManager.findPlanByName(planName);
@@ -75,8 +85,23 @@ public class EnrollmentMenu {
         Plan plan = (Plan) planResult.getData();
 
         String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
+        if (dateInput.isEmpty()) {
+            ui.showError("Data de início não informada. Matrícula cancelada.");
+            return;
+        }
+
         String durationInput = ui.getInput("Duração (em meses):");
+        if (durationInput.isEmpty()) {
+            ui.showError("Duração não informada. Matrícula cancelada.");
+            return;
+        }
+
         String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
+        if (paymentInput.isEmpty()) {
+            ui.showError("Valor do pagamento não informado. Matrícula cancelada.");
+            return;
+        }
+
 
         ui.showMessage("""
             Tipos de pagamento:
@@ -87,6 +112,11 @@ public class EnrollmentMenu {
             """);
 
         String typeInput = ui.getInput("Escolha o tipo de pagamento:");
+        if (typeInput.isEmpty()) {
+            ui.showError("Tipo de pagamento não informado. Matrícula cancelada.");
+            return;
+        }
+
         if (!typeInput.matches("[1-4]")) {
             ui.showError("Tipo de pagamento inválido!");
             return;
@@ -96,17 +126,49 @@ public class EnrollmentMenu {
         // Coleta de dados dinâmicos baseados na escolha do usuário
         String extra1 = "", extra2 = "", extra3 = "";
         switch (option) {
-            case 1 -> extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
-            case 2 -> {
+            case 1:
+                extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
+                if (extra1.isEmpty()) {
+                    ui.showError("Valor em dinheiro não informado. Matrícula cancelada.");
+                    return;
+                }
+                break;
+            case 2:
                 extra1 = ui.getInput("Nome do titular do cartão de débito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Matrícula cancelada.");
+                    return;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
-            }
-            case 3 -> {
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Matrícula cancelada.");
+                    return;
+                }
+                break;
+            case 3:
                 extra1 = ui.getInput("Nome do titular do cartão de crédito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Matrícula cancelada.");
+                    return;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Matrícula cancelada.");
+                    return;
+                }
                 extra3 = ui.getInput("Quantidade de parcelas desejada:");
-            }
-            case 4 -> extra1 = ui.getInput("Informe a chave PIX utilizada:");
+                if (extra3.isEmpty()) {
+                    ui.showError("Quantidade de parcelas não informada. Matrícula cancelada.");
+                    return;
+                }
+                break;
+            case 4:
+                extra1 = ui.getInput("Informe a chave PIX utilizada:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Chave PIX não informada. Matrícula cancelada.");
+                    return;
+                }
+                break;
         }
 
         var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, extra1, extra2, extra3);
@@ -120,7 +182,17 @@ public class EnrollmentMenu {
     */
     private void registerPayment() {
         String codeInput   = ui.getInput("Código da matrícula:");
+        if (codeInput.isEmpty()) {
+            ui.showError("Código não informado. Pagamento cancelado.");
+            return;
+        }
+
         String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
+        if (amountInput.isEmpty()) {
+            ui.showError("Valor não informado. Pagamento cancelado.");
+            return;
+        }
+
 
         ui.showMessage("""
             Tipos de pagamento:
@@ -131,6 +203,11 @@ public class EnrollmentMenu {
             """);
 
         String typeInput = ui.getInput("Escolha o tipo de pagamento:");
+        if (typeInput.isEmpty()) {
+            ui.showError("Tipo de pagamento não informado. Pagamento cancelado.");
+            return;
+        }
+
         if (!typeInput.matches("[1-4]")) {
             ui.showError("Tipo de pagamento inválido!");
             return;
@@ -139,17 +216,49 @@ public class EnrollmentMenu {
 
         String extra1 = "", extra2 = "", extra3 = "";
         switch (option) {
-            case 1 -> extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente:");
-            case 2 -> {
+            case 1:
+                extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Valor em dinheiro não informado. Pagamento cancelado.");
+                    return;
+                }
+                break;
+            case 2:
                 extra1 = ui.getInput("Nome do titular do cartão de débito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Pagamento cancelado.");
+                    return;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
-            }
-            case 3 -> {
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Pagamento cancelado.");
+                    return;
+                }
+                break;
+            case 3:
                 extra1 = ui.getInput("Nome do titular do cartão de crédito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Pagamento cancelado.");
+                    return;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Pagamento cancelado.");
+                    return;
+                }
                 extra3 = ui.getInput("Quantidade de parcelas:");
-            }
-            case 4 -> extra1 = ui.getInput("Informe a chave PIX:");
+                if (extra3.isEmpty()) {
+                    ui.showError("Quantidade de parcelas não informada. Pagamento cancelado.");
+                    return;
+                }
+                break;
+            case 4:
+                extra1 = ui.getInput("Informe a chave PIX:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Chave PIX não informada. Pagamento cancelado.");
+                    return;
+                }
+                break;
         }
 
         var result = fitManager.registerPayment(codeInput, amountInput, option, extra1, extra2, extra3);
@@ -159,6 +268,10 @@ public class EnrollmentMenu {
 
     private void findActiveByStudent() {
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
         var result = fitManager.findActiveEnrollmentByStudent(cpf);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
@@ -170,6 +283,11 @@ public class EnrollmentMenu {
 
     private void cancel() {
         String codeInput = ui.getInput("Código da matrícula:");
+        if (codeInput.isEmpty()) {
+            ui.showError("Código não informado. Cancelamento abortado.");
+            return;
+        }
+
         var result = fitManager.cancelEnrollment(codeInput);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
@@ -186,6 +304,5 @@ public class EnrollmentMenu {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(enrollments.get(i).toString());
         }
-        ui.showMessage("===================================");
     }
 }
