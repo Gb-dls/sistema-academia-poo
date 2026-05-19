@@ -47,7 +47,7 @@ public class EnrollmentMenu {
 
     /*
     @ preparePaymentDetails
-    @ Objetivo: Centralizar a captura de dados de pagamento dinâmicos de enroll() e registerPayment()
+    @ Objetivo: Centralizar a captura de dados de pagamento dinâmicos de enroll() e registerPayment() com validação anti-nulo
     @ Retorna: Um array onde [0]=opcao, [1]=extra1, [2]=extra2, [3]=extra3. Retorna null se for inválido.
     */
     private String[] preparePaymentDetails() {
@@ -60,6 +60,11 @@ public class EnrollmentMenu {
         """);
 
         String typeInput = ui.getInput("Escolha o tipo de pagamento:");
+        if (typeInput.isEmpty()) {
+            ui.showError("Tipo de pagamento não informado. Operação cancelada.");
+            return null;
+        }
+
         if (!typeInput.matches("[1-4]")) {
             ui.showError("Tipo de pagamento inválido!");
             return null;
@@ -69,17 +74,49 @@ public class EnrollmentMenu {
         String extra1 = "", extra2 = "", extra3 = "";
 
         switch (Integer.parseInt(option)) {
-            case 1 -> extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
+            case 1 -> {
+                extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
+                if (extra1.isEmpty()) {
+                    ui.showError("Valor em dinheiro não informado. Operação cancelada.");
+                    return null;
+                }
+            }
             case 2 -> {
                 extra1 = ui.getInput("Nome do titular do cartão de débito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Operação cancelada.");
+                    return null;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Operação cancelada.");
+                    return null;
+                }
             }
             case 3 -> {
                 extra1 = ui.getInput("Nome do titular do cartão de crédito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Operação cancelada.");
+                    return null;
+                }
                 extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Operação cancelada.");
+                    return null;
+                }
                 extra3 = ui.getInput("Quantidade de parcelas desejada:");
+                if (extra3.isEmpty()) {
+                    ui.showError("Quantidade de parcelas não informada. Operação cancelada.");
+                    return null;
+                }
             }
-            case 4 -> extra1 = ui.getInput("Informe a chave PIX utilizada:");
+            case 4 -> {
+                extra1 = ui.getInput("Informe a chave PIX utilizada:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Chave PIX não informada. Operação cancelada.");
+                    return null;
+                }
+            }
         }
 
         return new String[]{option, extra1, extra2, extra3};
@@ -87,10 +124,15 @@ public class EnrollmentMenu {
 
     /*
     @ enroll
-    @ Objetivo: Coletar os dados da matrícula
+    @ Objetivo: Coletar os dados da matrícula validando campos em branco
     */
     private void enroll() {
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Matrícula cancelada.");
+            return;
+        }
+
         OperationResult studentResult = fitManager.findStudentByCpf(cpf);
         if (!studentResult.isSuccess()) {
             ui.showError(studentResult.getMessage());
@@ -99,6 +141,11 @@ public class EnrollmentMenu {
         Student student = (Student) studentResult.getData();
 
         String planName = ui.getInput("Nome do plano:");
+        if (planName.isEmpty()) {
+            ui.showError("Nome do plano não informado. Matrícula cancelada.");
+            return;
+        }
+
         OperationResult planResult = fitManager.findPlanByName(planName);
         if (!planResult.isSuccess()) {
             ui.showError(planResult.getMessage());
@@ -106,9 +153,23 @@ public class EnrollmentMenu {
         }
         Plan plan = (Plan) planResult.getData();
 
-        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
-        String durationInput = ui.getInput("Duração:");
-        String paymentInput  = ui.getInput("Valor do pagamento inicial:");
+        String dateInput = ui.getInput("Data de início (dd/MM/yyyy):");
+        if (dateInput.isEmpty()) {
+            ui.showError("Data de início não informada. Matrícula cancelada.");
+            return;
+        }
+
+        String durationInput = ui.getInput("Duração (em meses):");
+        if (durationInput.isEmpty()) {
+            ui.showError("Duração não informada. Matrícula cancelada.");
+            return;
+        }
+
+        String paymentInput = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
+        if (paymentInput.isEmpty()) {
+            ui.showError("Valor do pagamento não informado. Matrícula cancelada.");
+            return;
+        }
 
         String[] paymentData = preparePaymentDetails();
         if (paymentData == null) return;
@@ -122,12 +183,15 @@ public class EnrollmentMenu {
 
     /*
     @ registerPayment
-    @ Objetivo: Capturar o CPF do aluno, localizar contrato com débito pendente e registrar um pagamento.
+    @ Objetivo: Capturar o CPF do aluno, localizar contrato com débito pendente automaticamente e registrar um pagamento.
     */
     private void registerPayment() {
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Pagamento cancelado.");
+            return;
+        }
 
-        // Tenta buscar a matrícula ativa primeiro
         var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
         String codeInput;
 
@@ -136,15 +200,20 @@ public class EnrollmentMenu {
             codeInput = String.valueOf(enrollment.getCode());
             ui.showMessage("Matrícula ATIVA localizada! Código: " + codeInput);
         } else {
-            // Se não achar ativa, o aluno pode estar tentando pagar a taxa de uma matrícula CANCELADA.
-            // Pede o código direto ou listar para que ele digite o ID do contrato que restou o débito.
             ui.showMessage("Nenhuma matrícula ATIVA encontrada. Se for um acerto de contas de cancelamento:");
             codeInput = ui.getInput("Digite o código da matrícula que deseja pagar:");
         }
 
-        if (codeInput.isBlank()) return;
+        if (codeInput.isBlank()) {
+            ui.showError("Código da matrícula não informado. Pagamento abortado.");
+            return;
+        }
 
-        String amountInput = ui.getInput("Valor do pagamento:");
+        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
+        if (amountInput.isEmpty()) {
+            ui.showError("Valor não informado. Pagamento cancelado.");
+            return;
+        }
 
         String[] paymentData = preparePaymentDetails();
         if (paymentData == null) return;
@@ -162,6 +231,10 @@ public class EnrollmentMenu {
     */
     private void findActiveByStudent() {
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
         var result = fitManager.findActiveEnrollmentByStudent(cpf);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
@@ -177,8 +250,11 @@ public class EnrollmentMenu {
     */
     private void cancel() {
         String cpf = ui.getInput("CPF do aluno para cancelamento:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Cancelamento abortado.");
+            return;
+        }
 
-        // Busca a matrícula ativa por Cpf
         var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
         if (!activeResult.isSuccess()) {
             ui.showError(activeResult.getMessage());
@@ -210,6 +286,5 @@ public class EnrollmentMenu {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(enrollments.get(i).toString());
         }
-        ui.showMessage("===================================");
     }
 }

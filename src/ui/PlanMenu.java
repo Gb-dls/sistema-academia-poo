@@ -39,8 +39,17 @@ public class PlanMenu {
     }
 
     private void registerPlan() {
-        String name        = ui.getInput("Nome do plano:");
+        String name = ui.getInput("Nome do plano:");
+        if (name.isEmpty()) {
+            ui.showError("Nome não informado. Cadastro cancelado.");
+            return;
+        }
+
         String description = ui.getInput("Descrição:");
+        if (description.isEmpty()) {
+            ui.showError("Descrição não informada. Cadastro cancelado.");
+            return;
+        }
         ui.showMessage("""
                 Tipos de plano:
                 1 - Mensal
@@ -49,10 +58,24 @@ public class PlanMenu {
                 4 - Anual
                 """);
         String typeInput = ui.getInput("Escolha o tipo:");
+        if (typeInput.isEmpty()) {
+            ui.showError("Tipo não informado. Cadastro cancelado.");
+            return;
+        }
+
 
         // Coleta dados adicionais
         String durationInput = ui.getInput("Duração mínima (em meses):");
+        if (durationInput.isEmpty()) {
+            ui.showError("Duração não informada. Cadastro cancelado.");
+            return;
+        }
+
         String priceInput    = ui.getInput("Preço mensal (ex: 99.90):");
+        if (priceInput.isEmpty()) {
+            ui.showError("Preço não informado. Cadastro cancelado.");
+            return; }
+
 
         // Envia dados para a camada de negócio
         var result = fitManager.registerPlan(name, description, typeInput, durationInput, priceInput);
@@ -69,6 +92,11 @@ public class PlanMenu {
 
     private void findByName() {
         String name = ui.getInput("Nome do plano:");
+        if (name.isEmpty()) {
+            ui.showError("Nome não informado. Consulta cancelada.");
+            return;
+        }
+
         OperationResult result = fitManager.findPlanByName(name);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
@@ -80,7 +108,17 @@ public class PlanMenu {
 
     private void updatePrice() {
         String name = ui.getInput("Nome do plano:");
+        if (name.isEmpty()) {
+            ui.showError("Nome não informado. Alteração cancelada.");
+            return;
+        }
+
         String priceInput = ui.getInput("Novo preço mensal (ex: 99.90):");
+        if (priceInput.isEmpty()) {
+            ui.showError("Preço não informado. Alteração cancelada.");
+            return;
+        }
+
         OperationResult result = fitManager.updatePlanPrice(name, priceInput);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
@@ -97,7 +135,6 @@ public class PlanMenu {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(plans.get(i).toString());
         }
-        ui.showMessage("===========================");
     }
 
 }

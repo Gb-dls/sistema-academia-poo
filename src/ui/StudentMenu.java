@@ -40,11 +40,32 @@ public class StudentMenu {
     }
 
     private void registerStudent() {
-        String name    = ui.getInput("Nome:");
-        String cpf     = ui.getInput("CPF:");
+        String name = ui.getInput("Nome:");
+        if (name.isEmpty()){
+            ui.showError("Nome não informado. Cadastro cancelado.");
+            return;
+        }
+        String cpf = ui.getInput("CPF:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Cadastro cancelado.");
+            return;
+        }
+
         String contact = ui.getInput("Contato:");
-        String email   = ui.getInput("E-mail:");
-        String birth   = ui.getInput("Data de nascimento (dd/MM/yyyy):");
+        if (contact.isEmpty()){
+            ui.showError("Contato não informado. Cadastro cancelado.");
+            return;
+        }
+        String email  = ui.getInput("E-mail:");
+        if (email.isEmpty()){
+            ui.showError("E-mail não informado. Cadastro cancelado.");
+            return;
+        }
+        String birth = ui.getInput("Data de nascimento (dd/MM/yyyy):");
+        if (birth.isEmpty()){
+            ui.showError("Data de nascimento não informada. Cadastro cancelado.");
+            return;
+        }
 
         OperationResult result = fitManager.registerStudent(name, cpf, contact, email, birth);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
@@ -53,6 +74,10 @@ public class StudentMenu {
 
     private void findByCpf() {
         String cpf = ui.getInput("CPF:");
+        if (cpf.isEmpty()){
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
         OperationResult result = fitManager.findStudentByCpf(cpf);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
@@ -63,11 +88,35 @@ public class StudentMenu {
     }
 
     private void updateStudent() {
-        String cpf     = ui.getInput("CPF do aluno:");
-        String name    = ui.getInput("Novo nome:");
+        String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()){
+            ui.showError("CPF não informado. Edição cancelada.");
+            return;
+        }
+
+        String name = ui.getInput("Novo nome:");
+        if (name.isEmpty()){
+            ui.showError("Nome não informado. Edição cancelada.");
+            return;
+        }
+
         String contact = ui.getInput("Novo contato:");
-        String email   = ui.getInput("Novo e-mail:");
-        String birth   = ui.getInput("Nova data de nascimento (dd/MM/yyyy):");
+        if (contact.isEmpty()){
+            ui.showError("Contato não informado. Edição cancelada.");
+            return;
+        }
+
+        String email = ui.getInput("Novo e-mail:");
+        if (email.isEmpty()){
+            ui.showError("E-mail não informado. Edição cancelada.");
+            return;
+        }
+
+        String birth = ui.getInput("Nova data de nascimento (dd/MM/yyyy):");
+        if (birth.isEmpty()){
+            ui.showError("Data de nascimento não informada. Edição cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.updateStudent(cpf, name, contact, email, birth);
         if (result.isSuccess()) {
@@ -80,6 +129,10 @@ public class StudentMenu {
 
     private void deleteStudent() {
         String cpf = ui.getInput("CPF:");
+        if (cpf.isEmpty()){
+            ui.showError("CPF não informado. Inativação cancelada.");
+            return;
+        }
         OperationResult result = fitManager.removeStudent(cpf);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
@@ -94,7 +147,6 @@ public class StudentMenu {
                 ui.showMessage("---------- " + (i + 1) + " ----------");
                 ui.showMessage(students.get(i).toString());
             }
-            ui.showMessage("===========================");
         } else {
             ui.showError(result.getMessage());
         }

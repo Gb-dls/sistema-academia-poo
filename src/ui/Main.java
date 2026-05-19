@@ -8,11 +8,11 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // Usa as janelas graficas para poder escolher a 'interface'
-        String[] opcoes = {"Terminal", "Gráfica"};      // Opções de 'interface'
+        // Usa as janelas graficas para poder escolher a interface
+        String[] opcoes = {"Terminal", "Gráfica"};      // Opções de interface
         int escolha = -1;
 
-        // Exibe janela para seleção da 'interface'
+        // Exibe janela para seleção da interface
         while (escolha != 0 && escolha != 1) {
             int resultado = JOptionPane.showOptionDialog(null,"Seja Bem-Vindo!\nEscolha a interface do sistema:", "FitManager", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opcoes, opcoes[0]);
 
@@ -24,7 +24,7 @@ public class Main {
         }
 
 
-        // Cria a 'interface' escolhida pelo usuario
+        // Cria a interface escolhida pelo usuario
         UserInterface ui;
         if (escolha == 0) {
             ui = new TerminalUI();
