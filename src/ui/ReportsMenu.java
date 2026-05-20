@@ -3,19 +3,17 @@ package ui;
 
 
 import application.FitManager;
-import ui.UserInterface;
 import application.OperationResult;
 import java.util.ArrayList;
 import domain.Student;
 import domain.Enrollment;
-import domain.EnrollmentStatus;
-import domain.Plan;
+import domain.plan.Plan;
 
 
 // Classe responsável pelo menu de gerenciamento dos relatorios
 public class ReportsMenu {
 
-    // Interface responsável pela comunicação com o usuário (entrada/saída)
+    // 'Interface' responsável pela comunicação com o utilizador (entrada/saída)
     private final UserInterface ui;
 
     // Classe principal de regras de negócio do sistema
@@ -32,7 +30,7 @@ public class ReportsMenu {
 
         String option;
 
-        // Loop que mantém o menu ativo até o usuário escolher sair
+        // Looping que mantém o menu ativo até o utilizador escolher sair
         do {
             ui.showMenu(
                     "RELATÓRIOS",
@@ -48,7 +46,7 @@ public class ReportsMenu {
                     """
             );
 
-            option = ui.getInput("");       // Le a opção do usuário
+            option = ui.getInput("");       // Le a opção do utilizador
 
             switch (option) {
 
@@ -93,9 +91,8 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + activeStudents.size() + " aluno(s).");
-        ui.showMessage("======================================");
-    }
 
+    }
 
     // Lista matrículas que possuem saldo pendente
     private void listPendingEnrollments() {
@@ -103,13 +100,21 @@ public class ReportsMenu {
         OperationResult result = fitManager.listPendingEnrollments();
 
         if (!result.isSuccess()) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showError(result.getMessage());
             return;
         }
 
-        ui.showMessage(result.getMessage());
-    }
+        ArrayList<Enrollment> pending = (ArrayList<Enrollment>) result.getData();
 
+        ui.showMessage("===== MATRÍCULAS PENDENTES =====");
+
+        for (int i = 0; i < pending.size(); i++) {
+            ui.showMessage(pending.get(i).toString());
+        }
+
+        ui.showMessage("Total: " + pending.size() + " matrícula(s) pendente(s).");
+
+    }
 
     // Lista todas as matrículas cadastradas no sistema
     private void listAllEnrollments() {
@@ -117,7 +122,7 @@ public class ReportsMenu {
         ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
 
         if (enrollments.isEmpty()) {
-            ui.showMessage("ERRO: Nenhuma matrícula cadastrada.");
+            ui.showMessage("Nenhuma matrícula cadastrada.");
             return;
         }
 
@@ -132,7 +137,7 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + enrollments.size());
-        ui.showMessage("================================");
+
     }
 
     // Lista todos os planos disponíveis no sistema
@@ -141,7 +146,7 @@ public class ReportsMenu {
         ArrayList<Plan> plans = fitManager.listPlans();
 
         if (plans.isEmpty()) {
-            ui.showMessage("ERRO: Nenhum plano cadastrado.");
+            ui.showMessage("Nenhum plano cadastrado.");
             return;
         }
 
@@ -155,20 +160,24 @@ public class ReportsMenu {
         }
 
         ui.showMessage("Total: " + plans.size());
-        ui.showMessage("============================");
+
     }
 
 
 
-    // Busca um aluno pelo CPF informado pelo usuário
+    // Busca um aluno pelo CPF informado pelo utilizador
     private void findStudentByCpf() {
 
         String cpf = ui.getInput("Digite o CPF do aluno:");
+        if(cpf.isEmpty()){
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findStudentByCpf(cpf);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 
@@ -177,15 +186,19 @@ public class ReportsMenu {
         ui.showMessage(student.toString());
     }
 
-    // Busca um plano pelo nome informado pelo usuário
+    // Busca um plano pelo nome informado pelo utilizador
     private void findPlanByName() {
 
         String name = ui.getInput("Digite o nome do plano:");
+        if(name.isEmpty()){
+            ui.showError("Nome não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findPlanByName(name);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 
@@ -198,11 +211,15 @@ public class ReportsMenu {
     private void findActiveEnrollmentByCpf() {
 
         String cpf = ui.getInput("Digite o CPF do aluno:");
+        if(cpf.isEmpty()){
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
 
         OperationResult result = fitManager.findActiveEnrollmentByStudent(cpf);
 
         if (!result.isSuccess() || result.getData() == null) {
-            ui.showMessage("ERRO: " + result.getMessage());
+            ui.showMessage(result.getMessage());
             return;
         }
 

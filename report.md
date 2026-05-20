@@ -158,3 +158,118 @@ Os seguintes materiais foram utilizados como apoio ao longo do desenvolvimento d
 - **TURINI, Rodrigo. *Desbravando Java e Orientação a Objetos: Um guia para o iniciante da linguagem*.** Casa do Código. Utilizado como referência de apoio para conceitos de POO aplicados à linguagem Java.
 - ***Java — Ensinando o Básico*.** Material complementar consultado para revisão de sintaxe e recursos fundamentais da linguagem.
 - **Claude (Anthropic), ChatGPT (OpenAI) e Gemini (Google)** — ferramentas de IA utilizadas como auxílio durante o desenvolvimento, para tirar dúvidas pontuais sobre sintaxe, revisar lógica de implementação e apoiar a escrita da documentação.
+
+
+------------------------
+
+# Relatório da Etapa 2: Refatoração FitManager
+
+## 1. Introdução da Etapa 2
+Nesta segunda etapa, o sistema FitManager passou por uma refatoração arquitetural profunda para incorporar conceitos essenciais de Programação Orientada a Objetos: herança, classes abstratas, polimorfismo e interfaces.
+
+As entidades `Plan` e `Payment` deixaram de ser classes concretas genéricas com enums informativos e tornaram-se superclasses abstratas, dando origem a hierarquias especializadas. Além disso, a classe `UserInterface` foi transformada em uma interface Java pura, permitindo múltiplas implementações de visualização (Console e Caixa de Diálogo). O objetivo foi eliminar estruturas condicionais baseadas em tipo, aumentar a coesão e preparar o sistema para evoluções futuras.
+
+---
+
+## 2. Integrantes e Contribuições
+* **Maria:** Responsável pela conversão da `UserInterface` em interface Java e implementação das classes `TerminalUI` e `JOptionPaneUI`, além da adequação dos menus.
+* **Marcelly:** Responsável pela refatoração da hierarquia de Planos (`Plan` abstrata, `MonthlyPlan`, `QuarterlyPlan`, `SemiAnnualPlan`, `AnnualPlan`), lógica matemática de descontos e multas.
+* **Gabriel:** Responsável pela refatoração da hierarquia de Pagamentos (`Payment` abstrata e subclasses) e lógica de resumo e troco.
+
+---
+
+## 3. Diagrama de Classes Final
+
+![Diagrama de Classes Etapa 01](./diagrama-stage-2.png)
+---
+
+## 4. Decisões de Projeto da Etapa 2
+
+### 4.1. Hierarquia de Planos (Plan)
+* **Padronização nos planos e definição de diferenças:** Decidimos que os atributos `name`, `description`, `minDurationMonths` e `pricePerMonth` são universais e pertencem à superclasse abstrata `Plan`. Os métodos `calculateTotalPrice(months)` e `getCancellationFee(enrollment)` variam conforme o tipo e foram declarados como abstratos.
+* **Papel do enum PlanType no novo modelo:** Decidimos remover o `PlanType`. Com a introdução das subclasses, o enum tornou-se redundante e adicionava complexidade desnecessária. A escolha do usuário no menu passou a transitar como um número inteiro para o serviço.
+* **Estratégia de instanciação da subclasse correta no serviço:** No `PlanService`, adotamos uma estrutura condicional (`if`/`else`) atuando com o número escolhido no menu. Essa abordagem foi preferida por isolar a regra de criação e manter o menu livre do conhecimento sobre as subclasses de domínio.
+* **Apresentação amigável dos tipos de plano ao usuário:** No `PlanMenu`, substituímos a listagem do Enum por uma exibição textual amigável e numerada (1 - Mensal, 2 - Trimestral, etc.), melhorando a usabilidade e a clareza da interface.
+* **Encapsulamento da taxa de cancelamento via objeto Enrollment:** O método `getCancellationFee(Enrollment enrollment)` recebe o objeto completo em vez de atributos soltos. Essa passagem de contexto reduz o acoplamento, permitindo extrair dados dinamicamente e blindando a assinatura do método contra futuras mudanças nas regras de negócio.
+* **Isolamento do cálculo de tempo cumprido:** Criamos um método auxiliar na classe `Enrollment`, que utiliza a API `java.time.temporal.ChronoUnit` para calcular se metade do período já passou. Isso abstraiu o cálculo de datas das regras dos planos.
+* **Independência entre taxa de cancelamento e saldo pendente:** A taxa representa uma quebra de contrato atrelada ao benefício oferecido. Ela é calculada e exibida independentemente de o aluno ter saldo devedor das mensalidades passadas, consistindo em uma cobrança administrativa extra.
+
+### 4.2. Hierarquia de Pagamentos (Payment)
+* **Padronização e definição de diferenças:** O atributo `amount` (valor nominal da transação) é universal e abstrato, pertencendo à superclasse `Payment`. As subclasses encapsulam dados específicos de seus canais: `CashPayment` (montante físico entregue), `PixPayment` (chave de transação) e variantes de cartão (dados do titular, bandeira e parcelas).
+* **Responsabilidade pela taxa de processamento:** A academia absorve a taxa administrativa das operadoras. Exemplo: um pagamento de 100,00 reais no cartão com taxa de 5% (5 reais) terá apenas 95,00 reais líquidos abatidos do saldo devedor via `calculateTotalPaid()`, mantendo R$ 5,00 como pendência contábil.
+* **Uso de getPaymentSummary() em vez de toString():** Evitamos sobrecarregar o `toString()` (projetado para debugging). O método `getPaymentSummary()` permite que cada subclasse formate sua saída polimorficamente com termos comerciais.
+* **Tratamento de métodos exclusivos em subclasses:** Encapsulamos o `getChange()` estritamente em `CashPayment`. No `EnrollmentService`, usamos `instanceof` (Pattern Matching do Java moderno) pontualmente para extrair o troco de forma segura.
+* **Papel do enum PaymentType:** Removido do modelo de domínio, pois violava o Princípio do Polimorfismo Aberto/Fechado (OCP). A própria instância da subclasse já define o tipo de pagamento.
+* **Localização das validações específicas:** Validações financeiras (ex: `received < amount`) foram posicionadas no `EnrollmentService` e na UI, evitando lançar exceções no construtor de objetos de entidade.
+* **Responsabilidade pela formatação de saída:** `getPaymentSummary()` gera uma String formatada dentro da classe de domínio, mantendo os dados brutos privados e entregando uma representação contextualizada.
+* **Transporte de dados do pagamento inicial:** O `EnrollmentMenu` utiliza parâmetros posicionais e strings adicionais. O serviço avalia e faz o parse correspondente antes de invocar o construtor correto.
+
+### 4.3. Interface de Usuário (UserInterface)
+* **Escolha entre Interface e Classe Abstrata:** Implementada como interface Java. `TerminalUI` e `JOptionPaneUI` não compartilham atributos ou comportamentos, invalidando o uso de classe abstrata.
+* **Estratégia de escolha inicial:** Acontece logo no `main`, antes da criação dos menus, sendo o único ponto de acoplamento direto com a interface gráfica.
+* **Garantia de consistência:** O mesmo comportamento e validações foram mantidos em ambas as UIs.
+* **Gestão de retornos nulos no JOptionPane:** Retornos nulos (fechar ou cancelar) são tratados como strings vazias. Validações com `isEmpty()` impedem cadastros incompletos, interrompendo o fluxo.
+* **Adaptação do contrato:** Os quatro métodos originais da interface foram suficientes para atender terminal e interface gráfica.
+* **Viabilidade de persistência:** Seria possível salvar a preferência do usuário em arquivo, já que a escolha acontece apenas no `main`.
+
+### 4.4. Arquitetura, Organização e Outros
+* **Estratégia de refatoração incremental:** Refatoramos primeiro `Plan` (garantindo `PlanService`), depois `Payment` e, por último, `UserInterface`.
+* **Refatoração da lógica de relatórios:** Separação entre busca de dados e formatação. Métodos como `listStudentsWithDebt()` retornam listas validadas; a formatação fica no `ReportsMenu`.
+* **Transparência na exibição:** O `toString()` de `Plan` exibe o valor bruto e o valor com desconto lado a lado.
+* **Ordem de operações no cancelamento:** Toda a lógica foi internalizada no método `.cancel()` de `Enrollment`, evitando "Anemia de Domínio".
+* **Exibição condicional da taxa nula:** Taxas zeradas aparecem como "Isento de multas rescisórias" por transparência.
+* **Tratamento de situações com instanceof:** Restrito estritamente a verificar `CashPayment` para troco.
+* **Organização em subpacotes:** Criados `domain.plan` e `domain.payment` para agrupar classes afins.
+* **Centralização de formatações:** A classe `DateFormatter` centraliza lógicas de limpeza e formatação.
+
+---
+
+## 5. Como o polimorfismo simplificou o código
+A aplicação de polimorfismo eliminou estruturas condicionais que amarravam as regras de negócio aos serviços.
+
+**Cenário sem polimorfismo (Etapa 1):**
+```java
+if (plan.getType() == PlanType.QUARTERLY) {
+    preco = preco * 0.95;
+} else if (plan.getType() == PlanType.ANNUAL) { 
+    preco = preco * 0.85; 
+}
+```
+
+Com a refatoração, o serviço usa apenas `enrollment.getPlan().calculateTotalPrice(months)`. A responsabilidade fica encapsulada na subclasse concreta instanciada. Nenhuma mudança no `EnrollmentService` precisará ser feita caso a academia adicione novos planos.
+
+## 6. Regras de Negócio Implementadas nesta Etapa
+
+* **Aplicação Inclusiva de Descontos:** O desconto é garantido sempre que os meses contratados forem maiores ou iguais à carência mínima (`months >= minDurationMonths`).
+* **Restrição de Taxas em Planos sem Benefício:** Retorno isento (`0.0`) para a multa do plano Mensal via sobrescrita.
+* **Consistência de Fluxo de Caixa:** Travas estritas em pagamentos em dinheiro (`received < amount`) e exigência de preenchimento obrigatório de chaves/dados em pagamentos eletrônicos. Pagamentos avulsos não podem superar o saldo devedor.
+
+---
+
+## 7. Funcionalidades Extras
+
+###  Funcionalidade 1: Política de Taxa de Cancelamento Progressiva
+* **O que foi implementado:** Multa por quebra de tempo mínimo para todos os planos longos, atrelada em 5% acima do desconto oferecido (Trimestral = 10%, Semestral = 15%, Anual = 20%), usando o método protegido `calculatePercentageFee` na superclasse.
+* **Agrega valor?** Sim. Penaliza a quebra de contrato e protege a academia.
+* **Arquitetura/Impacto:** Protegida no pacote `domain.plan`, usa herança e não impacta outras classes.
+
+###  Funcionalidade 2: Fluxo Inteligente de Descoberta de Matrícula por CPF
+* **O que foi implementado:** Fluxos de pagamento avulso e cancelamento agora solicitam o CPF e o sistema localiza automaticamente a matrícula via `findActiveEnrollmentByStudent(cpf)`.
+* **Agrega valor?** Sim. Otimiza radicalmente a usabilidade do operador de caixa.
+* **Arquitetura/Impacto:** A UI apenas coleta o dado; o controlador gerencia a ponte. Mínimo impacto nas classes existentes.
+
+### Funcionalidade 3: Sistema de Bloqueio de Inadimplência e Flexibilização de Caixa
+* **O que foi implementado:** O método `hasDebt()` bloqueia novas matrículas de alunos inadimplentes. O método `registerPayment()` foi reescrito para aceitar pagamentos de matrículas `CANCELLED` com saldo devedor.
+* **Agrega valor?** Sim. Protege a saúde financeira da empresa e permite recuperar créditos de contratos já encerrados.
+* **Arquitetura/Impacto:** Regras executadas no `EnrollmentService`, controlando consistentemente o ciclo de vida das entidades.
+
+---
+
+## 8. Dificuldades e Aprendizados da Etapa 2
+
+**Gestão de Conflitos e Consistência de Estados:**
+Nesta etapa, o grupo enfrentou desafios significativos na resolução de *Merge Conflicts* no Git, decorrentes da edição simultânea de arquivos centrais, aprendendo a conciliar alterações estruturais com correções pontuais. Também tivemos dificuldade em padronizar a emissão de mensagens descritivas via `OperationResult` em todas as camadas, mantendo o sistema livre de estados inconsistentes.
+
+**Sinergia do Desenvolvimento:** Outro desafio profundo foi integrar as três frentes de refatoração (`Plan`, `Payment` e `UI`). Aprendemos que adotar uma estratégia incremental e utilizar o diagrama de classes como ferramenta viva de projeto foram essenciais para antecipar acoplamentos.
+
+**A Realidade da Refatoração:** Por fim, descobrimos na prática que refatorar um código já existente é consideravelmente mais complexo do que criá-lo do zero, exigindo intenso alinhamento arquitetural de todo o grupo.

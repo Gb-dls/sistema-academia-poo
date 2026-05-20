@@ -1,9 +1,8 @@
 package application;
-import domain.Plan;
-import domain.PlanType;
+
+import domain.plan.*;
 import java.util.ArrayList;
 import java.util.Comparator;
-import application.OperationResult;
 
 // Classe responsável pela lógica de negócio dos planos
 // Aqui ficam regras de cadastro, busca, atualização e validação de planos
@@ -36,10 +35,10 @@ public class PlanService {
 
     // ================= CADASTRAR PLANO =================
     // Registra um novo plano no sistema
-    public OperationResult registerPlan(String name, String description, PlanType type, String minDurationStr, String priceStr) {
+    public OperationResult registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) {
 
         // Validação do tipo de plano
-        if (type == null) {
+        if (typeStr == null) {
             return new OperationResult(false, "Tipo de plano inválido.");
         }
 
@@ -70,16 +69,27 @@ public class PlanService {
             return new OperationResult(false, "O preço deve ser positivo.");
         }
 
-        // Criação do plano após validações
-        Plan newPlan = new Plan(name, description, type, minDurationMonths, pricePerMonth);
+        int type = parseInt(typeStr);
+        Plan newPlan;
+        // A decisão é baseada exclusivamente na escolha do usuário no menu (typeStr)
+        if (type == 1) {
+            newPlan = new MonthlyPlan(name, description, minDurationMonths, pricePerMonth);
+        } else if (type == 2) {
+            newPlan = new QuarterlyPlan(name, description, minDurationMonths, pricePerMonth);
+        } else if (type == 3) {
+            newPlan = new SemiAnnualPlan(name, description, minDurationMonths, pricePerMonth);
+        } else if (type == 4) {
+            newPlan = new AnnualPlan(name, description, minDurationMonths, pricePerMonth);
+        } else {
+            return new OperationResult(false, "Opção de tipo de plano inválida.");
+        }
 
-        // Adiciona na lista
+        // Adicionando plano a lista de forma ordenada
         plans.add(newPlan);
-
-        // Mantém lista ordenada por nome
         plans.sort(Comparator.comparing(Plan::getName));
 
-        return new OperationResult(true, "Plano cadastrado com sucesso!", newPlan);
+        return new OperationResult(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
+
     }
 
     // ================= BUSCA =================

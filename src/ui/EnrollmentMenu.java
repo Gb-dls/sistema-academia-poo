@@ -1,147 +1,241 @@
 package ui;
 
 import domain.Enrollment;
-import domain.PaymentType;
-import domain.Plan;
+import domain.plan.Plan;
 import domain.Student;
 import application.FitManager;
 import application.OperationResult;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-
-// Classe responsável pelo menu de MATRÍCULAS
-// Faz a interface entre o usuário e o FitManager
 public class EnrollmentMenu {
 
-    // Interface de comunicação com o usuário (entrada/saída)
     private final UserInterface ui;
-
-    // Fachada do sistema (encaminha para os services)
     private final FitManager fitManager;
 
-    // Construtor das dependências necessárias
     public EnrollmentMenu(UserInterface ui, FitManager fitManager) {
         this.ui = ui;
         this.fitManager = fitManager;
     }
 
-    // ================= MENU PRINCIPAL =================
+    /*
+    @ start
+    @ Objetivo: Iniciar e gerenciar o loop principal do menu de matrículas, direcionando as escolhas do usuário
+    */
     public void start() {
-
         String option;
-
         do {
-            ui.showMenu(
-                    "GERENCIAR MATRÍCULAS",
-                    """
-                            1 - Realizar matrícula
-                            2 - Registrar pagamento
-                            3 - Cancelar matrícula
-                            4 - Consultar matrícula ativa
-                            5 - Listar histórico
-                            6 - Voltar
-                            """
-            );
-
+            ui.showMenu("GERENCIAR MATRÍCULAS", """
+                    1 - Realizar matrícula
+                    2 - Registrar pagamento
+                    3 - Cancelar matrícula
+                    4 - Consultar matrícula ativa
+                    5 - Listar histórico
+                    6 - Voltar
+                    """);
             option = ui.getInput("");
-
             switch (option) {
-                case "1" -> enroll();               // Realizar matrícula
-
-                case "2" -> registerPayment();       // Registrar pagamento
-
-                case "3" -> cancel();                // Cancelar matrícula
-
-                case "4" -> findActiveByStudent();   // Consultar matrícula ativa por CPF
-
-                case "5" -> listAll();               // Listar histórico de matrículas
-
+                case "1" -> enroll();
+                case "2" -> registerPayment();
+                case "3" -> cancel();
+                case "4" -> findActiveByStudent();
+                case "5" -> listAll();
                 case "6" -> ui.showMessage("Voltando ao menu principal...");
-
                 default -> ui.showError("Opção inválida!");
             }
-
         } while (!option.equals("6"));
     }
 
+    /*
+    @ preparePaymentDetails
+    @ Objetivo: Centralizar a captura de dados de pagamento dinâmicos de enroll() e registerPayment() com validação anti-nulo
+    @ Retorna: Um array onde [0]=opcao, [1]=extra1, [2]=extra2, [3]=extra3. Retorna null se for inválido.
+    */
+    private String[] preparePaymentDetails() {
+        ui.showMessage("""
+        Tipos de pagamento:
+        1 - Dinheiro
+        2 - Cartão de débito
+        3 - Cartão de crédito
+        4 - PIX
+        """);
 
-    // ================= REALIZAR MATRÍCULA =================
+        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
+        if (typeInput.isEmpty()) {
+            ui.showError("Tipo de pagamento não informado. Operação cancelada.");
+            return null;
+        }
+
+        if (!typeInput.matches("[1-4]")) {
+            ui.showError("Tipo de pagamento inválido!");
+            return null;
+        }
+
+        String option = typeInput;
+        String extra1 = "", extra2 = "", extra3 = "";
+
+        switch (Integer.parseInt(option)) {
+            case 1 -> {
+                extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
+                if (extra1.isEmpty()) {
+                    ui.showError("Valor em dinheiro não informado. Operação cancelada.");
+                    return null;
+                }
+            }
+            case 2 -> {
+                extra1 = ui.getInput("Nome do titular do cartão de débito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Operação cancelada.");
+                    return null;
+                }
+                extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Operação cancelada.");
+                    return null;
+                }
+            }
+            case 3 -> {
+                extra1 = ui.getInput("Nome do titular do cartão de crédito:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Nome do titular não informado. Operação cancelada.");
+                    return null;
+                }
+                extra2 = ui.getInput("Últimos 4 dígitos do cartão:");
+                if (extra2.isEmpty()) {
+                    ui.showError("Dígitos do cartão não informados. Operação cancelada.");
+                    return null;
+                }
+                extra3 = ui.getInput("Quantidade de parcelas desejada:");
+                if (extra3.isEmpty()) {
+                    ui.showError("Quantidade de parcelas não informada. Operação cancelada.");
+                    return null;
+                }
+            }
+            case 4 -> {
+                extra1 = ui.getInput("Informe a chave PIX utilizada:");
+                if (extra1.isEmpty()) {
+                    ui.showError("Chave PIX não informada. Operação cancelada.");
+                    return null;
+                }
+            }
+        }
+
+        return new String[]{option, extra1, extra2, extra3};
+    }
+
+    /*
+    @ enroll
+    @ Objetivo: Coletar os dados da matrícula validando campos em branco
+    */
     private void enroll() {
-        // Solicita CPF do aluno
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Matrícula cancelada.");
+            return;
+        }
 
-        // Busca aluno no sistema
-        var studentResult = fitManager.findStudentByCpf(cpf);
-
+        OperationResult studentResult = fitManager.findStudentByCpf(cpf);
         if (!studentResult.isSuccess()) {
             ui.showError(studentResult.getMessage());
             return;
         }
-
-        // Converte retorno para Student
         Student student = (Student) studentResult.getData();
 
-        // Solicita plano
         String planName = ui.getInput("Nome do plano:");
+        if (planName.isEmpty()) {
+            ui.showError("Nome do plano não informado. Matrícula cancelada.");
+            return;
+        }
 
-        // Busca plano no sistema
-        var planResult = fitManager.findPlanByName(planName);
+        OperationResult planResult = fitManager.findPlanByName(planName);
         if (!planResult.isSuccess()) {
             ui.showError(planResult.getMessage());
             return;
         }
-
-        // Converte retorno para Plan
         Plan plan = (Plan) planResult.getData();
 
-        // Coleta dados da matrícula
-        String dateInput     = ui.getInput("Data de início (dd/MM/yyyy):");
-        String durationInput = ui.getInput("Duração (em meses):");
-        String paymentInput  = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
-
-        // Exibe opções de pagamento
-        ui.showMessage("""
-            Tipos de pagamento:
-            1 - Dinheiro
-            2 - Cartão de débito
-            3 - Cartão de crédito
-            4 - PIX
-            """);
-
-        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
-
-        // Converte opção para enum PaymentType
-        PaymentType paymentType = parsePaymentType(typeInput);
-
-        if (paymentType == null) {
-            ui.showError("Tipo de pagamento inválido!");
+        String dateInput = ui.getInput("Data de início (dd/MM/yyyy):");
+        if (dateInput.isEmpty()) {
+            ui.showError("Data de início não informada. Matrícula cancelada.");
             return;
         }
 
-        // Executa matrícula via FitManager
-        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, paymentType);
+        String durationInput = ui.getInput("Duração (em meses):");
+        if (durationInput.isEmpty()) {
+            ui.showError("Duração não informada. Matrícula cancelada.");
+            return;
+        }
 
-        if (result.isSuccess()) {
-            ui.showMessage(result.getMessage());
+        String paymentInput = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
+        if (paymentInput.isEmpty()) {
+            ui.showError("Valor do pagamento não informado. Matrícula cancelada.");
+            return;
         }
-        else {
-            ui.showError(result.getMessage());
-        }
+
+        String[] paymentData = preparePaymentDetails();
+        if (paymentData == null) return;
+
+        int option = Integer.parseInt(paymentData[0]);
+
+        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, paymentData[1], paymentData[2], paymentData[3]);
+        if (result.isSuccess()) ui.showMessage(result.getMessage());
+        else ui.showError(result.getMessage());
     }
 
-
-    // ================= CONSULTAR MATRÍCULA ATIVA =================
-    private void findActiveByStudent() {
-
-        // Solicita o CPF do aluno
+    /*
+    @ registerPayment
+    @ Objetivo: Capturar o CPF do aluno, localizar contrato com débito pendente automaticamente e registrar um pagamento.
+    */
+    private void registerPayment() {
         String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Pagamento cancelado.");
+            return;
+        }
 
-        // Busca a matricula ativa do aluno pelo CPF
+        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        String codeInput;
+
+        if (activeResult.isSuccess()) {
+            Enrollment enrollment = (Enrollment) activeResult.getData();
+            codeInput = String.valueOf(enrollment.getCode());
+            ui.showMessage("Matrícula ATIVA localizada! Código: " + codeInput);
+        } else {
+            ui.showMessage("Nenhuma matrícula ATIVA encontrada. Se for um acerto de contas de cancelamento:");
+            codeInput = ui.getInput("Digite o código da matrícula que deseja pagar:");
+        }
+
+        if (codeInput.isBlank()) {
+            ui.showError("Código da matrícula não informado. Pagamento abortado.");
+            return;
+        }
+
+        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
+        if (amountInput.isEmpty()) {
+            ui.showError("Valor não informado. Pagamento cancelado.");
+            return;
+        }
+
+        String[] paymentData = preparePaymentDetails();
+        if (paymentData == null) return;
+
+        int option = Integer.parseInt(paymentData[0]);
+
+        var result = fitManager.registerPayment(codeInput, amountInput, option, paymentData[1], paymentData[2], paymentData[3]);
+        if (result.isSuccess()) ui.showMessage(result.getMessage());
+        else ui.showError(result.getMessage());
+    }
+
+    /*
+    @ findActiveByStudent
+    @ Objetivo: Solicitar a busca e exibir os dados completos da matrícula ativa de acordo com o Cpf informado
+    */
+    private void findActiveByStudent() {
+        String cpf = ui.getInput("CPF do aluno:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Consulta cancelada.");
+            return;
+        }
         var result = fitManager.findActiveEnrollmentByStudent(cpf);
-
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
             ui.showMessage(result.getData().toString());
@@ -150,90 +244,47 @@ public class EnrollmentMenu {
         }
     }
 
-    // ================= REGISTRAR PAGAMENTO =================
-    private void registerPayment() {
-
-        // Coleta dados do pagamento
-        String codeInput   = ui.getInput("Código da matrícula:");
-        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
-
-        ui.showMessage("""
-            Tipos de pagamento:
-            1 - Dinheiro
-            2 - Cartão de débito
-            3 - Cartão de crédito
-            4 - PIX
-            """);
-
-        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
-
-        PaymentType paymentType = parsePaymentType(typeInput);
-        if (paymentType == null) {
-            ui.showError("Tipo de pagamento inválido!");
+    /*
+    @ cancel
+    @ Objetivo: Encontrar a matrícula ativa automaticamente por Cpf e solicitar o cancelamento.
+    */
+    private void cancel() {
+        String cpf = ui.getInput("CPF do aluno para cancelamento:");
+        if (cpf.isEmpty()) {
+            ui.showError("CPF não informado. Cancelamento abortado.");
             return;
         }
 
-        String description = ui.getInput("Descrição do pagamento:");
-
-        // Registra pagamento via FitManager
-        var result = fitManager.registerPayment(codeInput, amountInput, paymentType, description);
-
-        if (result.isSuccess()) {
-            ui.showMessage(result.getMessage());
+        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        if (!activeResult.isSuccess()) {
+            ui.showError(activeResult.getMessage());
+            return;
         }
-        else {
-            ui.showError(result.getMessage());
-        }
-    }
 
-    // ================= CANCELAR MATRÍCULA =================
+        Enrollment enrollment = (Enrollment) activeResult.getData();
+        String codeInput = String.valueOf(enrollment.getCode());
 
-    private void cancel() {
+        ui.showMessage("Matrícula ativa localizada! Encerrando contrato código: " + codeInput);
 
-        // Solicita código da matrícula
-        String codeInput = ui.getInput("Código da matrícula:");
-
-        // Cancela matrícula
         var result = fitManager.cancelEnrollment(codeInput);
-        if (result.isSuccess()) {
-            ui.showMessage(result.getMessage());
-        }
-        else {
-            ui.showError(result.getMessage()); }
+        if (result.isSuccess()) ui.showMessage(result.getMessage());
+        else ui.showError(result.getMessage());
     }
 
-
-    // ================= LISTAR HISTÓRICO =================
+    /*
+    @ listAll
+    @ Objetivo: Recuperar e listar o histórico de matrículas cadastradas no sistema da academia
+    */
     private void listAll() {
-
-        // Busca todas as matrículas
         ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
-
         if (enrollments.isEmpty()) {
             ui.showError("Nenhuma matrícula cadastrada.");
             return;
         }
-
         ui.showMessage("===== HISTÓRICO DE MATRÍCULAS =====");
-        // Percorre e exibe todas as matrículas
         for (int i = 0; i < enrollments.size(); i++) {
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(enrollments.get(i).toString());
         }
-        ui.showMessage("===================================");
     }
-
-    // ================= PRIVADOS =================
-
-
-    // Converte string para PaymentType
-    private PaymentType parsePaymentType(String input) {
-        if (input == null || input.isBlank()) return null;
-        if (!input.matches("\\d+")) return null;
-
-        int value = Integer.parseInt(input);
-        return PaymentType.fromOption(value);
-    }
-
 }
-
