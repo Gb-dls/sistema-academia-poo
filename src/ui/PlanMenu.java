@@ -78,7 +78,7 @@ public class PlanMenu {
 
 
         // Envia dados para a camada de negócio
-        var result = fitManager.registerPlan(name, description, typeInput, durationInput, priceInput);
+        OperationResult<Plan> result = fitManager.registerPlan(name, description, typeInput, durationInput, priceInput);
 
         // Exibe resultado da operação
 
@@ -97,41 +97,55 @@ public class PlanMenu {
             return;
         }
 
-        OperationResult result = fitManager.findPlanByName(name);
+        OperationResult<Plan> result = fitManager.findPlanByName(name);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
-            ui.showMessage(result.getData().toString());
+            Plan plan = result.getData();
+            ui.showMessage(plan.toString());
         } else {
             ui.showError(result.getMessage());
         }
     }
 
-    private void updatePrice() {
+    private void updatePrice(){
+
         String name = ui.getInput("Nome do plano:");
-        if (name.isEmpty()) {
+
+        if (name.isEmpty()){
             ui.showError("Nome não informado. Alteração cancelada.");
             return;
         }
 
-        String priceInput = ui.getInput("Novo preço mensal (ex: 99.90):");
-        if (priceInput.isEmpty()) {
+        String priceInput =
+                ui.getInput("Novo preço mensal (ex: 99.90):");
+
+        if (priceInput.isEmpty()){
             ui.showError("Preço não informado. Alteração cancelada.");
             return;
         }
 
-        OperationResult result = fitManager.updatePlanPrice(name, priceInput);
-        if (result.isSuccess()) ui.showMessage(result.getMessage());
-        else ui.showError(result.getMessage());
+        OperationResult<Plan> result = fitManager.updatePlanPrice(name, priceInput);
+
+        if (result.isSuccess()){
+            ui.showMessage(result.getMessage());
+            Plan plan = result.getData();
+            if(plan != null){
+                ui.showMessage(plan.toString());
+            }
+        }else{
+            ui.showError(result.getMessage());
+        }
     }
 
     private void listAll() {
-        ArrayList<Plan> plans = fitManager.listPlans();
-        if (plans.isEmpty()) {
-            ui.showError("Nenhum plano cadastrado.");
+        OperationResult<ArrayList<Plan>> result = fitManager.listPlans();
+        if (!result.isSuccess()) {
+            ui.showError(result.getMessage());
             return;
         }
+        ArrayList<Plan> plans = result.getData();
         ui.showMessage("===== LISTA DE PLANOS =====");
-        for (int i = 0; i < plans.size(); i++) {
+        for(int i = 0; i < plans.size(); i++){
             ui.showMessage("---------- " + (i + 1) + " ----------");
             ui.showMessage(plans.get(i).toString());
         }

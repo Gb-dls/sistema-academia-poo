@@ -35,38 +35,38 @@ public class PlanService {
 
     // ================= CADASTRAR PLANO =================
     // Registra um novo plano no sistema
-    public OperationResult registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) {
+    public OperationResult<Plan> registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) {
 
         // Validação do tipo de plano
         if (typeStr == null) {
-            return new OperationResult(false, "Tipo de plano inválido.");
+            return new OperationResult<>(false, "Tipo de plano inválido.");
         }
 
         // Validação do nome
         if (name == null || name.isBlank()) {
-            return new OperationResult(false, "O nome do plano não pode ser vazio.");
+            return new OperationResult<>(false, "O nome do plano não pode ser vazio.");
         }
 
         // Validação da descrição
         if (description == null || description.isBlank()) {
-            return new OperationResult(false, "A descrição não pode ser vazia.");
+            return new OperationResult<>(false, "A descrição não pode ser vazia.");
         }
 
         // Evita duplicação de planos
         if (nameExists(name)) {
-            return new OperationResult(false, "Já há um plano com esse nome.");
+            return new OperationResult<>(false, "Já há um plano com esse nome.");
         }
 
         // Converte e valida duração mínima
         int minDurationMonths = parseInt(minDurationStr);
         if (minDurationMonths <= 0) {
-            return new OperationResult(false, "A duração mínima deve ser maior que zero.");
+            return new OperationResult<>(false, "A duração mínima deve ser maior que zero.");
         }
 
         // Converte e valida preço
         double pricePerMonth = parseDouble(priceStr);
         if (pricePerMonth <= 0) {
-            return new OperationResult(false, "O preço deve ser positivo.");
+            return new OperationResult<>(false, "O preço deve ser positivo.");
         }
 
         int type = parseInt(typeStr);
@@ -81,53 +81,55 @@ public class PlanService {
         } else if (type == 4) {
             newPlan = new AnnualPlan(name, description, minDurationMonths, pricePerMonth);
         } else {
-            return new OperationResult(false, "Opção de tipo de plano inválida.");
+            return new OperationResult<>(false, "Opção de tipo de plano inválida.");
         }
 
         // Adicionando plano a lista de forma ordenada
         plans.add(newPlan);
         plans.sort(Comparator.comparing(Plan::getName));
 
-        return new OperationResult(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
+        return new OperationResult<>(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
 
     }
 
     // ================= BUSCA =================
     // Busca um plano pelo nome e retorna null se não encontrado
-    public Plan findByName(String name) {
+    public OperationResult<Plan> findByName(String name) {
         for (Plan current : plans) {
             if (current.getName().equalsIgnoreCase(name)) {
-                return current;
+                return new OperationResult<>(true, "Plano encontrado.", current);
             }
         }
-        return null;
-    }
 
+        return new OperationResult<>(false, "Plano não encontrado.");
+    }
 
     // ================= ATUALIZAÇÃO =================
 
     // Atualiza o preço mensal de um plano existente
     // Importante: matrículas antigas não são afetadas
 
-    public OperationResult updatePrice(String name, String priceStr) {
+    public OperationResult<Plan> updatePrice(String name, String priceStr) {
 
         // Busca plano
-        Plan planUpdate = findByName(name);
+        OperationResult<Plan> result = findByName(name);
 
-        if (planUpdate == null) {
-            return new OperationResult(false, "O plano não foi encontrado.");
+        if (!result.isSuccess()) {
+            return new OperationResult<>(false, "O plano não foi encontrado.");
         }
+
+        Plan planUpdate = result.getData();
 
         // Converte e valida novo preço
         double newPrice = parseDouble(priceStr);
         if (newPrice <= 0) {
-            return new OperationResult(false, "O preço deve ser positivo.");
+            return new OperationResult<>(false, "O preço deve ser positivo.");
         }
 
         // Atualiza preço no objeto
         planUpdate.updatePrice(newPrice);
 
-        return new OperationResult(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice);
+        return new OperationResult<>(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice);
     }
 
 
@@ -135,8 +137,12 @@ public class PlanService {
     // Retorna uma cópia da lista de planos cadastrados.
     // Uma cópia é retornada para impedir que classes externas
     // modifiquem a coleção interna diretamente.
-    public ArrayList<Plan> listPlans() {
-        return new ArrayList<>(plans);
+    public OperationResult<ArrayList<Plan>> listPlans() {
+        if (plans.isEmpty()) {
+            return new OperationResult<>(false, "Nenhum plano cadastrado.");
+        }
+        return new OperationResult<>(true, "Lista de planos carregada.", new ArrayList<>(plans)
+        );
     }
 
 
