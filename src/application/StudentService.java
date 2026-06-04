@@ -6,6 +6,7 @@ import validators.CpfValidator;
 import validators.ContactValidator;
 import domain.Enrollment;
 import formatters.DateFormatter;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,42 +40,36 @@ public class StudentService {
 
     // ================= CADASTRAR ALUNO =================
 
-    public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
-
-        // Remove caracteres não numéricos do CPF e telefone
-        /*String cleanCpf     = cleanNumber(cpf);
-        String cleanContact = cleanNumber(contact);
-
+    public OperationResult<Student>  registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
         // Converte string de data para LocalDate
-        LocalDate birthDate = parseDate(birthDateStr);*/
         String cleanCpf     = DateFormatter.cleanNumber(cpf);
         String cleanContact = DateFormatter.cleanNumber(contact);
         LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
 
         // Validações de regra de negócio
         if (name == null || name.isBlank()) {
-            return new OperationResult(false, "Nome inválido!");
+            return new OperationResult<>(false, "Nome inválido!");
         }
 
         if (!cpfValidator.isValidCpf(cleanCpf)) {
-            return new OperationResult(false, "CPF inválido.\n");
+            return new OperationResult<>(false, "CPF inválido.\n");
         }
 
         if (cpfExists(cleanCpf)) {
-            return new OperationResult(false, "CPF já cadastrado.\n");
+            return new OperationResult<>(false, "CPF já cadastrado.\n");
         }
 
 
         if (!contactValidator.isValidContact(cleanContact)) {
-            return new OperationResult(false, "Telefone inválido!");
+            return new OperationResult<>(false, "Telefone inválido!");
         }
 
         if (email == null || email.isBlank()) {
-            return new OperationResult(false, "Email inválido!");
+            return new OperationResult<>(false, "Email inválido!");
         }
 
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            return new OperationResult(false, "Data de nascimento inválida!");
+            return new OperationResult<>(false, "Data de nascimento inválida!");
         }
 
         // Criação do objeto aluno após validações
@@ -95,12 +90,12 @@ public class StudentService {
                 student.getBirthDate()
         );
 
-        return new OperationResult(true, "Aluno cadastrado com sucesso.\n", copy);
+        return new OperationResult<>(true, "Aluno cadastrado com sucesso.\n", copy);
     }
 
 
     // ================= BUSCAR POR CPF =================
-    public OperationResult findByCpf(String cpf) {
+    public OperationResult<Student> findByCpf(String cpf) {
 
         // Busca entidade real na lista
         Student student = findEntityByCpf(cpf);
@@ -114,30 +109,26 @@ public class StudentService {
                     student.getEmail(),
                     student.getBirthDate()
             );
-            return new OperationResult(true, "Aluno encontrado.\n", copy);
+            return new OperationResult<>(true, "Aluno encontrado.\n", copy);
         }
-        return new OperationResult(false, "Aluno não encontrado.\n");
+        return new OperationResult<>(false, "Aluno não encontrado.\n");
     }
 
     // ================= LISTAR ALUNOS =================
-    public OperationResult listStudents() {
+    public OperationResult<ArrayList<Student>> listStudents() {
 
         // Verifica se não há alunos cadastrados
         if (students.isEmpty()) {
-            return new OperationResult(false, "Nenhum aluno cadastrado.");
+            return new OperationResult<>(false, "Nenhum aluno cadastrado.");
         }
         // Retorna cópia da lista para evitar alteração externa
-        return new OperationResult(true, "Lista de alunos carregada.", new ArrayList<>(students));
+        return new OperationResult<>(true, "Lista de alunos carregada.", new ArrayList<>(students));
     }
 
     // ================= ATUALIZAR ALUNO =================
-    public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
 
-        /*// Normaliza entrada
-        String cleanCpf     = cleanNumber(cpf);
-        String cleanContact = cleanNumber(contact);
-        LocalDate birthDate = parseDate(birthDateStr);*/
-
+        // Normaliza entrada
         String cleanCpf     = DateFormatter.cleanNumber(cpf);
         String cleanContact = DateFormatter.cleanNumber(contact);
         LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
@@ -147,23 +138,23 @@ public class StudentService {
 
         // Validações de atualização
         if (student == null) {
-            return new OperationResult(false, "Aluno não encontrado.\n");
+            return new OperationResult<>(false, "Aluno não encontrado.\n");
         }
 
         if (name == null || name.isBlank()) {
-            return new OperationResult(false, "Nome inválido!");
+            return new OperationResult<>(false, "Nome inválido!");
         }
 
         if (!contactValidator.isValidContact(cleanContact)) {
-            return new OperationResult(false, "Telefone inválido!");
+            return new OperationResult<>(false, "Telefone inválido!");
         }
 
         if (email == null || email.isBlank()) {
-            return new OperationResult(false, "Email inválido!");
+            return new OperationResult<>(false, "Email inválido!");
         }
 
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            return new OperationResult(false, "Data de nascimento inválida!");
+            return new OperationResult<>(false, "Data de nascimento inválida!");
         }
 
         // Atualiza dados do aluno existente
@@ -184,41 +175,41 @@ public class StudentService {
                 student.getBirthDate()
         );
 
-        return new OperationResult(true, "Aluno atualizado com sucesso.\n", copy);
+        return new OperationResult<>(true, "Aluno atualizado com sucesso.\n", copy);
     }
 
 
 
     // ================= INATIVAR ALUNO =================
-    public OperationResult removeStudent(String cpf) {
+    public OperationResult<Void> removeStudent(String cpf) {
 
         String cleanCpf = DateFormatter.cleanNumber(cpf);
         // Busca aluno
         Student student = findEntityByCpf(cleanCpf);
 
         if (student == null) {
-            return new OperationResult(false, "Aluno não encontrado.");
+            return new OperationResult<>(false, "Aluno não encontrado.");
         }
 
         // Verifica se já está inativo
         if (!student.isActive()) {
-            return new OperationResult(false, "Aluno já está inativo.");
+            return new OperationResult<>(false, "Aluno já está inativo.");
         }
 
         // Verifica se possui matrícula ativa
         if (enrollmentService.hasActiveEnrollment(cleanCpf)) {
-            return new OperationResult(false, "Aluno possui matrícula ativa, não pode ser inativado.");
+            return new OperationResult<>(false, "Aluno possui matrícula ativa, não pode ser inativado.");
         }
 
         // Verifica se possui débitos pendentes
         if (enrollmentService.hasDebt(cleanCpf)) {
-            return new OperationResult(false, "Aluno possui débitos pendentes, não pode ser inativado.");
+            return new OperationResult<>(false, "Aluno possui débitos pendentes, não pode ser inativado.");
         }
 
         //Inativa o aluno
         student.deactivate();
 
-        return new OperationResult(true, "Aluno inativado com sucesso.");
+        return new OperationResult<>(true, "Aluno inativado com sucesso.");
     }
 
     // ================= MÉTODOS PRIVADOS =================
@@ -238,33 +229,6 @@ public class StudentService {
         return findEntityByCpf(cpf) != null;
     }
 
-    /*// Converte string de data (dd/MM/yyyy) para LocalDate
-    private LocalDate parseDate(String input) {
-
-        if (input == null || input.isBlank()) {
-            return null;
-        }
-        if (!input.matches("\\d{2}/\\d{2}/\\d{4}")) {
-            return null;
-        }
-
-        int day   = Integer.parseInt(input.substring(0, 2));
-        int month = Integer.parseInt(input.substring(3, 5));
-        int year  = Integer.parseInt(input.substring(6, 10));
-
-        if (month < 1 || month > 12) return null;
-        if (day < 1 || day > 31)     return null;
-
-        return LocalDate.of(year, month, day);
-    }
-
-    //limpa tudo que não é numero de uma string
-    private String cleanNumber(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.replaceAll("\\D", "");
-    }*/
 
 
 }
