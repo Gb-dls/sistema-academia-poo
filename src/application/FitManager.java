@@ -30,27 +30,27 @@ public class FitManager {
     // ================= ALUNOS =================
 
     // Cadastra um aluno
-    public OperationResult registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
         return studentService.registerStudent(name, cpf, contact, email, birthDateStr);
     }
 
     // Busca aluno pelo CPF
-    public OperationResult findStudentByCpf(String cpf) {
+    public OperationResult<Student> findStudentByCpf(String cpf) {
         return studentService.findByCpf(cpf);
     }
 
     // Atualiza dados de um aluno
-    public OperationResult updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
         return studentService.updateStudent(cpf, name, contact, email, birthDateStr);
     }
 
     // Inativa um aluno
-    public OperationResult removeStudent(String cpf) {
+    public OperationResult<Void> removeStudent(String cpf) {
         return studentService.removeStudent(cpf);
     }
 
     // Lista todos os alunos cadastrados
-    public OperationResult listStudents() {
+    public OperationResult<ArrayList<Student>>  listStudents() {
         return studentService.listStudents();
     }
 
@@ -148,17 +148,13 @@ public class FitManager {
 
     // Lista todos os alunos que possuem dívidas pendentes
     public ArrayList<Student> listStudentsWithDebt() {
-        OperationResult result = studentService.listStudents();
+        OperationResult<ArrayList<Student>> result = studentService.listStudents();
 
         if (!result.isSuccess() || result.getData() == null) {
             return new ArrayList<>();
         }
 
-        if (!(result.getData() instanceof ArrayList)) {
-            return new ArrayList<>();
-        }
-
-        ArrayList<Student> students = (ArrayList<Student>) result.getData();
+        ArrayList<Student> students = result.getData();
         ArrayList<Student> withDebt = new ArrayList<>();
 
         for (int i = 0; i < students.size(); i++) {
