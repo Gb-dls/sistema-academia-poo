@@ -96,71 +96,51 @@ public class ReportsMenu {
 
     // Lista matrículas que possuem saldo pendente
     private void listPendingEnrollments() {
-
-        OperationResult result = fitManager.listPendingEnrollments();
-
-        if (!result.isSuccess()) {
+        OperationResult<ArrayList<Enrollment>> result = fitManager.listPendingEnrollments();
+        if(!result.isSuccess()){
             ui.showError(result.getMessage());
             return;
         }
-
-        ArrayList<Enrollment> pending = (ArrayList<Enrollment>) result.getData();
-
+        ArrayList<Enrollment> pending = result.getData();
         ui.showMessage("===== MATRÍCULAS PENDENTES =====");
 
-        for (int i = 0; i < pending.size(); i++) {
+        for(int i = 0; i < pending.size(); i++){
             ui.showMessage(pending.get(i).toString());
         }
-
         ui.showMessage("Total: " + pending.size() + " matrícula(s) pendente(s).");
-
     }
 
     // Lista todas as matrículas cadastradas no sistema
     private void listAllEnrollments() {
 
-        ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
-
-        if (enrollments.isEmpty()) {
-            ui.showMessage("Nenhuma matrícula cadastrada.");
+        OperationResult<ArrayList<Enrollment>> result = fitManager.listEnrollments();
+        if(!result.isSuccess()){
+            ui.showMessage(result.getMessage());
             return;
         }
 
+        ArrayList<Enrollment> enrollments = result.getData();
         ui.showMessage("===== TODAS AS MATRÍCULAS =====");
-
-        for (int i = 0; i < enrollments.size(); i++) {
-
-            Enrollment e = enrollments.get(i);
-
-            ui.showMessage(e.toString());
-
+        for(int i = 0; i < enrollments.size(); i++){
+            ui.showMessage(enrollments.get(i).toString());
         }
-
         ui.showMessage("Total: " + enrollments.size());
-
     }
 
     // Lista todos os planos disponíveis no sistema
     private void listAllPlans() {
-
-        ArrayList<Plan> plans = fitManager.listPlans();
-
-        if (plans.isEmpty()) {
-            ui.showMessage("Nenhum plano cadastrado.");
+        OperationResult<ArrayList<Plan>> result = fitManager.listPlans();
+        if(!result.isSuccess()){
+            ui.showMessage(result.getMessage());
             return;
         }
-
+        ArrayList<Plan> plans = result.getData();
         ui.showMessage("===== TODOS OS PLANOS =====");
-
-        for (int i = 0; i < plans.size(); i++) {
-
+        for(int i = 0; i < plans.size(); i++){
             Plan p = plans.get(i);
-
-            ui.showMessage(plans.get(i).toString());
+            ui.showMessage(p.toString());
         }
-
         ui.showMessage("Total: " + plans.size());
-
     }
 
 
@@ -174,14 +154,13 @@ public class ReportsMenu {
             return;
         }
 
-        OperationResult result = fitManager.findStudentByCpf(cpf);
-
-        if (!result.isSuccess() || result.getData() == null) {
+        OperationResult<Student> result = fitManager.findStudentByCpf(cpf);
+        if(!result.isSuccess()){
             ui.showMessage(result.getMessage());
             return;
         }
 
-        Student student = (Student) result.getData();
+        Student student = result.getData();
 
         ui.showMessage(student.toString());
     }
@@ -195,15 +174,12 @@ public class ReportsMenu {
             return;
         }
 
-        OperationResult result = fitManager.findPlanByName(name);
-
-        if (!result.isSuccess() || result.getData() == null) {
+        OperationResult<Plan> result = fitManager.findPlanByName(name);
+        if(!result.isSuccess()){
             ui.showMessage(result.getMessage());
             return;
         }
-
-        Plan plan = (Plan) result.getData();
-
+        Plan plan = result.getData();
         ui.showMessage(plan.toString());
     }
 
@@ -216,15 +192,12 @@ public class ReportsMenu {
             return;
         }
 
-        OperationResult result = fitManager.findActiveEnrollmentByStudent(cpf);
-
-        if (!result.isSuccess() || result.getData() == null) {
+        OperationResult<Enrollment> result = fitManager.findActiveEnrollmentByStudent(cpf);
+        if(!result.isSuccess()){
             ui.showMessage(result.getMessage());
             return;
         }
-
-        Enrollment enrollment = (Enrollment) result.getData();
-
+        Enrollment enrollment = result.getData();
         ui.showMessage(enrollment.toString());
     }
 
