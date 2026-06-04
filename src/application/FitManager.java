@@ -57,26 +57,23 @@ public class FitManager {
     // ================= PLANOS =================
 
     // Cadastra um novo plano
-    public OperationResult registerPlan(String name, String description, String type, String minDuration, String price) {
+    public  OperationResult<Plan> registerPlan(String name, String description, String type, String minDuration, String price) {
         return planService.registerPlan(name, description, type, minDuration, price);
     }
 
     // Busca plano pelo nome
-    public OperationResult findPlanByName(String name) {
-        Plan plan = planService.findByName(name);
-        if (plan == null) {
-            return new OperationResult(false, "Plano não encontrado.");
-        }
-        return new OperationResult(true, "Plano encontrado.", plan);
+    public OperationResult<Plan> findPlanByName(String name) {
+        return planService.findByName(name);
+
     }
 
     // Atualiza o preço de um plano
-    public OperationResult updatePlanPrice(String name, String newPrice) {
+    public OperationResult<Plan> updatePlanPrice(String name, String newPrice) {
         return planService.updatePrice(name, newPrice);
     }
 
     // Lista todos os planos
-    public ArrayList<Plan> listPlans() {
+    public OperationResult<ArrayList<Plan>> listPlans() {
         return planService.listPlans();
     }
 
@@ -86,7 +83,7 @@ public class FitManager {
     @ enroll
     @ Objetivo: Repassar a solicitação de matrícula com os parâmetros de pagamento expandidos para o Service
     */
-    public OperationResult enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, int paymentOption, String extra1, String extra2, String extra3) {
         return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentOption, extra1, extra2, extra3);
     }
 
@@ -94,26 +91,26 @@ public class FitManager {
     @ registerPayment
     @ Objetivo: Repassar o registro do pagamento avulso com dados expandidos para o Service
     */
-    public OperationResult registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
         return enrollmentService.registerPayment(codeStr, amountStr, paymentOption, extra1, extra2, extra3);
     }
 
     // Cancela uma matrícula
-    public OperationResult cancelEnrollment(String codeStr) {
+    public OperationResult<Void> cancelEnrollment(String codeStr) {
         return enrollmentService.cancel(codeStr);
     }
 
     // Consulta a matrícula ativa de um aluno pelo CPF
-    public OperationResult findActiveEnrollmentByStudent(String cpf) {
+    public OperationResult<Enrollment> findActiveEnrollmentByStudent(String cpf) {
         Enrollment enrollment = enrollmentService.findActiveByStudent(cpf);
         if (enrollment == null) {
-            return new OperationResult(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
+            return new OperationResult<>(false, "Nenhuma matrícula ativa encontrada para o CPF informado.");
         }
-        return new OperationResult(true, "Matrícula ativa encontrada.", enrollment);
+        return new OperationResult<>(true, "Matrícula ativa encontrada.", enrollment);
     }
 
     // Retorna a lista de todas as matrículas (histórico)
-    public ArrayList<Enrollment> listEnrollments() {
+    public OperationResult<ArrayList<Enrollment>> listEnrollments() {
         return enrollmentService.listEnrollments();
     }
 
@@ -121,7 +118,12 @@ public class FitManager {
 
     // Lista todos os alunos que possuem matrícula ativa no sistema
     public ArrayList<Student> listActiveStudents() {
-        ArrayList<Enrollment> enrollments = listEnrollments();
+        OperationResult<ArrayList<Enrollment>> result = listEnrollments();
+        if(!result.isSuccess()){
+            return new ArrayList<>();
+        }
+
+        ArrayList<Enrollment> enrollments = result.getData();
         ArrayList<Student> activeStudents = new ArrayList<>();
 
         for (int i = 0; i < enrollments.size(); i++) {
@@ -167,28 +169,31 @@ public class FitManager {
     }
 
     // Lista matrículas que possuem saldo pendente
-    public OperationResult listPendingEnrollments() {
+    public OperationResult<ArrayList<Enrollment>> listPendingEnrollments() {
+
         ArrayList<Student> studentsWithDebt = listStudentsWithDebt();
 
-        if (studentsWithDebt.isEmpty()) {
-            return new OperationResult(false, "Nenhum aluno com dívida encontrado.");
+        if(studentsWithDebt.isEmpty()){
+            return new OperationResult<>(false, "Nenhum aluno com dívida encontrado.");
         }
 
-        ArrayList<Enrollment> enrollments = listEnrollments();
+        OperationResult<ArrayList<Enrollment>> result = listEnrollments();
 
-        if (enrollments == null || enrollments.isEmpty()) {
-            return new OperationResult(false, "Nenhuma matrícula cadastrada.");
+        if(!result.isSuccess() || result.getData() == null){
+            return new OperationResult<>(false, "Nenhuma matrícula cadastrada.");
         }
+
+        ArrayList<Enrollment> enrollments = result.getData();
 
         ArrayList<Enrollment> pending = new ArrayList<>();
 
-        for (int i = 0; i < enrollments.size(); i++) {
+        for(int i = 0; i < enrollments.size(); i++){
             Enrollment e = enrollments.get(i);
 
-            if (e != null && e.getStudent() != null && e.getStatus() == EnrollmentStatus.ACTIVE) {
-                for (int j = 0; j < studentsWithDebt.size(); j++) {
+            if(e != null && e.getStudent() != null && e.getStatus() == EnrollmentStatus.ACTIVE){
+                for(int j = 0; j < studentsWithDebt.size(); j++){
                     Student s = studentsWithDebt.get(j);
-                    if (s != null && e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0) {
+                    if(s != null && e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0){
                         pending.add(e);
                         break;
                     }
@@ -196,10 +201,9 @@ public class FitManager {
             }
         }
 
-        if (pending.isEmpty()) {
-            return new OperationResult(false, "Nenhuma matrícula ativa com saldo pendente encontrada.");
+        if(pending.isEmpty()){
+            return new OperationResult<>(false, "Nenhuma matrícula ativa com saldo pendente encontrada.");
         }
-
-        return new OperationResult(true, "Matrículas pendentes encontradas.", pending);
+        return new OperationResult<>(true, "Matrículas pendentes encontradas.", pending);
     }
 }
