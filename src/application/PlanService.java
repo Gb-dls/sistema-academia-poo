@@ -6,13 +6,9 @@ import java.util.Comparator;
 
 // Classe responsável pela lógica de negócio dos planos
 // Aqui ficam regras de cadastro, busca, atualização e validação de planos
-public class PlanService {
+public class PlanService extends Repository<Plan> {
 
-    // ================= ATRIBUTOS =================
 
-    // Lista interna de planos cadastrados.
-    // Acessível apenas pelos métodos deste serviço — nunca diretamente por outras classes.
-    private ArrayList<Plan> plans = new ArrayList<Plan>();
 
     // ================= VALIDAÇÕES =================
 
@@ -20,7 +16,7 @@ public class PlanService {
     // A comparação ignora maiúsculas/minúsculas para evitar duplicatas como
     // "Mensal" e "mensal".
     public boolean nameExists(String name){
-        for (Plan current : plans) {
+        for (Plan current : items) {
             if (current.getName().equalsIgnoreCase(name)) {
                 return true;
             }
@@ -85,8 +81,8 @@ public class PlanService {
         }
 
         // Adicionando plano a lista de forma ordenada
-        plans.add(newPlan);
-        plans.sort(Comparator.comparing(Plan::getName));
+        items.add(newPlan);
+        items.sort(Comparator.comparing(Plan::getName));
 
         return new OperationResult<>(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
 
@@ -95,7 +91,7 @@ public class PlanService {
     // ================= BUSCA =================
     // Busca um plano pelo nome e retorna null se não encontrado
     public OperationResult<Plan> findByName(String name) {
-        for (Plan current : plans) {
+        for (Plan current : items) {
             if (current.getName().equalsIgnoreCase(name)) {
                 return new OperationResult<>(true, "Plano encontrado.", current);
             }
@@ -138,13 +134,23 @@ public class PlanService {
     // Uma cópia é retornada para impedir que classes externas
     // modifiquem a coleção interna diretamente.
     public OperationResult<ArrayList<Plan>> listPlans() {
-        if (plans.isEmpty()) {
+        if(count() == 0){
             return new OperationResult<>(false, "Nenhum plano cadastrado.");
         }
-        return new OperationResult<>(true, "Lista de planos carregada.", new ArrayList<>(plans)
-        );
+
+        return new OperationResult<>(true, "Lista de planos carregada.", listAll());
     }
 
+    // metodos concretos de repository implementar quando for inserir os arquivos
+    @Override
+    public void save(String filePath) {
+
+    }
+
+    @Override
+    public void load(String filePath) {
+
+    }
 
     // ================= PRIVADOS =================
 
