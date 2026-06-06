@@ -133,12 +133,12 @@ public class EnrollmentMenu {
             return;
         }
 
-        OperationResult studentResult = fitManager.findStudentByCpf(cpf);
+        OperationResult<Student> studentResult = fitManager.findStudentByCpf(cpf);
         if (!studentResult.isSuccess()) {
             ui.showError(studentResult.getMessage());
             return;
         }
-        Student student = (Student) studentResult.getData();
+        Student student = studentResult.getData();
 
         String planName = ui.getInput("Nome do plano:");
         if (planName.isEmpty()) {
@@ -146,12 +146,12 @@ public class EnrollmentMenu {
             return;
         }
 
-        OperationResult planResult = fitManager.findPlanByName(planName);
+        OperationResult<Plan> planResult = fitManager.findPlanByName(planName);
         if (!planResult.isSuccess()) {
             ui.showError(planResult.getMessage());
             return;
         }
-        Plan plan = (Plan) planResult.getData();
+        Plan plan = planResult.getData();
 
         String dateInput = ui.getInput("Data de início (dd/MM/yyyy):");
         if (dateInput.isEmpty()) {
@@ -176,7 +176,7 @@ public class EnrollmentMenu {
 
         int option = Integer.parseInt(paymentData[0]);
 
-        var result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, paymentData[1], paymentData[2], paymentData[3]);
+        OperationResult<Enrollment> result = fitManager.enroll(student, plan, dateInput, durationInput, paymentInput, option, paymentData[1], paymentData[2], paymentData[3]);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
     }
@@ -192,7 +192,7 @@ public class EnrollmentMenu {
             return;
         }
 
-        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        OperationResult<Enrollment> activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
         String codeInput;
 
         if (activeResult.isSuccess()) {
@@ -220,7 +220,7 @@ public class EnrollmentMenu {
 
         int option = Integer.parseInt(paymentData[0]);
 
-        var result = fitManager.registerPayment(codeInput, amountInput, option, paymentData[1], paymentData[2], paymentData[3]);
+        OperationResult<Enrollment> result = fitManager.registerPayment(codeInput, amountInput, option, paymentData[1], paymentData[2], paymentData[3]);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
     }
@@ -235,7 +235,7 @@ public class EnrollmentMenu {
             ui.showError("CPF não informado. Consulta cancelada.");
             return;
         }
-        var result = fitManager.findActiveEnrollmentByStudent(cpf);
+        OperationResult<Enrollment> result = fitManager.findActiveEnrollmentByStudent(cpf);
         if (result.isSuccess()) {
             ui.showMessage(result.getMessage());
             ui.showMessage(result.getData().toString());
@@ -255,18 +255,18 @@ public class EnrollmentMenu {
             return;
         }
 
-        var activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
+        OperationResult<Enrollment> activeResult = fitManager.findActiveEnrollmentByStudent(cpf);
         if (!activeResult.isSuccess()) {
             ui.showError(activeResult.getMessage());
             return;
         }
 
-        Enrollment enrollment = (Enrollment) activeResult.getData();
+        Enrollment enrollment = activeResult.getData();
         String codeInput = String.valueOf(enrollment.getCode());
 
         ui.showMessage("Matrícula ativa localizada! Encerrando contrato código: " + codeInput);
 
-        var result = fitManager.cancelEnrollment(codeInput);
+        OperationResult<Void> result = fitManager.cancelEnrollment(codeInput);
         if (result.isSuccess()) ui.showMessage(result.getMessage());
         else ui.showError(result.getMessage());
     }
@@ -276,15 +276,19 @@ public class EnrollmentMenu {
     @ Objetivo: Recuperar e listar o histórico de matrículas cadastradas no sistema da academia
     */
     private void listAll() {
-        ArrayList<Enrollment> enrollments = fitManager.listEnrollments();
-        if (enrollments.isEmpty()) {
-            ui.showError("Nenhuma matrícula cadastrada.");
+        OperationResult<ArrayList<Enrollment>> result = fitManager.listEnrollments();
+        if (!result.isSuccess()) {
+            ui.showError(result.getMessage());
             return;
         }
+        ArrayList<Enrollment> enrollments = result.getData();
         ui.showMessage("===== HISTÓRICO DE MATRÍCULAS =====");
-        for (int i = 0; i < enrollments.size(); i++) {
+        for(int i = 0; i < enrollments.size(); i++){
+
             ui.showMessage("---------- " + (i + 1) + " ----------");
+
             ui.showMessage(enrollments.get(i).toString());
         }
+
     }
 }
