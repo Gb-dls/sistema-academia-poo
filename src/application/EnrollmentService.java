@@ -8,14 +8,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnrollmentService {
+public class EnrollmentService extends Repository<Enrollment>  {
 
     private static int nextCode = 1;
-    private ArrayList<Enrollment> enrollments;
 
-    public EnrollmentService() {
-        this.enrollments = new ArrayList<>();
-    }
 
     /*
     @ enroll
@@ -89,7 +85,7 @@ public class EnrollmentService {
 
         Enrollment newEnrollment = new Enrollment(nextCode, student, plan, startDate, durationMonths);
         newEnrollment.registerPayment(firstPayment);
-        enrollments.add(newEnrollment);
+        items.add(newEnrollment);
         nextCode++;
 
         return new OperationResult<>(true, "Matrícula efetivada com sucesso.");
@@ -218,7 +214,7 @@ public class EnrollmentService {
     @ Retorna: O objeto Enrollment correspondente ao código informado ou null caso não seja localizado
     */
     public Enrollment findByCode(int code) {
-        for (Enrollment e : enrollments) {
+        for (Enrollment e : items) {
             if (e.getCode() == code) return e;
         }
         return null;
@@ -240,7 +236,7 @@ public class EnrollmentService {
     */
     public Enrollment findActiveByStudent(String cpf) {
         String cleanCpf = DateFormatter.cleanNumber(cpf);
-        for (Enrollment e : enrollments) {
+        for (Enrollment e : items) {
             if (e.getStudent().getCpf().equals(cleanCpf) && e.getStatus() == EnrollmentStatus.ACTIVE) {
                 return e;
             }
@@ -254,10 +250,11 @@ public class EnrollmentService {
     @ Retorna: Um ArrayList contendo todas as matrículas registradas no sistema
     */
     public OperationResult<ArrayList<Enrollment>> listEnrollments() {
-        if(enrollments.isEmpty()){
+        if(count() == 0){
             return new OperationResult<>(false, "Nenhuma matrícula cadastrada.");
         }
-        return new OperationResult<>(true, "Lista de matrículas carregada.", new ArrayList<>(enrollments));
+        return new OperationResult<>(true, "Lista de matrículas carregada.", listAll()
+        );
     }
 
     /*
@@ -269,7 +266,7 @@ public class EnrollmentService {
         // Remove pontos e traços para garantir que a comparação seja apenas dos números
         String cleanCpf = cpf.replaceAll("\\D", "");
 
-        for (Enrollment e : enrollments) {
+        for (Enrollment e : items) {
             String studentCleanCpf = e.getStudent().getCpf().replaceAll("\\D", "");
             if (studentCleanCpf.equals(cleanCpf)) {
                 result.add(e);
@@ -300,6 +297,17 @@ public class EnrollmentService {
         if (input == null || input.isBlank() || !input.matches("\\d+")) return -1;
         return Integer.parseInt(input);
     }
+    // metodos concretos de repository implementar quando for inserir os arquivos
+    @Override
+    public void save(String filePath) {
+
+    }
+
+    @Override
+    public void load(String filePath) {
+
+    }
+
 
     /*
     @ parseDouble
@@ -310,4 +318,6 @@ public class EnrollmentService {
         if (input == null || input.isBlank() || !input.matches("\\d+(\\.\\d+)?")) return -1;
         return Double.parseDouble(input);
     }
+
+
 }

@@ -15,12 +15,9 @@ import java.util.Comparator;
 
 // Classe responsável pela lógica de negócio dos alunos
 // Aqui ficam as regras do sistema (validações, criação, atualização, busca)
-public class StudentService {
+public class StudentService extends Repository<Student> {
 
     // ================= ATRIBUTOS =================
-
-    // Lista em memória que armazena todos os alunos cadastrados
-    private List<Student> students = new ArrayList<>();
 
     // Validador responsável por regras de CPF
     private CpfValidator cpfValidator = new CpfValidator();
@@ -76,10 +73,10 @@ public class StudentService {
         Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
 
         // Adiciona aluno na lista em memória
-        students.add(student);
+        items.add(student);
 
         // Mantém lista ordenada por nome (ordem alfabética)
-        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER)); //ordena a lista por ordem alfabética
+        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER)); //ordena a lista por ordem alfabética
 
         // Cria uma cópia para não expor o objeto original
         Student copy = new Student(
@@ -118,11 +115,11 @@ public class StudentService {
     public OperationResult<ArrayList<Student>> listStudents() {
 
         // Verifica se não há alunos cadastrados
-        if (students.isEmpty()) {
+        if (items.isEmpty()) {
             return new OperationResult<>(false, "Nenhum aluno cadastrado.");
         }
         // Retorna cópia da lista para evitar alteração externa
-        return new OperationResult<>(true, "Lista de alunos carregada.", new ArrayList<>(students));
+        return new OperationResult<>(true, "Lista de alunos carregada.", listAll());
     }
 
     // ================= ATUALIZAR ALUNO =================
@@ -164,7 +161,7 @@ public class StudentService {
         student.setBirthDate(birthDate);
 
         // Reordena lista após atualização
-        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
+        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
 
         // Cria cópia para retorno com os dados do aluno atualizados
         Student copy = new Student(
@@ -216,12 +213,28 @@ public class StudentService {
 
     // Percorre a lista procurando um aluno com o CPF informado
     private Student findEntityByCpf(String cpf) {
-        for (int i = 0; i < students.size(); i++) {
+        /*for (int i = 0; i < students.size(); i++) {
             if (students.get(i).getCpf().equals(cpf)) {
                 return students.get(i);
             }
+        }*/
+        for(int i = 0; i < items.size(); i++){
+            if (items.get(i).getCpf().equals(cpf)) {
+                return items.get(i);
+            }
         }
         return null;
+    }
+
+     // metodos concretos de repository implementar quando for inserir os arquivos
+    @Override
+    public void save(String filePath) {
+
+    }
+
+    @Override
+    public void load(String filePath) {
+
     }
 
     // Verifica se um CPF já está cadastrado
