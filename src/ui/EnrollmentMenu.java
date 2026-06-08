@@ -5,12 +5,15 @@ import domain.plan.Plan;
 import domain.Student;
 import application.FitManager;
 import application.OperationResult;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 
 public class EnrollmentMenu {
 
     private final UserInterface ui;
     private final FitManager fitManager;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public EnrollmentMenu(UserInterface ui, FitManager fitManager) {
         this.ui = ui;
@@ -22,7 +25,7 @@ public class EnrollmentMenu {
     @ Objetivo: Iniciar e gerenciar o loop principal do menu de matrículas, direcionando as escolhas do usuário
     */
     public void start() {
-        String option;
+        int option;
         do {
             ui.showMenu("GERENCIAR MATRÍCULAS", """
                     1 - Realizar matrícula
@@ -32,17 +35,17 @@ public class EnrollmentMenu {
                     5 - Listar histórico
                     6 - Voltar
                     """);
-            option = ui.getInput("");
+            option = ui.getInt("");
             switch (option) {
-                case "1" -> enroll();
-                case "2" -> registerPayment();
-                case "3" -> cancel();
-                case "4" -> findActiveByStudent();
-                case "5" -> listAll();
-                case "6" -> ui.showMessage("Voltando ao menu principal...");
+                case 1 -> enroll();
+                case 2 -> registerPayment();
+                case 3 -> cancel();
+                case 4 -> findActiveByStudent();
+                case 5 -> listAll();
+                case 6 -> ui.showMessage("Voltando ao menu principal...");
                 default -> ui.showError("Opção inválida!");
             }
-        } while (!option.equals("6"));
+        } while (option != 6);
     }
 
     /*
@@ -59,27 +62,23 @@ public class EnrollmentMenu {
         4 - PIX
         """);
 
-        String typeInput = ui.getInput("Escolha o tipo de pagamento:");
-        if (typeInput.isEmpty()) {
+        int typeInput = ui.getInt("Escolha o tipo de pagamento:");
+        if (typeInput == -1) {
             ui.showError("Tipo de pagamento não informado. Operação cancelada.");
             return null;
         }
 
-        if (!typeInput.matches("[1-4]")) {
-            ui.showError("Tipo de pagamento inválido!");
-            return null;
-        }
-
-        String option = typeInput;
+        String option = String.valueOf(typeInput);
         String extra1 = "", extra2 = "", extra3 = "";
 
         switch (Integer.parseInt(option)) {
             case 1 -> {
-                extra1 = ui.getInput("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
-                if (extra1.isEmpty()) {
+                double cash = ui.getDouble("Valor em dinheiro entregue pelo cliente (para cálculo do troco):");
+                if (cash == -1.0) {
                     ui.showError("Valor em dinheiro não informado. Operação cancelada.");
                     return null;
                 }
+                extra1 = String.valueOf(cash);
             }
             case 2 -> {
                 extra1 = ui.getInput("Nome do titular do cartão de débito:");
@@ -104,11 +103,13 @@ public class EnrollmentMenu {
                     ui.showError("Dígitos do cartão não informados. Operação cancelada.");
                     return null;
                 }
-                extra3 = ui.getInput("Quantidade de parcelas desejada:");
-                if (extra3.isEmpty()) {
+
+                int installments = ui.getInt("Quantidade de parcelas desejada:");
+                if (installments == -1) {
                     ui.showError("Quantidade de parcelas não informada. Operação cancelada.");
                     return null;
                 }
+                extra3 = String.valueOf(installments);
             }
             case 4 -> {
                 extra1 = ui.getInput("Informe a chave PIX utilizada:");
@@ -116,6 +117,10 @@ public class EnrollmentMenu {
                     ui.showError("Chave PIX não informada. Operação cancelada.");
                     return null;
                 }
+            }
+            default -> {
+                ui.showError("Tipo de pagamento inválido!");
+                return null;
             }
         }
 
@@ -153,23 +158,26 @@ public class EnrollmentMenu {
         }
         Plan plan = planResult.getData();
 
-        String dateInput = ui.getInput("Data de início (dd/MM/yyyy):");
-        if (dateInput.isEmpty()) {
+        LocalDate startDate = ui.getDate("Data de início");
+        if (startDate == null) {
             ui.showError("Data de início não informada. Matrícula cancelada.");
             return;
         }
+        String dateInput = startDate.format(dateFormatter);
 
-        String durationInput = ui.getInput("Duração (em meses):");
-        if (durationInput.isEmpty()) {
+        int duration = ui.getInt("Duração (em meses):");
+        if (duration == -1) {
             ui.showError("Duração não informada. Matrícula cancelada.");
             return;
         }
+        String durationInput = String.valueOf(duration);
 
-        String paymentInput = ui.getInput("Valor do pagamento inicial (ex: 99.90):");
-        if (paymentInput.isEmpty()) {
+        double paymentValue = ui.getDouble("Valor do pagamento inicial (ex: 99.90):");
+        if (paymentValue == -1.0) {
             ui.showError("Valor do pagamento não informado. Matrícula cancelada.");
             return;
         }
+        String paymentInput = String.valueOf(paymentValue);
 
         String[] paymentData = preparePaymentDetails();
         if (paymentData == null) return;
@@ -196,24 +204,25 @@ public class EnrollmentMenu {
         String codeInput;
 
         if (activeResult.isSuccess()) {
-            Enrollment enrollment = (Enrollment) activeResult.getData();
+            Enrollment enrollment = activeResult.getData();
             codeInput = String.valueOf(enrollment.getCode());
             ui.showMessage("Matrícula ATIVA localizada! Código: " + codeInput);
         } else {
             ui.showMessage("Nenhuma matrícula ATIVA encontrada. Se for um acerto de contas de cancelamento:");
-            codeInput = ui.getInput("Digite o código da matrícula que deseja pagar:");
+            int code = ui.getInt("Digite o código da matrícula que deseja pagar:");
+            if (code == -1) {
+                ui.showError("Operação cancelada pelo usuário. Pagamento abortado.");
+                return;
+            }
+            codeInput = String.valueOf(code);
         }
 
-        if (codeInput.isBlank()) {
-            ui.showError("Código da matrícula não informado. Pagamento abortado.");
-            return;
-        }
-
-        String amountInput = ui.getInput("Valor do pagamento (ex: 99.90):");
-        if (amountInput.isEmpty()) {
+        double amount = ui.getDouble("Valor do pagamento (ex: 99.90):");
+        if (amount == -1.0) {
             ui.showError("Valor não informado. Pagamento cancelado.");
             return;
         }
+        String amountInput = String.valueOf(amount);
 
         String[] paymentData = preparePaymentDetails();
         if (paymentData == null) return;
