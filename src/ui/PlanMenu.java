@@ -17,7 +17,7 @@ public class PlanMenu {
     }
 
     public void start() {
-        String option;
+        int option;
         do {
             ui.showMenu("GERENCIAR PLANOS", """
                     1 - Cadastrar novo plano
@@ -26,16 +26,16 @@ public class PlanMenu {
                     4 - Listar todos
                     5 - Voltar
                     """);
-            option = ui.getInput("");
+            option = ui.getInt("");
             switch (option) {
-                case "1" -> registerPlan();
-                case "2" -> findByName();
-                case "3" -> updatePrice();
-                case "4" -> listAll();
-                case "5" -> ui.showMessage("Voltando ao menu principal...");
+                case 1 -> registerPlan();
+                case 2 -> findByName();
+                case 3 -> updatePrice();
+                case 4 -> listAll();
+                case 5 -> ui.showMessage("Voltando ao menu principal...");
                 default  -> ui.showError("Opção inválida!");
             }
-        } while (!option.equals("5"));
+        } while (option != 5);
     }
 
     private void registerPlan() {
@@ -57,25 +57,28 @@ public class PlanMenu {
                 3 - Semestral
                 4 - Anual
                 """);
-        String typeInput = ui.getInput("Escolha o tipo:");
-        if (typeInput.isEmpty()) {
-            ui.showError("Tipo não informado. Cadastro cancelado.");
+        int type = ui.getInt("Escolha o tipo:");
+        if (type == -1) {
+            ui.showError("Operação cancelada pelo usuário. Cadastro cancelado.");
             return;
         }
-
 
         // Coleta dados adicionais
-        String durationInput = ui.getInput("Duração mínima (em meses):");
-        if (durationInput.isEmpty()) {
-            ui.showError("Duração não informada. Cadastro cancelado.");
+        int duration = ui.getInt("Duração mínima (em meses):");
+        if (duration == -1) {
+            ui.showError("Operação cancelada pelo usuário. Cadastro cancelado.");
             return;
         }
 
-        String priceInput    = ui.getInput("Preço mensal (ex: 99.90):");
-        if (priceInput.isEmpty()) {
-            ui.showError("Preço não informado. Cadastro cancelado.");
-            return; }
+        double price = ui.getDouble("Preço mensal (ex: 99.90):");
+        if (price == -1.0) {
+            ui.showError("Operação cancelada pelo usuário. Cadastro cancelado.");
+            return;
+        }
 
+        String typeInput = String.valueOf(type);
+        String durationInput = String.valueOf(duration);
+        String priceInput = String.valueOf(price);
 
         // Envia dados para a camada de negócio
         OperationResult<Plan> result = fitManager.registerPlan(name, description, typeInput, durationInput, priceInput);
@@ -116,14 +119,13 @@ public class PlanMenu {
             return;
         }
 
-        String priceInput =
-                ui.getInput("Novo preço mensal (ex: 99.90):");
-
-        if (priceInput.isEmpty()){
-            ui.showError("Preço não informado. Alteração cancelada.");
+        double price = ui.getDouble("Novo preço mensal (ex: 99.90):");
+        if (price == -1.0) {
+            ui.showError("Operação cancelada pelo usuário. Alteração cancelada.");
             return;
         }
 
+        String priceInput = String.valueOf(price);
         OperationResult<Plan> result = fitManager.updatePlanPrice(name, priceInput);
 
         if (result.isSuccess()){
