@@ -16,7 +16,7 @@ public class StudentMenu {
     }
 
     public void start() {
-        String option;
+        int option;
         do {
             ui.showMenu("GERENCIAR ALUNOS", """
                     1 - Cadastrar novo aluno
@@ -26,17 +26,17 @@ public class StudentMenu {
                     5 - Listar todos
                     6 - Voltar
                     """);
-            option = ui.getInput("");
+            option = ui.getInt("");
             switch (option) {
-                case "1" -> registerStudent();
-                case "2" -> findByCpf();
-                case "3" -> updateStudent();
-                case "4" -> deleteStudent();
-                case "5" -> listAll();
-                case "6" -> ui.showMessage("Voltando ao menu principal...");
+                case 1 -> registerStudent();
+                case 2 -> findByCpf();
+                case 3 -> updateStudent();
+                case 4 -> deleteStudent();
+                case 5 -> listAll();
+                case 6 -> ui.showMessage("Voltando ao menu principal...");
                 default -> ui.showError("Opção inválida!");
             }
-        } while (!option.equals("6"));
+        } while (option != 6);
     }
 
     private void registerStudent() {
@@ -61,11 +61,16 @@ public class StudentMenu {
             ui.showError("E-mail não informado. Cadastro cancelado.");
             return;
         }
-        String birth = ui.getInput("Data de nascimento (dd/MM/yyyy):");
-        if (birth.isEmpty()) {
-            ui.showError("Data de nascimento não informada. Cadastro cancelado.");
+
+        java.time.LocalDate birthDate = ui.getDate("Data de nascimento");
+        if (birthDate == null) {
+            ui.showError("Operação cancelada pelo usuário. O aluno não foi cadastrado.");
             return;
         }
+
+        // Converte o LocalDate estável para String para mandar ao FitManager sem quebrar nada
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String birth = birthDate.format(formatter);
 
         OperationResult<Student> result = fitManager.registerStudent(name, cpf, contact, email, birth);
 
@@ -114,11 +119,15 @@ public class StudentMenu {
             return;
         }
 
-        String birth = ui.getInput("Nova data de nascimento (dd/MM/yyyy):");
-        if (birth.isEmpty()) {
-            ui.showError("Data de nascimento não informada. Edição cancelada.");
+        java.time.LocalDate birthDate = ui.getDate("Nova data de nascimento");
+
+        if (birthDate == null) {
+            ui.showError("Operação cancelada pelo usuário. Edição cancelada.");
             return;
         }
+
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String birth = birthDate.format(formatter);
 
         OperationResult<Student> result = fitManager.updateStudent(cpf, name, contact, email, birth);
 
