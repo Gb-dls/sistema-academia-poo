@@ -37,7 +37,7 @@ public class MainMenu {
     // O sistema fica rodando nesse loop até o usuário escolher a opção de sair.
     public void start() {
 
-        String option;
+        int option;
         do {
             ui.showMenu("FITMANAGER",
                     """
@@ -49,23 +49,29 @@ public class MainMenu {
                     """
             );
 
-            option = ui.getInput("");   // Le a opção digitada pelo usuário
+            option = ui.getInt("");   // Le a opção digitada pelo usuário
+
+            // TRATAMENTO DO CANCELAR: Se o usuário clicou em Cancelar ou fechou o JOptionPane
+            if (option == -1) {
+                ui.showMessage("Operação cancelada pelo usuário. Saindo...");
+                break; // Quebra o do-while e encerra o menu com segurança
+            }
 
             switch (option) {       // Direciona para o menu correspondente à opção escolhida
 
-                case "1" -> studentMenu.start();     //  "1", entra no menu de alunos
+                case 1 -> studentMenu.start();     //  entra no menu de alunos
 
-                case "2" -> planMenu.start();      //  "2", entra no menu de planos
+                case 2 -> planMenu.start();      //  entra no menu de planos
 
-                case "3" -> enrollmentMenu.start(); //  "3", entra no menu de matriculas
+                case 3 -> enrollmentMenu.start(); //  entra no menu de matriculas
 
-                case "4" -> reportsMenu.start(); //  "4", entra no menu de relatorios
+                case 4 -> reportsMenu.start(); //  entra no menu de relatorios
 
-                case "5" -> ui.showMessage("Saindo..."); // Saida
+                case 5 -> ui.showMessage("Saindo..."); // Saida
 
                 default -> ui.showError("Opção inválida!"); // Qualquer outra opção é invalida
             }
 
-        } while (!option.equals("5"));
+        } while (option != 5);
     }
 }
