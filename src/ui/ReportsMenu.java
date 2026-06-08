@@ -25,10 +25,10 @@ public class ReportsMenu {
         this.fitManager = fitManager;
     }
 
-    // Método principal do menu de alunos
+    // Metodo principal do menu de alunos
     public void start() {
 
-        String option;
+        int option;
 
         // Looping que mantém o menu ativo até o utilizador escolher sair
         do {
@@ -46,30 +46,34 @@ public class ReportsMenu {
                     """
             );
 
-            option = ui.getInput("");       // Le a opção do utilizador
+            option = ui.getInt("");       // Le a opção do utilizador
+
+            if (option == -1) {
+                return;
+            }
 
             switch (option) {
 
-                case "1" -> listActiveStudents();
+                case 1 -> listActiveStudents();
 
-                case "2" -> listPendingEnrollments();
+                case 2 -> listPendingEnrollments();
 
-                case "3" -> listAllEnrollments();
+                case 3 -> listAllEnrollments();
 
-                case "4" -> listAllPlans();
+                case 4 -> listAllPlans();
 
-                case "5" -> findStudentByCpf();
+                case 5 -> findStudentByCpf();
 
-                case "6" -> findPlanByName();
+                case 6 -> findPlanByName();
 
-                case "7" -> findActiveEnrollmentByCpf();
+                case 7 -> findActiveEnrollmentByCpf();
 
-                case "8" -> ui.showMessage("Voltando ao menu principal...");
+                case 8 -> ui.showMessage("Voltando ao menu principal...");
 
                 default -> ui.showError("Opção inválida!");
             }
 
-        } while (!option.equals("8"));
+        } while (option != 8);
     }
 
 
