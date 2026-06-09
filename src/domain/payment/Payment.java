@@ -1,9 +1,10 @@
 package domain.payment;
 
 import java.time.LocalDate;
+import java.io.Serializable;
 
-public abstract class Payment {
-
+public abstract class Payment implements Serializable {
+    private static final long serialVersionUID = 1L;
     protected LocalDate date;
     protected double amount;
 
