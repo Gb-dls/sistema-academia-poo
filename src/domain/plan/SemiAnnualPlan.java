@@ -24,4 +24,8 @@ public class SemiAnnualPlan extends Plan {
     public double getCancellationFee(Enrollment enrollment) {
         return calculatePercentageFee(enrollment, 0.15);
     }
+
+
+    @Override
+    public String getPlanTypeName() { return "SemiAnnual"; }
 }

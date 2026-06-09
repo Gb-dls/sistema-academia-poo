@@ -39,4 +39,11 @@ public class CreditCardPayment extends Payment {
                 this.lastCardNumbers,
                 this.installments);
     }
+
+    /*
+    @ getPaymentMethod
+    @ Objetivo: Retornar o tipo de pagamento para exibir no relatorio financeiro
+    */
+    @Override
+    public String getPaymentMethodName() { return "Credit Card"; }
 }
