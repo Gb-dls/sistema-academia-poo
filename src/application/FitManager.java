@@ -4,6 +4,9 @@ import domain.Student;
 import domain.plan.Plan;
 import domain.Enrollment;
 import domain.EnrollmentStatus;
+import exceptions.ValidationException;
+import exceptions.BusinessException;
+
 import java.util.ArrayList;
 
 // Classe que centraliza o acesso aos serviços e serve de ponte entre a UI e as regras de negócio
@@ -30,7 +33,7 @@ public class FitManager {
     // ================= ALUNOS =================
 
     // Cadastra um aluno
-    public OperationResult<Student> registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> registerStudent(String name, String cpf, String contact, String email, String birthDateStr) throws ValidationException, BusinessException {
         return studentService.registerStudent(name, cpf, contact, email, birthDateStr);
     }
 
@@ -40,35 +43,34 @@ public class FitManager {
     }
 
     // Atualiza dados de um aluno
-    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) throws ValidationException, BusinessException {
         return studentService.updateStudent(cpf, name, contact, email, birthDateStr);
     }
 
     // Inativa um aluno
-    public OperationResult<Void> removeStudent(String cpf) {
+    public OperationResult<Void> removeStudent(String cpf) throws BusinessException {
         return studentService.removeStudent(cpf);
     }
 
     // Lista todos os alunos cadastrados
-    public OperationResult<ArrayList<Student>>  listStudents() {
+    public OperationResult<ArrayList<Student>> listStudents() {
         return studentService.listStudents();
     }
 
     // ================= PLANOS =================
 
     // Cadastra um novo plano
-    public  OperationResult<Plan> registerPlan(String name, String description, String type, String minDuration, String price) {
+    public OperationResult<Plan> registerPlan(String name, String description, String type, String minDuration, String price) throws ValidationException, BusinessException {
         return planService.registerPlan(name, description, type, minDuration, price);
     }
 
     // Busca plano pelo nome
     public OperationResult<Plan> findPlanByName(String name) {
         return planService.findByName(name);
-
     }
 
     // Atualiza o preço de um plano
-    public OperationResult<Plan> updatePlanPrice(String name, String newPrice) {
+    public OperationResult<Plan> updatePlanPrice(String name, String newPrice) throws ValidationException, BusinessException {
         return planService.updatePrice(name, newPrice);
     }
 
@@ -83,7 +85,7 @@ public class FitManager {
     @ enroll
     @ Objetivo: Repassar a solicitação de matrícula com os parâmetros de pagamento expandidos para o Service
     */
-    public OperationResult<Enrollment> enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> enroll(Student student, Plan plan, String startDateStr, String durationStr, String paymentStr, int paymentOption, String extra1, String extra2, String extra3) throws ValidationException, BusinessException {
         return enrollmentService.enroll(student, plan, startDateStr, durationStr, paymentStr, paymentOption, extra1, extra2, extra3);
     }
 
@@ -91,12 +93,12 @@ public class FitManager {
     @ registerPayment
     @ Objetivo: Repassar o registro do pagamento avulso com dados expandidos para o Service
     */
-    public OperationResult<Enrollment> registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) throws ValidationException, BusinessException {
         return enrollmentService.registerPayment(codeStr, amountStr, paymentOption, extra1, extra2, extra3);
     }
 
     // Cancela uma matrícula
-    public OperationResult<Void> cancelEnrollment(String codeStr) {
+    public OperationResult<Void> cancelEnrollment(String codeStr) throws ValidationException, BusinessException {
         return enrollmentService.cancel(codeStr);
     }
 

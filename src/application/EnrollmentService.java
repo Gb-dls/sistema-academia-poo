@@ -4,6 +4,7 @@ import domain.*;
 import domain.plan.Plan;
 import domain.payment.*;
 import formatters.DateFormatter;
+import exceptions.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,41 +21,41 @@ public class EnrollmentService {
     /*
     @ enroll
     @ Objetivo: Realizar a matrícula de um aluno em um plano instanciando a subclasse de pagamento correta
-    @ Retorna: Um OperationResult indicando o sucesso da operação ou o motivo da falha na validação
+    @ Retorna: Um OperationResult indicando o sucesso da operação ou lança exceções em caso de falha
     */
-    public OperationResult<Enrollment> enroll(Student student, Plan plan, String startDateStr, String durationStr, String initialPaymentStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> enroll(Student student, Plan plan, String startDateStr, String durationStr, String initialPaymentStr, int paymentOption, String extra1, String extra2, String extra3) throws ValidationException, BusinessException {
 
         LocalDate startDate = DateFormatter.parseDate(startDateStr);
         if (startDate == null) {
-            return new OperationResult<>(false, "Data inválida! Use o formato dd/MM/yyyy.");
+            throw new InvalidFormatFieldException("Data de Início", "dd/MM/yyyy");
         }
 
         int durationMonths = parseInt(durationStr);
         if (durationMonths <= 0) {
-            return new OperationResult<>(false, "Duração inválida.");
+            throw new InvalidFormatFieldException("Duração", "Número inteiro de meses maior que zero");
         }
 
         double initialPayment = parseDouble(initialPaymentStr);
         if (initialPayment <= 0) {
-            return new OperationResult<>(false, "Valor de pagamento inválido.");
+            throw new InvalidFormatFieldException("Valor do pagamento", "Valor numérico positivo");
         }
 
         if (hasActiveEnrollment(student.getCpf())) {
-            return new OperationResult<>(false, "O aluno já possui uma matrícula ativa no sistema.");
+            throw new StudentWithActiveRegistrationException(student.getCpf());
         }
 
         if (hasDebt(student.getCpf())) {
-            return new OperationResult<>(false, "Matrícula recusada! O aluno possui débitos pendentes em contratos anteriores.");
+            throw new BusinessException("Matrícula recusada! O aluno possui débitos pendentes em contratos anteriores.");
         }
 
         if (durationMonths < plan.getMinDurationMonths()) {
-            return new OperationResult<>(false, "A duração escolhida é menor que o mínimo exigido pelo plano (" + plan.getMinDurationMonths() + " meses).");
+            throw new BusinessException("A duração escolhida (" + durationMonths + " meses) é menor que o mínimo exigido pelo plano (" + plan.getMinDurationMonths() + " meses).");
         }
 
         double valuePerMonth = plan.calculateTotalPrice(durationMonths) / durationMonths;
 
         if (initialPayment < valuePerMonth) {
-            return new OperationResult<>(false, String.format("O pagamento inicial mínimo exigido é de R$ %.2f.", valuePerMonth));
+            throw new BusinessException(String.format("O pagamento inicial mínimo exigido pelo plano é de R$ %.2f.", valuePerMonth));
         }
 
         // Instanciação polimórfica baseada na escolha do Menu
@@ -63,27 +64,31 @@ public class EnrollmentService {
             case 1 -> { // Dinheiro
                 double received = parseDouble(extra1);
                 if (received < initialPayment) {
-                    return new OperationResult<>(false, "O valor entregue em dinheiro é menor que o valor a ser pago.");
+                    throw new BusinessException("O valor entregue em dinheiro é menor que o valor a ser pago.");
                 }
                 firstPayment = new CashPayment(initialPayment, received);
             }
             case 2 -> { // Cartão de Débito
-                if (extra1.isBlank() || extra2.isBlank()) return new OperationResult<>(false, "Dados do cartão de débito são obrigatórios.");
+                if (extra1.isBlank() || extra2.isBlank()) {
+                    throw new RequiredFieldException("Dados do cartão de débito");
+                }
                 firstPayment = new DebitCardPayment(initialPayment, extra1, extra2);
             }
             case 3 -> { // Cartão de Crédito
                 int installments = parseInt(extra3);
                 if (extra1.isBlank() || extra2.isBlank() || installments <= 0) {
-                    return new OperationResult<>(false, "Dados do cartão de crédito ou parcelas inválidos.");
+                    throw new RequiredFieldException("Dados do cartão de crédito ou parcelas");
                 }
                 firstPayment = new CreditCardPayment(initialPayment, extra1, extra2, installments);
             }
             case 4 -> { // PIX
-                if (extra1.isBlank()) return new OperationResult<>(false, "A chave PIX é obrigatória.");
+                if (extra1.isBlank()) {
+                    throw new RequiredFieldException("Chave PIX");
+                }
                 firstPayment = new PixPayment(initialPayment, extra1);
             }
             default -> {
-                return new OperationResult<>(false, "Opção de pagamento inválida no sistema.");
+                throw new InvalidPaymentMethodException(String.valueOf(paymentOption));
             }
         }
 
@@ -98,31 +103,31 @@ public class EnrollmentService {
     /*
     @ registerPayment
     @ Objetivo: Registra um pagamento em uma matrícula existente validando limites e regras de negócio
-    @ Retorna: Um OperationResult contendo o status de sucesso e a atualização do saldo devedor ou quitação da matrícula
+    @ Retorna: Um OperationResult contendo o status de sucesso e a atualização do saldo devedor
     */
-    public OperationResult<Enrollment> registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) {
+    public OperationResult<Enrollment> registerPayment(String codeStr, String amountStr, int paymentOption, String extra1, String extra2, String extra3) throws ValidationException, BusinessException {
 
         int enrollmentCode = parseInt(codeStr);
         if (enrollmentCode <= 0) {
-            return new OperationResult<>(false, "Código de matrícula inválido.");
+            throw new InvalidFormatFieldException("Código de matrícula", "Número inteiro válido");
         }
 
         double amount = parseDouble(amountStr);
         if (amount <= 0) {
-            return new OperationResult<>(false, "Valor de pagamento inválido.");
+            throw new InvalidFormatFieldException("Valor de pagamento", "Valor numérico positivo");
         }
 
         Enrollment flagEnrollment = findByCode(enrollmentCode);
         if (flagEnrollment == null) {
-            return new OperationResult<>(false, "Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
+            throw new BusinessException("Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
         }
 
         if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED && flagEnrollment.calculateBalance() <= 0) {
-            return new OperationResult<>(false, "Não é possível registrar pagamentos. Esta matrícula já está cancelada e quitada.");
+            throw new BusinessException("Não é possível registrar pagamentos. Esta matrícula já está cancelada e quitada.");
         }
 
         if (amount > flagEnrollment.calculateBalance()) {
-            return new OperationResult<>(false, "O valor pago supera o saldo devedor. Pagamento máximo permitido: R$ " + flagEnrollment.calculateBalance());
+            throw new PaymentValueMismatchException(flagEnrollment.calculateBalance(), amount);
         }
 
         // Instanciação polimórfica para novos pagamentos avulsos
@@ -131,27 +136,27 @@ public class EnrollmentService {
             case 1 -> {
                 double received = parseDouble(extra1);
                 if (received < amount) {
-                    return new OperationResult<>(false, "O valor entregue em dinheiro é insuficiente.");
+                    throw new BusinessException("O valor entregue em dinheiro é insuficiente.");
                 }
                 newPayment = new CashPayment(amount, received);
             }
             case 2 -> {
-                if (extra1.isBlank() || extra2.isBlank()) return new OperationResult<>(false, "Dados do cartão de débito são obrigatórios.");
+                if (extra1.isBlank() || extra2.isBlank()) throw new RequiredFieldException("Dados do cartão de débito");
                 newPayment = new DebitCardPayment(amount, extra1, extra2);
             }
             case 3 -> {
                 int installments = parseInt(extra3);
                 if (extra1.isBlank() || extra2.isBlank() || installments <= 0) {
-                    return new OperationResult<>(false, "Dados do cartão de crédito ou parcelas inválidos.");
+                    throw new RequiredFieldException("Dados do cartão de crédito ou parcelas");
                 }
                 newPayment = new CreditCardPayment(amount, extra1, extra2, installments);
             }
             case 4 -> {
-                if (extra1.isBlank()) return new OperationResult<>(false, "A chave PIX é obrigatória.");
+                if (extra1.isBlank()) throw new RequiredFieldException("Chave PIX");
                 newPayment = new PixPayment(amount, extra1);
             }
             default -> {
-                return new OperationResult<>(false, "Opção de pagamento inválida.");
+                throw new InvalidPaymentMethodException(String.valueOf(paymentOption));
             }
         }
 
@@ -174,13 +179,14 @@ public class EnrollmentService {
     @ cancel
     @ Objetivo: Solicitar o cancelamento de uma matrícula e retornar o extrato financeiro final recalculado.
     */
-    public OperationResult<Void> cancel(String codeStr) {
+    public OperationResult<Void> cancel(String codeStr) throws ValidationException, BusinessException {
         int code = parseInt(codeStr);
 
-        if (code <= 0) return new OperationResult<>(false, "Código de matrícula inválido.");
+        if (code <= 0) throw new InvalidFormatFieldException("Código de matrícula", "Número inteiro válido");
+
         Enrollment flagEnrollment = findByCode(code);
-        if (flagEnrollment == null) return new OperationResult<>(false, "Matrícula não encontrada no sistema.");
-        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) return new OperationResult<>(false, "A matrícula informada já está cancelada.");
+        if (flagEnrollment == null) throw new BusinessException("Matrícula não encontrada no sistema.");
+        if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) throw new BusinessException("A matrícula informada já está cancelada.");
 
         // Guarda os valores de antes do cancelamento apenas para o relatório técnico
         double originalContract = flagEnrollment.getTotalPrice();
