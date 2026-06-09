@@ -8,12 +8,15 @@ import exceptions.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
 
-public class StudentService {
+// Classe responsável pela lógica de negócio dos alunos
+// Aqui ficam as regras do sistema (validações, criação, atualização, busca)
+public class StudentService extends Repository<Student> {
 
-    private List<Student> students = new ArrayList<>();
+    // ================= ATRIBUTOS =================
+
+    // Validador responsável por regras de CPF
     private CpfValidator cpfValidator = new CpfValidator();
     private ContactValidator contactValidator = new ContactValidator();
     private EnrollmentService enrollmentService;
@@ -51,11 +54,54 @@ public class StudentService {
         }
 
         Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
-        students.add(student);
-        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
 
-        Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
-        return new OperationResult<>(true, "Aluno cadastrado com sucesso.", copy);
+        // Adiciona aluno na lista em memória (herdada do Repository)
+        items.add(student);
+
+        // Mantém lista ordenada por nome (ordem alfabética)
+        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
+
+        // Cria uma cópia para não expor o objeto original
+        Student copy = new Student(
+                student.getName(),
+                student.getCpf(),
+                student.getContact(),
+                student.getEmail(),
+                student.getBirthDate()
+        );
+
+        return new OperationResult<>(true, "Aluno cadastrado com sucesso.\n", copy);
+    }
+
+    // ================= BUSCAR POR CPF =================
+    public OperationResult<Student> findByCpf(String cpf) {
+
+        // Busca entidade real na lista
+        Student student = findEntityByCpf(cpf);
+
+        // Retorna cópia do aluno encontrado
+        if (student != null) {
+            Student copy = new Student(
+                    student.getName(),
+                    student.getCpf(),
+                    student.getContact(),
+                    student.getEmail(),
+                    student.getBirthDate()
+            );
+            return new OperationResult<>(true, "Aluno encontrado.\n", copy);
+        }
+        return new OperationResult<>(false, "Aluno não encontrado.\n");
+    }
+
+    // ================= LISTAR ALUNOS =================
+    public OperationResult<ArrayList<Student>> listStudents() {
+
+        // Verifica se não há alunos cadastrados
+        if (items.isEmpty()) {
+            return new OperationResult<>(false, "Nenhum aluno cadastrado.");
+        }
+        // Retorna cópia da lista para evitar alteração externa
+        return new OperationResult<>(true, "Lista de alunos carregada.", listAll());
     }
 
     // ================= ATUALIZAR ALUNO =================
@@ -86,7 +132,8 @@ public class StudentService {
         student.setEmail(email);
         student.setBirthDate(birthDate);
 
-        students.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
+        // Reordena lista após atualização
+        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
 
         Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
         return new OperationResult<>(true, "Cadastro atualizado com sucesso.", copy);
@@ -115,31 +162,28 @@ public class StudentService {
         return new OperationResult<>(true, "Aluno inativado com sucesso.");
     }
 
-    // ================= BUSCAR E LISTAR (Apenas Consultas) =================
-    public OperationResult<Student> findByCpf(String cpf) {
-        Student student = findEntityByCpf(DateFormatter.cleanNumber(cpf));
-        if (student != null) {
-            Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
-            return new OperationResult<>(true, "Aluno encontrado.", copy);
-        }
-        return new OperationResult<>(false, "Aluno não encontrado no sistema.");
-    }
-
-    public OperationResult<ArrayList<Student>> listStudents() {
-        if (students.isEmpty()) {
-            return new OperationResult<>(false, "Nenhum aluno cadastrado.");
-        }
-        return new OperationResult<>(true, "Lista de alunos carregada.", new ArrayList<>(students));
-    }
-
     // ================= MÉTODOS PRIVADOS =================
     private Student findEntityByCpf(String cpf) {
-        for (Student s : students) {
-            if (s.getCpf().equals(cpf)) return s;
+        for(int i = 0; i < items.size(); i++){
+            if (items.get(i).getCpf().equals(cpf)) {
+                return items.get(i);
+            }
         }
         return null;
     }
 
+    // metodos concretos de repository implementar quando for inserir os arquivos
+    @Override
+    public void save(String filePath) {
+
+    }
+
+    @Override
+    public void load(String filePath) {
+
+    }
+
+    // Verifica se um CPF já está cadastrado
     private boolean cpfExists(String cpf) {
         return findEntityByCpf(cpf) != null;
     }
