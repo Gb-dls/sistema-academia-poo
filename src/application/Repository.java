@@ -12,14 +12,14 @@ public abstract class Repository<T> {
         this.items = new ArrayList<>();
     }
 
-    // Retorna todos os itens
+    // Retorna todos os itens (retorna uma cópia por segurança)
     public ArrayList<T> listAll() {
-        return this.items;
+        return new ArrayList<>(items);
     }
 
     // Retorna a quantidade de itens cadastrados
     public int count() {
-        return this.items.size();
+        return items.size();
     }
 
     // Métodos abstratos de persistência que os serviços filhos são obrigados a implementar
