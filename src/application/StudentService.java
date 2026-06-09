@@ -1,17 +1,14 @@
 package application;
 
 import domain.Student;
-import application.OperationResult;
+import formatters.DateFormatter;
 import validators.CpfValidator;
 import validators.ContactValidator;
-import domain.Enrollment;
-import formatters.DateFormatter;
+import exceptions.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
-
 
 // Classe responsável pela lógica de negócio dos alunos
 // Aqui ficam as regras do sistema (validações, criação, atualização, busca)
@@ -21,62 +18,48 @@ public class StudentService extends Repository<Student> {
 
     // Validador responsável por regras de CPF
     private CpfValidator cpfValidator = new CpfValidator();
-
-    // Validador responsável por regras de contato/telefone
     private ContactValidator contactValidator = new ContactValidator();
-
-    // Serviço responsável por matrículas (para validações relacionadas a aluno)
     private EnrollmentService enrollmentService;
 
-    // Construtor da dependência do EnrollmentService
     public StudentService(EnrollmentService enrollmentService) {
         this.enrollmentService = enrollmentService;
     }
 
-
-
     // ================= CADASTRAR ALUNO =================
+    public OperationResult<Student> registerStudent(String name, String cpf, String contact, String email, String birthDateStr) throws ValidationException, BusinessException {
 
-    public OperationResult<Student>  registerStudent(String name, String cpf, String contact, String email, String birthDateStr) {
-        // Converte string de data para LocalDate
-        String cleanCpf     = DateFormatter.cleanNumber(cpf);
-        String cleanContact = DateFormatter.cleanNumber(contact);
-        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
-
-        // Validações de regra de negócio
         if (name == null || name.isBlank()) {
-            return new OperationResult<>(false, "Nome inválido!");
+            throw new RequiredFieldException("Nome");
         }
-
-        if (!cpfValidator.isValidCpf(cleanCpf)) {
-            return new OperationResult<>(false, "CPF inválido.\n");
-        }
-
-        if (cpfExists(cleanCpf)) {
-            return new OperationResult<>(false, "CPF já cadastrado.\n");
-        }
-
-
-        if (!contactValidator.isValidContact(cleanContact)) {
-            return new OperationResult<>(false, "Telefone inválido!");
-        }
-
         if (email == null || email.isBlank()) {
-            return new OperationResult<>(false, "Email inválido!");
+            throw new RequiredFieldException("E-mail");
         }
 
+        String cleanCpf = DateFormatter.cleanNumber(cpf);
+        if (!cpfValidator.isValidCpf(cleanCpf)) {
+            throw new InvalidFormatFieldException("CPF", "11 dígitos numéricos válidos");
+        }
+        if (cpfExists(cleanCpf)) {
+            throw new DuplicatedStudentException(cleanCpf);
+        }
+
+        String cleanContact = DateFormatter.cleanNumber(contact);
+        if (!contactValidator.isValidContact(cleanContact)) {
+            throw new InvalidFormatFieldException("Contato", "Formato de telefone válido");
+        }
+
+        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            return new OperationResult<>(false, "Data de nascimento inválida!");
+            throw new InvalidFormatFieldException("Data de nascimento", "Uma data válida e anterior ao dia de hoje");
         }
 
-        // Criação do objeto aluno após validações
         Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
 
         // Adiciona aluno na lista em memória
         items.add(student);
 
         // Mantém lista ordenada por nome (ordem alfabética)
-        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER)); //ordena a lista por ordem alfabética
+        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
 
         // Cria uma cópia para não expor o objeto original
         Student copy = new Student(
@@ -89,7 +72,6 @@ public class StudentService extends Repository<Student> {
 
         return new OperationResult<>(true, "Aluno cadastrado com sucesso.\n", copy);
     }
-
 
     // ================= BUSCAR POR CPF =================
     public OperationResult<Student> findByCpf(String cpf) {
@@ -123,38 +105,28 @@ public class StudentService extends Repository<Student> {
     }
 
     // ================= ATUALIZAR ALUNO =================
-    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) {
+    public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) throws ValidationException, BusinessException {
 
-        // Normaliza entrada
-        String cleanCpf     = DateFormatter.cleanNumber(cpf);
-        String cleanContact = DateFormatter.cleanNumber(contact);
-        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
-
-        // Busca aluno existente
+        String cleanCpf = DateFormatter.cleanNumber(cpf);
         Student student = findEntityByCpf(cleanCpf);
 
-        // Validações de atualização
         if (student == null) {
-            return new OperationResult<>(false, "Aluno não encontrado.\n");
+            throw new BusinessException("Aluno com o CPF informado não encontrado no sistema.");
         }
 
-        if (name == null || name.isBlank()) {
-            return new OperationResult<>(false, "Nome inválido!");
-        }
+        if (name == null || name.isBlank()) throw new RequiredFieldException("Nome");
+        if (email == null || email.isBlank()) throw new RequiredFieldException("E-mail");
 
+        String cleanContact = DateFormatter.cleanNumber(contact);
         if (!contactValidator.isValidContact(cleanContact)) {
-            return new OperationResult<>(false, "Telefone inválido!");
+            throw new InvalidFormatFieldException("Contato", "Formato de telefone válido");
         }
 
-        if (email == null || email.isBlank()) {
-            return new OperationResult<>(false, "Email inválido!");
-        }
-
+        LocalDate birthDate = DateFormatter.parseDate(birthDateStr);
         if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
-            return new OperationResult<>(false, "Data de nascimento inválida!");
+            throw new InvalidFormatFieldException("Data de nascimento", "Uma data válida e anterior ao dia de hoje");
         }
 
-        // Atualiza dados do aluno existente
         student.setName(name);
         student.setContact(cleanContact);
         student.setEmail(email);
@@ -163,61 +135,35 @@ public class StudentService extends Repository<Student> {
         // Reordena lista após atualização
         items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
 
-        // Cria cópia para retorno com os dados do aluno atualizados
-        Student copy = new Student(
-                student.getName(),
-                student.getCpf(),
-                student.getContact(),
-                student.getEmail(),
-                student.getBirthDate()
-        );
-
-        return new OperationResult<>(true, "Aluno atualizado com sucesso.\n", copy);
+        Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
+        return new OperationResult<>(true, "Cadastro atualizado com sucesso.", copy);
     }
 
-
-
     // ================= INATIVAR ALUNO =================
-    public OperationResult<Void> removeStudent(String cpf) {
+    public OperationResult<Void> removeStudent(String cpf) throws BusinessException {
 
         String cleanCpf = DateFormatter.cleanNumber(cpf);
-        // Busca aluno
         Student student = findEntityByCpf(cleanCpf);
 
         if (student == null) {
-            return new OperationResult<>(false, "Aluno não encontrado.");
+            throw new BusinessException("Aluno não encontrado para exclusão.");
         }
-
-        // Verifica se já está inativo
         if (!student.isActive()) {
-            return new OperationResult<>(false, "Aluno já está inativo.");
+            throw new BusinessException("O aluno já consta como inativo no sistema.");
         }
-
-        // Verifica se possui matrícula ativa
         if (enrollmentService.hasActiveEnrollment(cleanCpf)) {
-            return new OperationResult<>(false, "Aluno possui matrícula ativa, não pode ser inativado.");
+            throw new BusinessException("Bloqueado: O aluno possui uma matrícula ativa. Cancele a matrícula antes de inativá-lo.");
         }
-
-        // Verifica se possui débitos pendentes
         if (enrollmentService.hasDebt(cleanCpf)) {
-            return new OperationResult<>(false, "Aluno possui débitos pendentes, não pode ser inativado.");
+            throw new BusinessException("Bloqueado: O aluno possui débitos pendentes com a academia.");
         }
 
-        //Inativa o aluno
         student.deactivate();
-
         return new OperationResult<>(true, "Aluno inativado com sucesso.");
     }
 
     // ================= MÉTODOS PRIVADOS =================
-
-    // Percorre a lista procurando um aluno com o CPF informado
     private Student findEntityByCpf(String cpf) {
-        /*for (int i = 0; i < students.size(); i++) {
-            if (students.get(i).getCpf().equals(cpf)) {
-                return students.get(i);
-            }
-        }*/
         for(int i = 0; i < items.size(); i++){
             if (items.get(i).getCpf().equals(cpf)) {
                 return items.get(i);
@@ -226,7 +172,7 @@ public class StudentService extends Repository<Student> {
         return null;
     }
 
-     // metodos concretos de repository implementar quando for inserir os arquivos
+    // metodos concretos de repository implementar quando for inserir os arquivos
     @Override
     public void save(String filePath) {
 
@@ -241,7 +187,4 @@ public class StudentService extends Repository<Student> {
     private boolean cpfExists(String cpf) {
         return findEntityByCpf(cpf) != null;
     }
-
-
-
 }
