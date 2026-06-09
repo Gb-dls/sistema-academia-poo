@@ -16,8 +16,6 @@ public class MainMenu {
     private final ReportsMenu reportsMenu;// Menu específico para operações com relatorios
 
 
-
-
     // ================= CONSTRUTOR =================
     // Recebe todas as dependências prontas (criadas no Main)
     public MainMenu(UserInterface ui, FitManager fitManager, StudentMenu studentMenu, PlanMenu planMenu, EnrollmentMenu enrollmentMenu, ReportsMenu reportsMenu) {
@@ -29,12 +27,11 @@ public class MainMenu {
         this.reportsMenu = reportsMenu;
     }
 
-
-
     // ================= MENU PRINCIPAL =================
 
     // Inicia o loop do menu principal
     // O sistema fica rodando nesse loop até o usuário escolher a opção de sair.
+
     public void start() {
 
         int option;
@@ -51,12 +48,17 @@ public class MainMenu {
 
             option = ui.getInt("");   // Le a opção digitada pelo usuário
 
-            // TRATAMENTO DO CANCELAR: Se o usuário clicou em Cancelar ou fechou o JOptionPane
+            // TRATAMENTO DO CANCELAR: Se o usuário clicou em Cancelar ou fechou no "X"
             if (option == -1) {
-                ui.showMessage("Operação cancelada pelo usuário. Saindo...");
-                break; // Quebra o do-while e encerra o menu com segurança
+                fitManager.saveAll(); // Tenta salvar os dados antes de sair por segurança
+                // Valida se o salvamento ocorreu com sucesso
+                if (fitManager.isSucessoUltimoSalvamento()) {
+                    break; // Se salvou tudo ok, encerra o loop com segurança
+                } else {
+                    ui.showError("Gravação falhou! O sistema NÃO foi fechado para evitar perda de dados.");
+                    option = 0;
+                }
             }
-
             switch (option) {       // Direciona para o menu correspondente à opção escolhida
 
                 case 1 -> studentMenu.start();     //  entra no menu de alunos
@@ -67,11 +69,19 @@ public class MainMenu {
 
                 case 4 -> reportsMenu.start(); //  entra no menu de relatorios
 
-                case 5 -> ui.showMessage("Saindo..."); // Saida
-
+                case 5 ->{
+                    fitManager.saveAll(); // Executa o método void direto do seu DataManager
+                    // Faz a validação baseada no estado interno
+                    ui.showMessage("Saindo...");
+                    if (!fitManager.isSucessoUltimoSalvamento()) {
+                        ui.showError("Gravação falhou! O sistema NÃO foi fechado para evitar perda de dados.");
+                        option = 0; // Altera para 0 para o do-while NÃO fechar o programa
+                    }
+                }
                 default -> ui.showError("Opção inválida!"); // Qualquer outra opção é invalida
             }
 
         } while (option != 5);
+
     }
 }
