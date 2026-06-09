@@ -4,8 +4,11 @@ import domain.Student;
 import domain.plan.Plan;
 import domain.Enrollment;
 import domain.EnrollmentStatus;
+import persistence.*;
 import exceptions.ValidationException;
 import exceptions.BusinessException;
+import persistence.DataManager;
+import ui.UserInterface;
 
 import java.util.ArrayList;
 
@@ -14,20 +17,32 @@ public class FitManager {
 
     // Serviço responsável pelas regras de negócio dos alunos
     private final StudentService studentService;
-
     // Serviço responsável pelas regras de negócio dos planos
     private final PlanService planService;
-
     // Serviço responsável pelas regras de negócio das matrículas
     private final EnrollmentService enrollmentService;
 
-    // Construtor //
+
+    // Repositorios //
+    private final StudentRepository studentRepository;
+    private final PlanRepository planRepository;
+    private final EnrollmentRepository enrollmentRepository;
+
+    private final DataManager dataManager;
 
     // Inicializa e conecta todos os serviços do sistema
-    public FitManager() {
-        this.enrollmentService = new EnrollmentService();
-        this.studentService = new StudentService(enrollmentService);
-        this.planService = new PlanService();
+    public FitManager(UserInterface ui) {
+        // repositories
+        this.studentRepository = new StudentRepository();
+        this.planRepository = new PlanRepository();
+        this.enrollmentRepository = new EnrollmentRepository();
+
+        // services
+        this.enrollmentService = new EnrollmentService(enrollmentRepository);
+        this.planService = new PlanService(planRepository);
+        this.studentService = new StudentService(studentRepository, enrollmentService);
+        this.dataManager = new DataManager(studentRepository, planRepository, enrollmentRepository, ui);
+
     }
 
     // ================= ALUNOS =================
@@ -120,30 +135,19 @@ public class FitManager {
 
     // Lista todos os alunos que possuem matrícula ativa no sistema
     public ArrayList<Student> listActiveStudents() {
-        OperationResult<ArrayList<Enrollment>> result = listEnrollments();
-        if(!result.isSuccess()){
-            return new ArrayList<>();
-        }
-
-        ArrayList<Enrollment> enrollments = result.getData();
+        ArrayList<Student> allStudents = studentService.listStudents().getData();
         ArrayList<Student> activeStudents = new ArrayList<>();
-
-        for (int i = 0; i < enrollments.size(); i++) {
-            Enrollment e = enrollments.get(i);
-
-            if (e.getStatus() == EnrollmentStatus.ACTIVE)  {
-                Student student = e.getStudent();
+        for (Student s : allStudents) {
+            if (enrollmentService.hasActiveEnrollment(s.getCpf())) {
                 boolean exists = false;
-
-                for (int j = 0; j < activeStudents.size(); j++) {
-                    if (activeStudents.get(j).getCpf().equals(student.getCpf())) {
+                for(Student a : activeStudents){
+                    if(a.getCpf().equals(s.getCpf())){
                         exists = true;
                         break;
                     }
                 }
-
-                if (!exists) {
-                    activeStudents.add(student);
+                if(!exists){
+                    activeStudents.add(s);
                 }
             }
         }
@@ -152,60 +156,49 @@ public class FitManager {
 
     // Lista todos os alunos que possuem dívidas pendentes
     public ArrayList<Student> listStudentsWithDebt() {
-        OperationResult<ArrayList<Student>> result = studentService.listStudents();
+        ArrayList<Student> result = new ArrayList<>();
 
-        if (!result.isSuccess() || result.getData() == null) {
-            return new ArrayList<>();
-        }
-
-        ArrayList<Student> students = result.getData();
-        ArrayList<Student> withDebt = new ArrayList<>();
-
-        for (int i = 0; i < students.size(); i++) {
-            Student s = students.get(i);
-            if (s != null && enrollmentService.hasDebt(s.getCpf())) {
-                withDebt.add(s);
+        for (Student s : studentService.listStudents().getData()) {
+            if (enrollmentService.hasDebt(s.getCpf())) {
+                result.add(s);
             }
         }
-        return withDebt;
+
+        return result;
     }
 
     // Lista matrículas que possuem saldo pendente
     public OperationResult<ArrayList<Enrollment>> listPendingEnrollments() {
-
-        ArrayList<Student> studentsWithDebt = listStudentsWithDebt();
-
-        if(studentsWithDebt.isEmpty()){
-            return new OperationResult<>(false, "Nenhum aluno com dívida encontrado.");
-        }
-
-        OperationResult<ArrayList<Enrollment>> result = listEnrollments();
-
-        if(!result.isSuccess() || result.getData() == null){
-            return new OperationResult<>(false, "Nenhuma matrícula cadastrada.");
-        }
-
-        ArrayList<Enrollment> enrollments = result.getData();
-
+        ArrayList<Student> debtStudents = listStudentsWithDebt();
+        ArrayList<Enrollment> all = enrollmentService.listEnrollments().getData();
         ArrayList<Enrollment> pending = new ArrayList<>();
 
-        for(int i = 0; i < enrollments.size(); i++){
-            Enrollment e = enrollments.get(i);
-
-            if(e != null && e.getStudent() != null && e.getStatus() == EnrollmentStatus.ACTIVE){
-                for(int j = 0; j < studentsWithDebt.size(); j++){
-                    Student s = studentsWithDebt.get(j);
-                    if(s != null && e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0){
-                        pending.add(e);
-                        break;
-                    }
+        for(Enrollment e : all){
+            for (Student s : debtStudents) {
+                if (e.getStudent().getCpf().equals(s.getCpf()) && e.calculateBalance() > 0) {
+                    pending.add(e);
+                    break;
                 }
             }
         }
-
         if(pending.isEmpty()){
-            return new OperationResult<>(false, "Nenhuma matrícula ativa com saldo pendente encontrada.");
+            return new OperationResult<>(false, "Nenhuma matrícula pendente.");
         }
-        return new OperationResult<>(true, "Matrículas pendentes encontradas.", pending);
+            return new OperationResult<>(true, "Matrículas pendentes encontradas.", pending);
+    }
+
+
+    // ================= PERSISTÊNCIA =================
+
+    public void loadAll() {
+        dataManager.loadAll();
+    }
+
+    public void saveAll() {
+         dataManager.saveAll();
+    }
+
+    public boolean isSucessoUltimoSalvamento() {
+        return dataManager.isSucessoUltimoSalvamento();
     }
 }
