@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
+import java.io.InvalidClassException;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import exceptions.*;
@@ -33,7 +35,8 @@ public class PlanRepository extends Repository<Plan> {
     }
 
     public void sortByName() {
-        items.sort(Comparator.comparing(Plan::getName));
+        items.sort(Comparator.comparing(Plan::getName, String.CASE_INSENSITIVE_ORDER));
+
     }
 
 
@@ -56,10 +59,15 @@ public class PlanRepository extends Repository<Plan> {
             return;
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            items = (ArrayList<Plan>) ois.readObject();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+
+            this.items = (ArrayList<Plan>) ois.readObject();
+
+        } catch (InvalidClassException | StreamCorruptedException e) {
+
+            throw new CorruptedFileException("Arquivo de planos violou a estrutura de classes ou está corrompido.", e);
         } catch (ClassNotFoundException | IOException e) {
-            throw new CorruptedFileException(filePath, e);
+            throw new CorruptedFileException("Falha ao carregar a coleção de planos.", e);
         }
     }
 }
