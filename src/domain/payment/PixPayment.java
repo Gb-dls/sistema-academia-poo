@@ -29,4 +29,12 @@ public class PixPayment extends Payment {
     public String getPaymentSummary() {
         return String.format("Tipo: PIX | Chave utilizada: %s", this.Key);
     }
+
+    /*
+    @ getPaymentMethod
+    @ Objetivo: Retornar o tipo de pagamento para exibir no relatorio financeiro
+    */
+    @Override
+    public String getPaymentMethodName() { return "Pix"; }
+
 }

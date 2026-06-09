@@ -31,19 +31,18 @@ public class DataManager {
     }
 
     public void loadAll() {
-        allOk &= safeSave(studentRepo,    STUDENTS_FILE,    "Alunos");
-        allOk &= safeSave(planRepo,       PLANS_FILE,       "Planos");
-        allOk &= safeSave(enrollmentRepo, ENROLLMENTS_FILE, "Matrículas");
+        safeLoad(studentRepo,    STUDENTS_FILE,    "Alunos");
+        safeLoad(planRepo,       PLANS_FILE,       "Planos");
+        safeLoad(enrollmentRepo, ENROLLMENTS_FILE, "Matrículas");
     }
 
     public void saveAll() {
         new File("data").mkdirs();
 
         boolean allOk = true;
-        safeLoad(enrollmentRepo, ENROLLMENTS_FILE, "Matrículas");
-        safeLoad(planRepo,       PLANS_FILE,       "Planos");
-        safeLoad(studentRepo,    STUDENTS_FILE,    "Alunos");
-
+        allOk &= safeSave(enrollmentRepo, ENROLLMENTS_FILE, "Matrículas");
+        allOk &= safeSave(planRepo,       PLANS_FILE,       "Planos");
+        allOk &= safeSave(studentRepo,    STUDENTS_FILE,    "Alunos");
 
         this.sucessoUltimoSalvamento = allOk;
 

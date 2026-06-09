@@ -305,4 +305,51 @@ public class EnrollmentService {
         if (input == null || input.isBlank() || !input.matches("\\d+(\\.\\d+)?")) return -1;
         return Double.parseDouble(input);
     }
+
+    // ================= RELATÓRIO FINANCEIRO =================
+
+    /*
+    @ generateFinancialReport
+    @ Objetivo: Varrer o histórico de matrículas e pagamentos para consolidar métricas de um periodo
+    @ Retorna: O objeto FinancialReport preenchido (ou zerado)
+    */
+    public FinancialReport generateFinancialReport(int month, int year) {
+        FinancialReport report = new FinancialReport(month, year);
+
+        for (Enrollment e : enrollmentRepository.listAll()) {
+
+            // Verifica matrículas INICIADAS no período
+            LocalDate startDate = e.getStartDate();
+            if (startDate.getMonthValue() == month && startDate.getYear() == year) {
+                report.incrementStartedEnrollment();
+                // Registra qual plano foi contratado para o ranking
+                report.recordPlanContraction(e.getPlan().getPlanTypeName());
+            }
+
+            // Verifica matrículas CANCELADAS no período
+            if (e.getStatus() == EnrollmentStatus.CANCELLED) {
+                LocalDate endDate = e.getEndDate();
+                if (endDate != null && endDate.getMonthValue() == month && endDate.getYear() == year) {
+                    report.incrementCancelledEnrollment();
+                }
+            }
+
+            // Varre os PAGAMENTOS dessa matrícula e soma as receitas do período
+            List<Payment> payments = e.getPayments();
+            if (payments != null) {
+                for (Payment p : payments) {
+                    LocalDate pDate = p.getDate();
+                    if (pDate.getMonthValue() == month && pDate.getYear() == year) {
+                        report.addRevenue(p.getAmount());
+                        report.addProcessingFee(p.getProcessingFee());
+                        report.addRevenueByPaymentMethod(p.getPaymentMethodName(), p.getAmount());
+                        report.addRevenueByPlanType(e.getPlan().getPlanTypeName(), p.getAmount());
+                    }
+                }
+            }
+        }
+
+        return report;
+    }
+
 }

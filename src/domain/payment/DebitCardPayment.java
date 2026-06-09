@@ -32,4 +32,11 @@ public class DebitCardPayment extends Payment {
         return String.format("Tipo: Débito | Titular: %s | Cartão com final: %s",
                 this.cardHolderName, this.lastCardNumbers);
     }
+
+    /*
+    @ getPaymentMethod
+    @ Objetivo: Retornar o tipo de pagamento para exibir no relatorio financeiro
+    */
+    @Override
+    public String getPaymentMethodName() { return "Debit Card"; }
 }

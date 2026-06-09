@@ -1,9 +1,9 @@
 package application;
 
+import domain.FinancialReport;
 import domain.Student;
 import domain.plan.Plan;
 import domain.Enrollment;
-import domain.EnrollmentStatus;
 import persistence.*;
 import exceptions.ValidationException;
 import exceptions.BusinessException;
@@ -185,6 +185,12 @@ public class FitManager {
             return new OperationResult<>(false, "Nenhuma matrícula pendente.");
         }
             return new OperationResult<>(true, "Matrículas pendentes encontradas.", pending);
+    }
+
+
+    // Gera o relatório financeiro de um mês e ano específicos
+    public FinancialReport generateFinancialReport(int month, int year) {
+        return enrollmentService.generateFinancialReport(month, year);
     }
 
 
