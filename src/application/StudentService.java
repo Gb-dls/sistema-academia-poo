@@ -55,7 +55,7 @@ public class StudentService extends Repository<Student> {
 
         Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
 
-        // Adiciona aluno na lista em memória (herdada do Repository)
+        // Adiciona aluno na lista em memória
         items.add(student);
 
         // Mantém lista ordenada por nome (ordem alfabética)
