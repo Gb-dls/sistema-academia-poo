@@ -11,9 +11,6 @@ public class PlanService extends Repository<Plan> {
 
     // ================= VALIDAÇÕES =================
 
-    // Verifica se já existe um plano com o nome informado.
-    // A comparação ignora maiúsculas/minúsculas para evitar duplicatas como
-    // "Mensal" e "mensal".
     public boolean nameExists(String name){
         for (Plan current : items) {
             if (current.getName().equalsIgnoreCase(name)) {
@@ -23,41 +20,27 @@ public class PlanService extends Repository<Plan> {
         return false;
     }
 
-    // Registra um novo plano após validar todos os campos obrigatórios.
-    // Retorna OperationResult com sucesso e o objeto Plan criado,
-    // ou lança exceções descritivas caso alguma validação não passe.
-
     // ================= CADASTRAR PLANO =================
-    // Registra um novo plano no sistema
     public OperationResult<Plan> registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) throws ValidationException, BusinessException {
 
-        // Validação do tipo de plano
         if (typeStr == null || typeStr.isBlank()) {
             throw new RequiredFieldException("Tipo de plano");
         }
-
-        // Validação do nome
         if (name == null || name.isBlank()) {
             throw new RequiredFieldException("Nome do plano");
         }
-
-        // Validação da descrição
         if (description == null || description.isBlank()) {
             throw new RequiredFieldException("Descrição");
         }
-
-        // Evita duplicação de planos
         if (nameExists(name)) {
             throw new DuplicatedPlanException(name);
         }
 
-        // Converte e valida duração mínima
         int minDurationMonths = parseInt(minDurationStr);
         if (minDurationMonths <= 0) {
             throw new InvalidFormatFieldException("Duração", "Número inteiro maior que zero");
         }
 
-        // Converte e valida preço
         double pricePerMonth = parseDouble(priceStr);
         if (pricePerMonth <= 0) {
             throw new InvalidFormatFieldException("Preço", "Valor numérico positivo");
@@ -66,7 +49,6 @@ public class PlanService extends Repository<Plan> {
         int type = parseInt(typeStr);
         Plan newPlan;
 
-        // A decisão é baseada na escolha do usuário no menu
         if (type == 1) {
             newPlan = new MonthlyPlan(name, description, minDurationMonths, pricePerMonth);
         } else if (type == 2) {
@@ -79,7 +61,6 @@ public class PlanService extends Repository<Plan> {
             throw new BusinessException("Opção de tipo de plano inválida.");
         }
 
-        // Adicionando plano a lista de forma ordenada
         items.add(newPlan);
         items.sort(Comparator.comparing(Plan::getName));
 
@@ -87,24 +68,18 @@ public class PlanService extends Repository<Plan> {
     }
 
     // ================= BUSCA =================
-    // Busca um plano pelo nome e retorna null se não encontrado
     public OperationResult<Plan> findByName(String name) {
         for (Plan current : items) {
             if (current.getName().equalsIgnoreCase(name)) {
                 return new OperationResult<>(true, "Plano encontrado.", current);
             }
         }
-
         return new OperationResult<>(false, "Plano não encontrado.");
     }
 
     // ================= ATUALIZAÇÃO =================
-
-    // Atualiza o preço mensal de um plano existente
-    // Importante: matrículas antigas não são afetadas
     public OperationResult<Plan> updatePrice(String name, String priceStr) throws ValidationException, BusinessException {
 
-        // Busca plano
         OperationResult<Plan> result = findByName(name);
 
         if (!result.isSuccess()) {
@@ -113,53 +88,41 @@ public class PlanService extends Repository<Plan> {
 
         Plan planUpdate = result.getData();
 
-        // Converte e valida novo preço
         double newPrice = parseDouble(priceStr);
         if (newPrice <= 0) {
             throw new InvalidFormatFieldException("Novo preço", "Valor numérico positivo");
         }
 
-        // Atualiza preço no objeto
         planUpdate.updatePrice(newPrice);
-
         return new OperationResult<>(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, planUpdate);
     }
 
     // ================= LISTAGEM =================
-    // Retorna uma cópia da lista de planos cadastrados.
     public OperationResult<ArrayList<Plan>> listPlans() {
         if(count() == 0){
             return new OperationResult<>(false, "Nenhum plano cadastrado.");
         }
-
         return new OperationResult<>(true, "Lista de planos carregada.", listAll());
     }
 
-    // metodos concretos de repository implementar quando for inserir os arquivos
     @Override
     public void save(String filePath) {
-
     }
 
     @Override
     public void load(String filePath) {
-
     }
 
     // ================= PRIVADOS =================
-
-    // Converte String para int com validação básica
     private int parseInt(String input) {
         if (input == null || input.isBlank()) return -1;
         if (!input.matches("\\d+")) return -1;
         return Integer.parseInt(input);
     }
 
-    // Converte String para double com validação básica
     private double parseDouble(String input) {
         if (input == null || input.isBlank()) return -1;
         if (!input.matches("\\d+(\\.\\d+)?")) return -1;
         return Double.parseDouble(input);
     }
-
 }
