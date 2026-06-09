@@ -3,16 +3,23 @@ package application;
 import domain.*;
 import domain.plan.Plan;
 import domain.payment.*;
+import persistence.EnrollmentRepository;
 import formatters.DateFormatter;
 import exceptions.*;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnrollmentService extends Repository<Enrollment>  {
+public class EnrollmentService {
 
-    private static int nextCode = 1;
+    private final EnrollmentRepository enrollmentRepository;
 
+    public EnrollmentService(EnrollmentRepository enrollmentRepository) {
+        this.enrollmentRepository = enrollmentRepository;
+    }
+
+    // ================= MATRÍCULA =================
 
     /*
     @ enroll
@@ -36,7 +43,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
             throw new InvalidFormatFieldException("Valor do pagamento", "Valor numérico positivo");
         }
 
-        if (hasActiveEnrollment(student.getCpf())) {
+        if (enrollmentRepository.findActiveByStudent(student.getCpf()) != null) {
             throw new StudentWithActiveRegistrationException(student.getCpf());
         }
 
@@ -54,7 +61,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
             throw new BusinessException(String.format("O pagamento inicial mínimo exigido pelo plano é de R$ %.2f.", valuePerMonth));
         }
 
-        // Instanciação polimórfica baseada na escolha do Menu
+        // Instanciação polimórfica baseada na escolha do Menu de pagamento
         Payment firstPayment;
         switch (paymentOption) {
             case 1 -> { // Dinheiro
@@ -87,15 +94,16 @@ public class EnrollmentService extends Repository<Enrollment>  {
                 throw new InvalidPaymentMethodException(String.valueOf(paymentOption));
             }
         }
-
-        Enrollment newEnrollment = new Enrollment(nextCode, student, plan, startDate, durationMonths);
+        // ================= CRIAÇÃO DA MATRICULA =================
+        int code = enrollmentRepository.useNextCode();
+        Enrollment newEnrollment = new Enrollment(code, student, plan, startDate, durationMonths);
         newEnrollment.registerPayment(firstPayment);
-        items.add(newEnrollment);
-        nextCode++;
+        enrollmentRepository.add(newEnrollment);
 
-        return new OperationResult<>(true, "Matrícula efetivada com sucesso.");
+        return new OperationResult<>(true, "Matrícula efetivada com sucesso.",newEnrollment);
     }
 
+    // ================= PAGAMENTO AVULSO =================
     /*
     @ registerPayment
     @ Objetivo: Registra um pagamento em uma matrícula existente validando limites e regras de negócio
@@ -113,7 +121,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
             throw new InvalidFormatFieldException("Valor de pagamento", "Valor numérico positivo");
         }
 
-        Enrollment flagEnrollment = findByCode(enrollmentCode);
+        Enrollment flagEnrollment = enrollmentRepository.findByCode(enrollmentCode);
         if (flagEnrollment == null) {
             throw new BusinessException("Matrícula de código " + enrollmentCode + " não encontrada no sistema.");
         }
@@ -171,6 +179,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
         return new OperationResult<>(true, "Pagamento registrado com sucesso." + statusFinanceiro + changeMessage);
     }
 
+    // ================= CANCELAMENTO =================
     /*
     @ cancel
     @ Objetivo: Solicitar o cancelamento de uma matrícula e retornar o extrato financeiro final recalculado.
@@ -180,7 +189,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
 
         if (code <= 0) throw new InvalidFormatFieldException("Código de matrícula", "Número inteiro válido");
 
-        Enrollment flagEnrollment = findByCode(code);
+        Enrollment flagEnrollment =  enrollmentRepository.findByCode(code);
         if (flagEnrollment == null) throw new BusinessException("Matrícula não encontrada no sistema.");
         if (flagEnrollment.getStatus() == EnrollmentStatus.CANCELLED) throw new BusinessException("A matrícula informada já está cancelada.");
 
@@ -214,26 +223,16 @@ public class EnrollmentService extends Repository<Enrollment>  {
         return new OperationResult<>(true, resumo);
     }
 
-    /*
-    @ findByCode
-    @ Objetivo: Buscar e retornar uma matrícula específica dentro do histórico geral utilizando o código identificador
-    @ Retorna: O objeto Enrollment correspondente ao código informado ou null caso não seja localizado
-    */
-    public Enrollment findByCode(int code) {
-        for (Enrollment e : items) {
-            if (e.getCode() == code) return e;
-        }
-        return null;
-    }
-
+    // ================= CONSULTAS =================
     /*
     @ hasActiveEnrollment
     @ Objetivo: Verificar se um determinado aluno possui um contrato com o status ativo no momento
     @ Retorna: Um valor booleano (true se houver matrícula ativa, false caso contrário)
     */
     public boolean hasActiveEnrollment(String cpf) {
-        return findActiveByStudent(cpf) != null;
+        return enrollmentRepository.findActiveByStudent(cpf) != null;
     }
+
 
     /*
     @ findActiveByStudent
@@ -242,7 +241,7 @@ public class EnrollmentService extends Repository<Enrollment>  {
     */
     public Enrollment findActiveByStudent(String cpf) {
         String cleanCpf = DateFormatter.cleanNumber(cpf);
-        for (Enrollment e : items) {
+        for (Enrollment e : enrollmentRepository.listAll()) {
             if (e.getStudent().getCpf().equals(cleanCpf) && e.getStatus() == EnrollmentStatus.ACTIVE) {
                 return e;
             }
@@ -256,29 +255,19 @@ public class EnrollmentService extends Repository<Enrollment>  {
     @ Retorna: Um ArrayList contendo todas as matrículas registradas no sistema
     */
     public OperationResult<ArrayList<Enrollment>> listEnrollments() {
-        if(count() == 0){
+
+        ArrayList<Enrollment> list = enrollmentRepository.listAll();
+        if (list.isEmpty()) {
             return new OperationResult<>(false, "Nenhuma matrícula cadastrada.");
         }
-        return new OperationResult<>(true, "Lista de matrículas carregada.", listAll()
-        );
+        return new OperationResult<>(true, "Lista de matrículas carregada.", list);
     }
-
     /*
     @ getEnrollmentsByStudent
     @ Objetivo: Filtrar histórico de contratos vinculados ao CPF de um aluno.
     */
     public List<Enrollment> getEnrollmentsByStudent(String cpf) {
-        List<Enrollment> result = new ArrayList<>();
-        // Remove pontos e traços para garantir que a comparação seja apenas dos números
-        String cleanCpf = cpf.replaceAll("\\D", "");
-
-        for (Enrollment e : items) {
-            String studentCleanCpf = e.getStudent().getCpf().replaceAll("\\D", "");
-            if (studentCleanCpf.equals(cleanCpf)) {
-                result.add(e);
-            }
-        }
-        return result;
+        return enrollmentRepository.findAllByStudent(cpf);
     }
 
     /*
@@ -287,13 +276,16 @@ public class EnrollmentService extends Repository<Enrollment>  {
     @ Retorna: Um valor booleano indicando se há débitos pendentes.
     */
     public boolean hasDebt(String cpf) {
-        List<Enrollment> studentEnrollments = getEnrollmentsByStudent(cpf);
-        for (Enrollment e : studentEnrollments) {
-            if (e.calculateBalance() > 0) return true;
+        List<Enrollment> list = enrollmentRepository.findAllByStudent(cpf);
+        for(Enrollment e : list){
+            if (e.calculateBalance() > 0) {
+                return true;
+            }
         }
         return false;
     }
 
+    // ================= PRIVADOS =================
     /*
     @ parseInt
     @ Objetivo: Realizar o tratamento e a conversão segura de dados textuais para números inteiros
@@ -303,17 +295,6 @@ public class EnrollmentService extends Repository<Enrollment>  {
         if (input == null || input.isBlank() || !input.matches("\\d+")) return -1;
         return Integer.parseInt(input);
     }
-    // metodos concretos de repository implementar quando for inserir os arquivos
-    @Override
-    public void save(String filePath) {
-
-    }
-
-    @Override
-    public void load(String filePath) {
-
-    }
-
 
     /*
     @ parseDouble
@@ -324,6 +305,4 @@ public class EnrollmentService extends Repository<Enrollment>  {
         if (input == null || input.isBlank() || !input.matches("\\d+(\\.\\d+)?")) return -1;
         return Double.parseDouble(input);
     }
-
-
 }

@@ -3,22 +3,18 @@ package application;
 import domain.plan.*;
 import exceptions.*;
 import java.util.ArrayList;
-import java.util.Comparator;
+import persistence.PlanRepository;
 
 // Classe responsável pela lógica de negócio dos planos
 // Aqui ficam regras de cadastro, busca, atualização e validação de planos
-public class PlanService extends Repository<Plan> {
+public class PlanService {
 
-    // ================= VALIDAÇÕES =================
+    private final PlanRepository planRepository;
 
-    public boolean nameExists(String name){
-        for (Plan current : items) {
-            if (current.getName().equalsIgnoreCase(name)) {
-                return true;
-            }
-        }
-        return false;
+    public PlanService(PlanRepository planRepository) {
+        this.planRepository = planRepository;
     }
+
 
     // ================= CADASTRAR PLANO =================
     public OperationResult<Plan> registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) throws ValidationException, BusinessException {
@@ -32,7 +28,7 @@ public class PlanService extends Repository<Plan> {
         if (description == null || description.isBlank()) {
             throw new RequiredFieldException("Descrição");
         }
-        if (nameExists(name)) {
+        if (planRepository.nameExists(name)) {
             throw new DuplicatedPlanException(name);
         }
 
@@ -61,68 +57,66 @@ public class PlanService extends Repository<Plan> {
             throw new BusinessException("Opção de tipo de plano inválida.");
         }
 
-        items.add(newPlan);
-        items.sort(Comparator.comparing(Plan::getName));
+        planRepository.add(newPlan);
+        planRepository.sortByName();
 
         return new OperationResult<>(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
     }
 
     // ================= BUSCA =================
     public OperationResult<Plan> findByName(String name) {
-        for (Plan current : items) {
-            if (current.getName().equalsIgnoreCase(name)) {
-                return new OperationResult<>(true, "Plano encontrado.", current);
-            }
+        Plan plan = planRepository.findByName(name);
+        if (plan == null){
+            return new OperationResult<>(false, "Plano não encontrado.");
         }
-        return new OperationResult<>(false, "Plano não encontrado.");
+        return new OperationResult<>(true, "Plano encontrado.", plan);
     }
 
     // ================= ATUALIZAÇÃO =================
     public OperationResult<Plan> updatePrice(String name, String priceStr) throws ValidationException, BusinessException {
 
-        OperationResult<Plan> result = findByName(name);
+        Plan plan = planRepository.findByName(name);
 
-        if (!result.isSuccess()) {
+        if (plan == null) {
             throw new BusinessException("O plano informado não foi encontrado no sistema.");
         }
-
-        Plan planUpdate = result.getData();
 
         double newPrice = parseDouble(priceStr);
         if (newPrice <= 0) {
             throw new InvalidFormatFieldException("Novo preço", "Valor numérico positivo");
         }
 
-        planUpdate.updatePrice(newPrice);
-        return new OperationResult<>(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, planUpdate);
+        plan.updatePrice(newPrice);
+        return new OperationResult<>(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, plan);
     }
 
     // ================= LISTAGEM =================
     public OperationResult<ArrayList<Plan>> listPlans() {
-        if(count() == 0){
+        ArrayList<Plan> list = planRepository.listAll();
+        if (list.isEmpty()){
             return new OperationResult<>(false, "Nenhum plano cadastrado.");
         }
-        return new OperationResult<>(true, "Lista de planos carregada.", listAll());
-    }
-
-    @Override
-    public void save(String filePath) {
-    }
-
-    @Override
-    public void load(String filePath) {
+        return new OperationResult<>(true, "Lista carregada.", list);
     }
 
     // ================= PRIVADOS =================
     private int parseInt(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+")) return -1;
+        if (input == null || input.isBlank()){
+            return -1;
+        }
+        if (!input.matches("\\d+")){
+            return -1;
+        }
         return Integer.parseInt(input);
     }
 
     private double parseDouble(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+(\\.\\d+)?")) return -1;
+        if (input == null || input.isBlank()){
+            return -1;
+        }
+        if (!input.matches("\\d+(\\.\\d+)?")){
+            return -1;
+        }
         return Double.parseDouble(input);
     }
 }

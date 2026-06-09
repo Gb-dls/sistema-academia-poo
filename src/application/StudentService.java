@@ -1,6 +1,7 @@
 package application;
 
 import domain.Student;
+import persistence.StudentRepository;
 import formatters.DateFormatter;
 import validators.CpfValidator;
 import validators.ContactValidator;
@@ -11,14 +12,17 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 // Classe responsável pela lógica de negócio dos alunos
-public class StudentService extends Repository<Student> {
+public class StudentService{
 
     // ================= ATRIBUTOS =================
+    private final StudentRepository studentRepository;
+    private final EnrollmentService enrollmentService;
     private CpfValidator cpfValidator = new CpfValidator();
     private ContactValidator contactValidator = new ContactValidator();
-    private EnrollmentService enrollmentService;
 
-    public StudentService(EnrollmentService enrollmentService) {
+
+    public StudentService(StudentRepository studentRepository, EnrollmentService enrollmentService) {
+        this.studentRepository = studentRepository;
         this.enrollmentService = enrollmentService;
     }
 
@@ -32,7 +36,7 @@ public class StudentService extends Repository<Student> {
         if (!cpfValidator.isValidCpf(cleanCpf)) {
             throw new InvalidFormatFieldException("CPF", "11 dígitos numéricos válidos");
         }
-        if (cpfExists(cleanCpf)) {
+        if (studentRepository.cpfExists(cleanCpf)) {
             throw new DuplicatedStudentException(cleanCpf);
         }
 
@@ -49,8 +53,8 @@ public class StudentService extends Repository<Student> {
         Student student = new Student(name, cleanCpf, cleanContact, email, birthDate);
 
         // Adiciona e ordena na lista do Repository
-        items.add(student);
-        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
+        studentRepository.add(student);
+        studentRepository.sortByName();
 
         Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
         return new OperationResult<>(true, "Aluno cadastrado com sucesso.\n", copy);
@@ -58,7 +62,8 @@ public class StudentService extends Repository<Student> {
 
     // ================= BUSCAR POR CPF =================
     public OperationResult<Student> findByCpf(String cpf) {
-        Student student = findEntityByCpf(cpf);
+        String cleanCpf = DateFormatter.cleanNumber(cpf);
+        Student student = studentRepository.findByCpf(cleanCpf);
         if (student != null) {
             Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
             return new OperationResult<>(true, "Aluno encontrado.\n", copy);
@@ -68,17 +73,19 @@ public class StudentService extends Repository<Student> {
 
     // ================= LISTAR ALUNOS =================
     public OperationResult<ArrayList<Student>> listStudents() {
-        if (items.isEmpty()) {
+        ArrayList<Student> list = studentRepository.listAll();
+        if (list.isEmpty()){
             return new OperationResult<>(false, "Nenhum aluno cadastrado.");
         }
-        return new OperationResult<>(true, "Lista de alunos carregada.", listAll());
+
+        return new OperationResult<>(true, "Lista de alunos carregada.", list);
     }
 
     // ================= ATUALIZAR ALUNO =================
     public OperationResult<Student> updateStudent(String cpf, String name, String contact, String email, String birthDateStr) throws ValidationException, BusinessException {
 
         String cleanCpf = DateFormatter.cleanNumber(cpf);
-        Student student = findEntityByCpf(cleanCpf);
+        Student student = studentRepository.findByCpf(cleanCpf);
 
         if (student == null) throw new BusinessException("Aluno com o CPF informado não encontrado no sistema.");
         if (name == null || name.isBlank()) throw new RequiredFieldException("Nome");
@@ -98,9 +105,6 @@ public class StudentService extends Repository<Student> {
         student.setContact(cleanContact);
         student.setEmail(email);
         student.setBirthDate(birthDate);
-
-        items.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
-
         Student copy = new Student(student.getName(), student.getCpf(), student.getContact(), student.getEmail(), student.getBirthDate());
         return new OperationResult<>(true, "Cadastro atualizado com sucesso.", copy);
     }
@@ -109,7 +113,7 @@ public class StudentService extends Repository<Student> {
     public OperationResult<Void> removeStudent(String cpf) throws BusinessException {
 
         String cleanCpf = DateFormatter.cleanNumber(cpf);
-        Student student = findEntityByCpf(cleanCpf);
+        Student student = studentRepository.findByCpf(cleanCpf);
 
         if (student == null) throw new BusinessException("Aluno não encontrado para exclusão.");
         if (!student.isActive()) throw new BusinessException("O aluno já consta como inativo no sistema.");
@@ -120,25 +124,5 @@ public class StudentService extends Repository<Student> {
         return new OperationResult<>(true, "Aluno inativado com sucesso.");
     }
 
-    // ================= MÉTODOS PRIVADOS =================
-    private Student findEntityByCpf(String cpf) {
-        for(int i = 0; i < items.size(); i++){
-            if (items.get(i).getCpf().equals(cpf)) {
-                return items.get(i);
-            }
-        }
-        return null;
-    }
 
-    @Override
-    public void save(String filePath) {
-    }
-
-    @Override
-    public void load(String filePath) {
-    }
-
-    private boolean cpfExists(String cpf) {
-        return findEntityByCpf(cpf) != null;
-    }
 }
