@@ -1,0 +1,587 @@
+@startuml
+abstract class persistence.Repository {
+# ArrayList<T> items
++ <<Create>> Repository()
++ void add(T)
++ void remove(T)
++ ArrayList<T> listAll()
++ int count()
++ {abstract}void save(String)
++ {abstract}void load(String)
+}
+
+
+class exceptions.PaymentValueMismatchException {
++ <<Create>> PaymentValueMismatchException(double,double)
+}
+
+class exceptions.DuplicatedPlanException {
++ <<Create>> DuplicatedPlanException(String)
+}
+
+class ui.TerminalUI {
+- Scanner scanner
+- DateTimeFormatter dateFormatter
++ <<Create>> TerminalUI()
++ String getInput(String)
++ void showMessage(String)
++ void showError(String)
++ void showMenu(String,String)
++ int getInt(String)
++ double getDouble(String)
++ LocalDate getDate(String)
+}
+
+
+class persistence.PlanRepository {
++ <<Create>> PlanRepository()
++ Plan findByName(String)
++ boolean nameExists(String)
++ void sortByName()
++ void save(String)
++ void load(String)
+}
+
+class exceptions.BusinessException {
++ <<Create>> BusinessException(String)
+}
+
+interface ui.UserInterface {
+~ String getInput(String)
+~ void showMessage(String)
+~ void showError(String)
+~ void showMenu(String,String)
+~ int getInt(String)
+~ double getDouble(String)
+~ LocalDate getDate(String)
+}
+
+class persistence.EnrollmentRepository {
+- int nextCode
++ <<Create>> EnrollmentRepository()
++ int useNextCode()
++ int getNextCode()
++ void setNextCode(int)
++ Enrollment findByCode(int)
++ Enrollment findActiveByStudent(String)
++ List<Enrollment> findAllByStudent(String)
++ void save(String)
++ void load(String)
+}
+
+
+class ui.PlanMenu {
+- UserInterface ui
+- FitManager fitManager
++ <<Create>> PlanMenu(UserInterface,FitManager)
++ void start()
+- void registerPlan()
+- void findByName()
+- void updatePrice()
+- void listAll()
+}
+
+
+class domain.FinancialReport {
+- int month
+- int year
+- double totalRevenue
+- double totalProcessingFees
+- int startedEnrollmentsCount
+- int cancelledEnrollmentsCount
+- Map<String,Double> revenueByPlanType
+- Map<String,Double> revenueByPaymentMethod
+- Map<String,Integer> planTypeContractionCount
++ <<Create>> FinancialReport(int,int)
++ void addRevenue(double)
++ void addProcessingFee(double)
++ void addRevenueByPlanType(String,double)
++ void addRevenueByPaymentMethod(String,double)
++ void incrementStartedEnrollment()
++ void incrementCancelledEnrollment()
++ void recordPlanContraction(String)
++ int getMonth()
++ int getYear()
++ double getTotalRevenue()
++ double getTotalProcessingFees()
++ int getStartedEnrollmentsCount()
++ int getCancelledEnrollmentsCount()
++ Map<String,Double> getRevenueByPlanType()
++ Map<String,Double> getRevenueByPaymentMethod()
++ Map<String,Integer> getPlanTypeContractionCount()
++ boolean hasFinancialActivity()
++ List<String> getTopContractedPlans()
+}
+
+
+class formatters.DateFormatter {
+- <<Create>> DateFormatter()
++ {static} LocalDate parseDate(String)
++ {static} String cleanNumber(String)
+}
+
+class persistence.StudentRepository {
++ <<Create>> StudentRepository()
++ Student findByCpf(String)
++ boolean cpfExists(String)
++ void sortByName()
++ void save(String)
++ void load(String)
+}
+
+class application.OperationResult {
+- boolean success
+- String message
+- T data
++ <<Create>> OperationResult(boolean,String)
++ <<Create>> OperationResult(boolean,String,T)
++ boolean isSuccess()
++ String getMessage()
++ T getData()
+}
+
+
+class ui.EnrollmentMenu {
+- UserInterface ui
+- FitManager fitManager
+- DateTimeFormatter dateFormatter
++ <<Create>> EnrollmentMenu(UserInterface,FitManager)
++ void start()
+- String[] preparePaymentDetails()
+- void enroll()
+- void registerPayment()
+- void cancel()
+- void findActiveByStudent()
+- void listAll()
+}
+
+
+class persistence.SaveState {
+- {static} long serialVersionUID
+- ArrayList<Enrollment> items
+- int nextCode
++ <<Create>> SaveState(ArrayList<Enrollment>,int)
++ ArrayList<Enrollment> getItems()
++ int getNextCode()
+}
+
+
+abstract class domain.payment.Payment {
+- {static} long serialVersionUID
+# LocalDate date
+# double amount
++ <<Create>> Payment(double)
++ LocalDate getDate()
++ double getAmount()
++ {abstract}double getProcessingFee()
++ {abstract}String getPaymentSummary()
++ {abstract}String getPaymentMethodName()
++ String toString()
+}
+
+
+enum domain.EnrollmentStatus {
++  ACTIVE
++  CANCELLED
+}
+
+class application.FitManager {
+- StudentService studentService
+- PlanService planService
+- EnrollmentService enrollmentService
+- StudentRepository studentRepository
+- PlanRepository planRepository
+- EnrollmentRepository enrollmentRepository
+- DataManager dataManager
++ <<Create>> FitManager(UserInterface)
++ OperationResult<Student> registerStudent(String,String,String,String,String)
++ OperationResult<Student> findStudentByCpf(String)
++ OperationResult<Student> updateStudent(String,String,String,String,String)
++ OperationResult<Void> removeStudent(String)
++ OperationResult<ArrayList<Student>> listStudents()
++ OperationResult<Plan> registerPlan(String,String,String,String,String)
++ OperationResult<Plan> findPlanByName(String)
++ OperationResult<Plan> updatePlanPrice(String,String)
++ OperationResult<ArrayList<Plan>> listPlans()
++ OperationResult<Enrollment> enroll(Student,Plan,String,String,String,int,String,String,String)
++ OperationResult<Enrollment> registerPayment(String,String,int,String,String,String)
++ OperationResult<Void> cancelEnrollment(String)
++ OperationResult<Enrollment> findActiveEnrollmentByStudent(String)
++ OperationResult<ArrayList<Enrollment>> listEnrollments()
++ ArrayList<Student> listActiveStudents()
++ ArrayList<Student> listStudentsWithDebt()
++ OperationResult<ArrayList<Enrollment>> listPendingEnrollments()
++ FinancialReport generateFinancialReport(int,int)
++ void loadAll()
++ void saveAll()
++ boolean isSucessoUltimoSalvamento()
+}
+
+
+class validators.ContactValidator {
++ boolean isValidContact(String)
+}
+
+class exceptions.PlanInUseException {
++ <<Create>> PlanInUseException(String)
+}
+
+class domain.plan.QuarterlyPlan {
++ <<Create>> QuarterlyPlan(String,String,int,double)
++ double calculateTotalPrice(int)
++ double getCancellationFee(Enrollment)
++ String getPlanTypeName()
+}
+
+class ui.Main {
++ {static} void main(String[])
+}
+
+class domain.payment.CashPayment {
+- double amountReceived
++ <<Create>> CashPayment(double,double)
++ double getChange()
++ double getProcessingFee()
++ String getPaymentSummary()
++ String getPaymentMethodName()
+}
+
+
+class exceptions.DuplicatedStudentException {
++ <<Create>> DuplicatedStudentException(String)
+}
+
+class application.EnrollmentService {
+- EnrollmentRepository enrollmentRepository
++ <<Create>> EnrollmentService(EnrollmentRepository)
++ OperationResult<Enrollment> enroll(Student,Plan,String,String,String,int,String,String,String)
++ OperationResult<Enrollment> registerPayment(String,String,int,String,String,String)
++ OperationResult<Void> cancel(String)
++ boolean hasActiveEnrollment(String)
++ Enrollment findActiveByStudent(String)
++ OperationResult<ArrayList<Enrollment>> listEnrollments()
++ List<Enrollment> getEnrollmentsByStudent(String)
++ boolean hasDebt(String)
+- int parseInt(String)
+- double parseDouble(String)
++ FinancialReport generateFinancialReport(int,int)
+}
+
+
+class domain.payment.DebitCardPayment {
+- String cardHolderName
+- String lastCardNumbers
++ <<Create>> DebitCardPayment(double,String,String)
++ double getProcessingFee()
++ String getPaymentSummary()
++ String getPaymentMethodName()
+}
+
+
+class exceptions.InvalidFormatFieldException {
++ <<Create>> InvalidFormatFieldException(String,String)
+}
+
+class application.PlanService {
+- PlanRepository planRepository
++ <<Create>> PlanService(PlanRepository)
++ OperationResult<Plan> registerPlan(String,String,String,String,String)
++ OperationResult<Plan> findByName(String)
++ OperationResult<Plan> updatePrice(String,String)
++ OperationResult<ArrayList<Plan>> listPlans()
+- int parseInt(String)
+- double parseDouble(String)
+}
+
+
+class domain.plan.SemiAnnualPlan {
++ <<Create>> SemiAnnualPlan(String,String,int,double)
++ double calculateTotalPrice(int)
++ double getCancellationFee(Enrollment)
++ String getPlanTypeName()
+}
+
+abstract class domain.plan.Plan {
+- {static} long serialVersionUID
+- String name
+- String description
+- int minDurationMonths
+- double pricePerMonth
++ <<Create>> Plan(String,String,int,double)
++ String getName()
++ String getDescription()
++ int getMinDurationMonths()
++ double getPricePerMonth()
++ void updatePrice(double)
++ {abstract}double calculateTotalPrice(int)
++ {abstract}double getCancellationFee(Enrollment)
++ {abstract}String getPlanTypeName()
+# double calculatePercentageFee(Enrollment,double)
++ String toString()
+}
+
+
+class domain.Student {
+- {static} long serialVersionUID
+- String name
+- String cpf
+- String contact
+- String email
+- LocalDate birthDate
+- boolean active
++ <<Create>> Student(String,String,String,String,LocalDate)
++ String getCpfFormatted()
++ String getContactFormatted()
++ String getBirthDateFormatted()
++ String getStatus()
++ boolean isActive()
++ int calculateAge()
++ void activate()
++ void deactivate()
++ String getName()
++ String getCpf()
++ String getContact()
++ String getEmail()
++ LocalDate getBirthDate()
++ void setName(String)
++ void setContact(String)
++ void setEmail(String)
++ void setBirthDate(LocalDate)
++ String toString()
+}
+
+
+class exceptions.WriteFailureException {
++ <<Create>> WriteFailureException(String,Throwable)
+}
+
+class exceptions.RequiredFieldException {
++ <<Create>> RequiredFieldException(String)
+}
+
+class validators.CpfValidator {
++ boolean isValidCpf(String)
+- boolean hasValidLength(String)
+- boolean isRepeatedCpf(String)
+- int calculateDigit(String,int)
+}
+
+class exceptions.PersistenceException {
++ <<Create>> PersistenceException(String,Throwable)
+}
+
+class ui.StudentMenu {
+- UserInterface ui
+- FitManager fitManager
++ <<Create>> StudentMenu(UserInterface,FitManager)
++ void start()
+- void registerStudent()
+- void updateStudent()
+- void deleteStudent()
+- void findByCpf()
+- void listAll()
+}
+
+
+class application.StudentService {
+- StudentRepository studentRepository
+- EnrollmentService enrollmentService
+- CpfValidator cpfValidator
+- ContactValidator contactValidator
++ <<Create>> StudentService(StudentRepository,EnrollmentService)
++ OperationResult<Student> registerStudent(String,String,String,String,String)
++ OperationResult<Student> findByCpf(String)
++ OperationResult<ArrayList<Student>> listStudents()
++ OperationResult<Student> updateStudent(String,String,String,String,String)
++ OperationResult<Void> removeStudent(String)
+}
+
+
+class domain.Enrollment {
+- {static} long serialVersionUID
+- int code
+- Student student
+- Plan plan
+- LocalDate startDate
+- LocalDate endDate
+- int durationMonths
+- double totalPrice
+- EnrollmentStatus status
+- ArrayList<Payment> payments
++ <<Create>> Enrollment(int,Student,Plan,LocalDate,int)
++ int getCode()
++ Student getStudent()
++ Plan getPlan()
++ LocalDate getStartDate()
++ LocalDate getEndDate()
++ int getDurationMonths()
++ double getTotalPrice()
++ EnrollmentStatus getStatus()
++ ArrayList<Payment> getPayments()
++ void registerPayment(Payment)
++ double calculateTotalPaid()
++ double calculateBalance()
++ void cancel()
++ String toString()
++ int getMonthsActive()
+}
+
+
+class domain.payment.CreditCardPayment {
+- {static} double fee_PERCENTAGE
+- String cardHolderName
+- int installments
+- String lastCardNumbers
++ <<Create>> CreditCardPayment(double,String,String,int)
++ double getProcessingFee()
++ String getPaymentSummary()
++ String getPaymentMethodName()
+}
+
+
+class domain.plan.MonthlyPlan {
++ <<Create>> MonthlyPlan(String,String,int,double)
++ double calculateTotalPrice(int)
++ double getCancellationFee(Enrollment)
++ String getPlanTypeName()
+}
+
+class exceptions.ValidationException {
++ <<Create>> ValidationException(String)
+}
+
+class domain.payment.PixPayment {
+- String Key
++ <<Create>> PixPayment(double,String)
++ double getProcessingFee()
++ String getPaymentSummary()
++ String getPaymentMethodName()
+}
+
+
+class ui.ReportsMenu {
+- UserInterface ui
+- FitManager fitManager
++ <<Create>> ReportsMenu(UserInterface,FitManager)
++ void start()
+- void listActiveStudents()
+- void listPendingEnrollments()
+- void listAllEnrollments()
+- void listAllPlans()
+- void findStudentByCpf()
+- void findPlanByName()
+- void findActiveEnrollmentByCpf()
+- void generateFinancialReport()
+}
+
+
+class domain.plan.AnnualPlan {
++ <<Create>> AnnualPlan(String,String,int,double)
++ double calculateTotalPrice(int)
++ double getCancellationFee(Enrollment)
++ String getPlanTypeName()
+}
+
+class exceptions.InvalidPaymentMethodException {
++ <<Create>> InvalidPaymentMethodException(String)
+}
+
+class ui.JOptionPaneUI {
+- DateTimeFormatter dateFormatter
++ String getInput(String)
++ void showMessage(String)
++ void showError(String)
++ void showMenu(String,String)
++ int getInt(String)
++ double getDouble(String)
++ LocalDate getDate(String)
+}
+
+
+class persistence.DataManager {
+- {static} String STUDENTS_FILE
+- {static} String PLANS_FILE
+- {static} String ENROLLMENTS_FILE
+- {static} String BACKUP_STUDENTS_FILE
+- {static} String BACKUP_PLANS_FILE
+- {static} String BACKUP_ENROLLMENTS_FILE
+- StudentRepository studentRepo
+- PlanRepository planRepo
+- EnrollmentRepository enrollmentRepo
+- UserInterface ui
+- boolean sucessoUltimoSalvamento
++ <<Create>> DataManager(StudentRepository,PlanRepository,EnrollmentRepository,UserInterface)
++ boolean isSucessoUltimoSalvamento()
++ void loadAll()
++ void saveAll()
+- void safeLoad(Repository<?>,String,String)
+- boolean safeSave(Repository<?>,String,String)
+- boolean saveEmergencyBackup()
+}
+
+
+class ui.MainMenu {
+- UserInterface ui
+- FitManager fitManager
+- StudentMenu studentMenu
+- PlanMenu planMenu
+- EnrollmentMenu enrollmentMenu
+- ReportsMenu reportsMenu
++ <<Create>> MainMenu(UserInterface,FitManager,StudentMenu,PlanMenu,EnrollmentMenu,ReportsMenu)
++ void start()
+}
+
+
+class exceptions.CorruptedFileException {
++ <<Create>> CorruptedFileException(String,Throwable)
+}
+
+class exceptions.StudentWithActiveRegistrationException {
++ <<Create>> StudentWithActiveRegistrationException(String)
+}
+
+class exceptions.FitManagerException {
++ <<Create>> FitManagerException(String)
++ <<Create>> FitManagerException(String,Throwable)
+}
+
+class exceptions.DuplicatedEnrollmentException {
++ <<Create>> DuplicatedEnrollmentException(int)
+}
+
+
+
+exceptions.BusinessException <|-- exceptions.PaymentValueMismatchException
+exceptions.BusinessException <|-- exceptions.DuplicatedPlanException
+ui.UserInterface <|.. ui.TerminalUI
+persistence.Repository <|-- persistence.PlanRepository
+exceptions.FitManagerException <|-- exceptions.BusinessException
+persistence.Repository <|-- persistence.EnrollmentRepository
+persistence.Repository <|-- persistence.StudentRepository
+java.io.Serializable <|.. persistence.SaveState
+java.io.Serializable <|.. domain.payment.Payment
+exceptions.BusinessException <|-- exceptions.PlanInUseException
+domain.plan.Plan <|-- domain.plan.QuarterlyPlan
+domain.payment.Payment <|-- domain.payment.CashPayment
+exceptions.BusinessException <|-- exceptions.DuplicatedStudentException
+domain.payment.Payment <|-- domain.payment.DebitCardPayment
+exceptions.ValidationException <|-- exceptions.InvalidFormatFieldException
+domain.plan.Plan <|-- domain.plan.SemiAnnualPlan
+java.io.Serializable <|.. domain.plan.Plan
+java.io.Serializable <|.. domain.Student
+exceptions.PersistenceException <|-- exceptions.WriteFailureException
+exceptions.ValidationException <|-- exceptions.RequiredFieldException
+exceptions.FitManagerException <|-- exceptions.PersistenceException
+java.io.Serializable <|.. domain.Enrollment
+domain.payment.Payment <|-- domain.payment.CreditCardPayment
+domain.plan.Plan <|-- domain.plan.MonthlyPlan
+exceptions.FitManagerException <|-- exceptions.ValidationException
+domain.payment.Payment <|-- domain.payment.PixPayment
+domain.plan.Plan <|-- domain.plan.AnnualPlan
+exceptions.ValidationException <|-- exceptions.InvalidPaymentMethodException
+ui.UserInterface <|.. ui.JOptionPaneUI
+exceptions.PersistenceException <|-- exceptions.CorruptedFileException
+exceptions.BusinessException <|-- exceptions.StudentWithActiveRegistrationException
+exceptions.RuntimeException <|-- exceptions.FitManagerException
+exceptions.BusinessException <|-- exceptions.DuplicatedEnrollmentException
+@enduml
