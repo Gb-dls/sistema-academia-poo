@@ -1,6 +1,7 @@
 package exceptions;
 
-public class FitManagerException extends Exception {
+//Exception
+public class FitManagerException extends RuntimeException  {
     // Construtor 1 //
     public FitManagerException(String message) {
         super(message);
