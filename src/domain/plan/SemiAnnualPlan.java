@@ -13,7 +13,7 @@ public class SemiAnnualPlan extends Plan {
         double basePrice = getPricePerMonth() * months;
 
         // Regra: desconto de 10%
-        if (months >= getMinDurationMonths()) {
+        if (months > getMinDurationMonths()) {
             return basePrice * 0.90;
         }
         return basePrice;
