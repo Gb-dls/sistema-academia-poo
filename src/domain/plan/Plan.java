@@ -43,6 +43,10 @@ public abstract class Plan implements Serializable{
 
      public abstract double getCancellationFee(Enrollment enrollment);
 
+     // Metodos para o relatorio //
+     // Cada subclasse deverá retornar seu nome de categoria (ex: "Mensal", "Anual") //
+     public abstract String getPlanTypeName();
+
      // Calcula a taxa baseada em porcentagem se o tempo mínimo de contrato não foi atingido
      protected double calculatePercentageFee(Enrollment enrollment, double percentage) {
           if (enrollment.getMonthsActive() <= enrollment.getDurationMonths()) {

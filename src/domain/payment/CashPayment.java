@@ -43,4 +43,12 @@ public class CashPayment extends Payment {
                 this.amountReceived,
                 this.getChange());
     }
+
+    /*
+    @ getPaymentMethod
+    @ Objetivo: Retornar o tipo de pagamento para exibir no relatorio financeiro
+    */
+    @Override
+    public String getPaymentMethodName() { return "Cash"; }
+
 }

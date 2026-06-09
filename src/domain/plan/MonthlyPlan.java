@@ -18,4 +18,7 @@ public class MonthlyPlan extends Plan {
     public double getCancellationFee(Enrollment enrollment) {
         return 0.0;
     }
+
+    @Override
+    public String getPlanTypeName() { return "Monthly"; }
 }

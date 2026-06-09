@@ -29,4 +29,6 @@ public class AnnualPlan extends Plan {
         return calculatePercentageFee(enrollment, 0.20);
     }
 
+    @Override
+    public String getPlanTypeName() { return "Annual"; }
 }

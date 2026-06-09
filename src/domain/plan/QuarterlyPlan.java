@@ -25,4 +25,8 @@ public class QuarterlyPlan extends Plan {
     public double getCancellationFee(Enrollment enrollment) {
         return calculatePercentageFee(enrollment, 0.10);
     }
+
+
+    @Override
+    public String getPlanTypeName() { return "Quarterly"; }
 }
