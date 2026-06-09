@@ -73,13 +73,9 @@ public class EnrollmentRepository extends Repository<Enrollment> {
 
     @Override
     public void save(String filePath) {
-        // Criamos o objeto que vai empacotar os dados
-        SaveState state = new SaveState();
-        state.items = this.items;
-        state.nextCode = this.nextCode;
-
+        SaveState state = new SaveState(this.items, this.nextCode);
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
-            oos.writeObject(state); // Salva o pacote completo no arquivo
+            oos.writeObject(state);
         } catch(IOException e) {
             throw new WriteFailureException(filePath, e);
         }
@@ -94,8 +90,8 @@ public class EnrollmentRepository extends Repository<Enrollment> {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))){
             // Lemos o pacote completo do arquivo
             SaveState state = (SaveState) ois.readObject();
-            this.items = state.items;
-            this.nextCode = state.nextCode;
+            this.items = state.getItems();
+            this.nextCode = state.getNextCode();
         } catch(ClassNotFoundException | IOException e){
             throw new CorruptedFileException(filePath, e);
         }
