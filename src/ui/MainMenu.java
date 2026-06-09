@@ -75,7 +75,8 @@ public class MainMenu {
                     ui.showMessage("Saindo...");
                     if (!fitManager.isSucessoUltimoSalvamento()) {
                         ui.showError("Gravação falhou! O sistema NÃO foi fechado para evitar perda de dados.");
-                        option = 0; // Altera para 0 para o do-while NÃO fechar o programa
+                        option = 0; // Altera para 0 para o do-while NÃO fechar o programa e salvar os dados na pasta de emergencia
+
                     }
                 }
                 default -> ui.showError("Opção inválida!"); // Qualquer outra opção é invalida
