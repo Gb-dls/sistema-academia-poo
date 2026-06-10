@@ -12,7 +12,10 @@ Sistema de gerenciamento de academia desenvolvido em Java, permitindo o controle
 
 Java 21
 
-## Como compilar e executar - PARTE 1
+---
+# Etapa 1
+
+## Como compilar e executar
 
 ### Compilar
 Navegue até a pasta `src` do projeto e execute:
@@ -35,7 +38,10 @@ src/
 └── validators/     → CpfValidator, ContactValidator
 ```
 
-## Como compilar e executar - PARTE 2
+---
+# Etapa 2
+
+## Como compilar e executar
 
 ### Pré-requisito
 Crie a pasta `bin` na raiz do projeto (apenas na primeira vez):
@@ -67,7 +73,10 @@ src/
 └── validators/     → Validadores isolados (CpfValidator, ContactValidator)
 ```
 
-## Como compilar e executar - PARTE 3
+---
+# Etapa 3
+
+## Como compilar e executar 
 
 ### Pré-requisito
 Crie a pasta `bin` na raiz do projeto (apenas na primeira vez):
