@@ -280,6 +280,22 @@ Nesta etapa, o grupo enfrentou desafios significativos na resolução de *Merge 
    Nesta terceira etapa, o sistema FitManager foi consolidado com a aplicação de conceitos avançados de Orientação a Objetos, focando em segurança de tipos, tratamento robusto de erros e armazenamento de dados. A classe OperationResult foi tipada com Generics (<T>), eliminando a necessidade de casts nos menus. Foi introduzido um repositório genérico (Repository<T>) para centralizar a manipulação e persistência de dados em arquivos binários (.ser), preservando a hierarquia polimórfica. Além disso, implementou-se uma sólida hierarquia de exceções personalizadas para proteger o sistema e um gerador de relatório financeiro mensal, que processa dados polimorficamente.
 
 ## 2. Diagrama de Classes Atualizado
+
+### Domain
+![Domain](diagrama-domain.png)
+
+### Application
+![Application](diagrama-application.png)
+
+### Persistence
+![Persistence](diagrama-persistence.png)
+
+### UI
+![UI](diagrama-ui.png)
+
+### Exceptions
+![Exceptions](diagrama-exceptions.png)
+
 ## 3. Decisões de projeto da Etapa 3
 
 ### Sobre Generics e o Repositório Genérico
