@@ -3,10 +3,11 @@ package domain;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-
+import java.io.Serializable;
 
 // Classe que representa a entidade Aluno no sistema
-public class Student {
+public class Student implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     // ================= ATRIBUTOS =================
     private String name;                // Nome do aluno

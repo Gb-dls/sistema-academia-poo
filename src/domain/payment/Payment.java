@@ -1,9 +1,10 @@
 package domain.payment;
 
 import java.time.LocalDate;
+import java.io.Serializable;
 
-public abstract class Payment {
-
+public abstract class Payment implements Serializable {
+    private static final long serialVersionUID = 1L;
     protected LocalDate date;
     protected double amount;
 
@@ -30,6 +31,10 @@ public abstract class Payment {
 
     /* Contrato Com Subclasses - Produz uma representação textual relevante para o tipo de pagamento */
     public abstract String getPaymentSummary();
+
+    // Metodo para relatorio financeiro //
+    /* Contrato Com Subclasses - Retorna o nome da forma de pagamento (ex: "PIX", "Cartão de Crédito") */
+    public abstract String getPaymentMethodName();
 
     // toString Payment //
     /* Exibição de detalhes do pagamento */

@@ -1,77 +1,50 @@
 package application;
 
 import domain.plan.*;
+import exceptions.*;
 import java.util.ArrayList;
-import java.util.Comparator;
+import persistence.PlanRepository;
 
 // Classe responsável pela lógica de negócio dos planos
 // Aqui ficam regras de cadastro, busca, atualização e validação de planos
 public class PlanService {
 
-    // ================= ATRIBUTOS =================
+    private final PlanRepository planRepository;
 
-    // Lista interna de planos cadastrados.
-    // Acessível apenas pelos métodos deste serviço — nunca diretamente por outras classes.
-    private ArrayList<Plan> plans = new ArrayList<Plan>();
-
-    // ================= VALIDAÇÕES =================
-
-    // Verifica se já existe um plano com o nome informado.
-    // A comparação ignora maiúsculas/minúsculas para evitar duplicatas como
-    // "Mensal" e "mensal".
-    public boolean nameExists(String name){
-        for (Plan current : plans) {
-            if (current.getName().equalsIgnoreCase(name)) {
-                return true;
-            }
-        }
-        return false;
+    public PlanService(PlanRepository planRepository) {
+        this.planRepository = planRepository;
     }
-
-    // Registra um novo plano após validar todos os campos obrigatórios.
-    // Retorna OperationResult com sucesso e o objeto Plan criado,
-    // ou com falha e mensagem descritiva caso alguma validação não passe.
 
 
     // ================= CADASTRAR PLANO =================
-    // Registra um novo plano no sistema
-    public OperationResult registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) {
+    public OperationResult<Plan> registerPlan(String name, String description, String typeStr, String minDurationStr, String priceStr) throws ValidationException, BusinessException {
 
-        // Validação do tipo de plano
-        if (typeStr == null) {
-            return new OperationResult(false, "Tipo de plano inválido.");
+        if (typeStr == null || typeStr.isBlank()) {
+            throw new RequiredFieldException("Tipo de plano");
         }
-
-        // Validação do nome
         if (name == null || name.isBlank()) {
-            return new OperationResult(false, "O nome do plano não pode ser vazio.");
+            throw new RequiredFieldException("Nome do plano");
         }
-
-        // Validação da descrição
         if (description == null || description.isBlank()) {
-            return new OperationResult(false, "A descrição não pode ser vazia.");
+            throw new RequiredFieldException("Descrição");
+        }
+        if (planRepository.nameExists(name)) {
+            throw new DuplicatedPlanException(name);
         }
 
-        // Evita duplicação de planos
-        if (nameExists(name)) {
-            return new OperationResult(false, "Já há um plano com esse nome.");
-        }
-
-        // Converte e valida duração mínima
         int minDurationMonths = parseInt(minDurationStr);
         if (minDurationMonths <= 0) {
-            return new OperationResult(false, "A duração mínima deve ser maior que zero.");
+            throw new InvalidFormatFieldException("Duração", "Número inteiro maior que zero");
         }
 
-        // Converte e valida preço
         double pricePerMonth = parseDouble(priceStr);
         if (pricePerMonth <= 0) {
-            return new OperationResult(false, "O preço deve ser positivo.");
+            throw new InvalidFormatFieldException("Preço", "Valor numérico positivo");
         }
 
         int type = parseInt(typeStr);
         Plan newPlan;
-        // A decisão é baseada exclusivamente na escolha do usuário no menu (typeStr)
+
         if (type == 1) {
             newPlan = new MonthlyPlan(name, description, minDurationMonths, pricePerMonth);
         } else if (type == 2) {
@@ -81,79 +54,69 @@ public class PlanService {
         } else if (type == 4) {
             newPlan = new AnnualPlan(name, description, minDurationMonths, pricePerMonth);
         } else {
-            return new OperationResult(false, "Opção de tipo de plano inválida.");
+            throw new BusinessException("Opção de tipo de plano inválida.");
         }
 
-        // Adicionando plano a lista de forma ordenada
-        plans.add(newPlan);
-        plans.sort(Comparator.comparing(Plan::getName));
+        planRepository.add(newPlan);
+        planRepository.sortByName();
 
-        return new OperationResult(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
-
+        return new OperationResult<>(true, "Plano " + name + " cadastrado com sucesso!", newPlan);
     }
 
     // ================= BUSCA =================
-    // Busca um plano pelo nome e retorna null se não encontrado
-    public Plan findByName(String name) {
-        for (Plan current : plans) {
-            if (current.getName().equalsIgnoreCase(name)) {
-                return current;
-            }
+    public OperationResult<Plan> findByName(String name) {
+        Plan plan = planRepository.findByName(name);
+        if (plan == null){
+            return new OperationResult<>(false, "Plano não encontrado.");
         }
-        return null;
+        return new OperationResult<>(true, "Plano encontrado.", plan);
     }
-
 
     // ================= ATUALIZAÇÃO =================
+    public OperationResult<Plan> updatePrice(String name, String priceStr) throws ValidationException, BusinessException {
 
-    // Atualiza o preço mensal de um plano existente
-    // Importante: matrículas antigas não são afetadas
+        Plan plan = planRepository.findByName(name);
 
-    public OperationResult updatePrice(String name, String priceStr) {
-
-        // Busca plano
-        Plan planUpdate = findByName(name);
-
-        if (planUpdate == null) {
-            return new OperationResult(false, "O plano não foi encontrado.");
+        if (plan == null) {
+            throw new BusinessException("O plano informado não foi encontrado no sistema.");
         }
 
-        // Converte e valida novo preço
         double newPrice = parseDouble(priceStr);
         if (newPrice <= 0) {
-            return new OperationResult(false, "O preço deve ser positivo.");
+            throw new InvalidFormatFieldException("Novo preço", "Valor numérico positivo");
         }
 
-        // Atualiza preço no objeto
-        planUpdate.updatePrice(newPrice);
-
-        return new OperationResult(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice);
+        plan.updatePrice(newPrice);
+        return new OperationResult<>(true, "O preço do plano " + name + " foi atualizado para R$ " + newPrice, plan);
     }
-
 
     // ================= LISTAGEM =================
-    // Retorna uma cópia da lista de planos cadastrados.
-    // Uma cópia é retornada para impedir que classes externas
-    // modifiquem a coleção interna diretamente.
-    public ArrayList<Plan> listPlans() {
-        return new ArrayList<>(plans);
+    public OperationResult<ArrayList<Plan>> listPlans() {
+        ArrayList<Plan> list = planRepository.listAll();
+        if (list.isEmpty()){
+            return new OperationResult<>(false, "Nenhum plano cadastrado.");
+        }
+        return new OperationResult<>(true, "Lista carregada.", list);
     }
 
-
     // ================= PRIVADOS =================
-
-    // Converte String para int com validação básica
     private int parseInt(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+")) return -1;
+        if (input == null || input.isBlank()){
+            return -1;
+        }
+        if (!input.matches("\\d+")){
+            return -1;
+        }
         return Integer.parseInt(input);
     }
 
-    // Converte String para double com validação básica
     private double parseDouble(String input) {
-        if (input == null || input.isBlank()) return -1;
-        if (!input.matches("\\d+(\\.\\d+)?")) return -1;
+        if (input == null || input.isBlank()){
+            return -1;
+        }
+        if (!input.matches("\\d+(\\.\\d+)?")){
+            return -1;
+        }
         return Double.parseDouble(input);
     }
-
 }

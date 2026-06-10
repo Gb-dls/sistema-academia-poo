@@ -5,9 +5,10 @@ import domain.payment.Payment;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.time.temporal.ChronoUnit;
+import java.io.Serializable;
 
-public class Enrollment {
-
+public class Enrollment  implements Serializable{
+    private static final long serialVersionUID = 1L;
     private int code;
     private Student student;
     private Plan plan;

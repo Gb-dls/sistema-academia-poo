@@ -273,3 +273,237 @@ Nesta etapa, o grupo enfrentou desafios significativos na resolução de *Merge 
 **Sinergia do Desenvolvimento:** Outro desafio profundo foi integrar as três frentes de refatoração (`Plan`, `Payment` e `UI`). Aprendemos que adotar uma estratégia incremental e utilizar o diagrama de classes como ferramenta viva de projeto foram essenciais para antecipar acoplamentos.
 
 **A Realidade da Refatoração:** Por fim, descobrimos na prática que refatorar um código já existente é consideravelmente mais complexo do que criá-lo do zero, exigindo intenso alinhamento arquitetural de todo o grupo.
+
+---
+
+## 1. Introdução da Etapa 3
+   Nesta terceira etapa, o sistema FitManager foi consolidado com a aplicação de conceitos avançados de Orientação a Objetos, focando em segurança de tipos, tratamento robusto de erros e armazenamento de dados. A classe OperationResult foi tipada com Generics (<T>), eliminando a necessidade de casts nos menus. Foi introduzido um repositório genérico (Repository<T>) para centralizar a manipulação e persistência de dados em arquivos binários (.ser), preservando a hierarquia polimórfica. Além disso, implementou-se uma sólida hierarquia de exceções personalizadas para proteger o sistema e um gerador de relatório financeiro mensal, que processa dados polimorficamente.
+
+## 2. Diagrama de Classes Atualizado
+
+### Domain
+![Domain](diagrama-domain.png)
+
+### Application
+![Application](diagrama-application.png)
+
+### Persistence
+![Persistence](diagrama-persistence.png)
+
+### UI
+![UI](diagrama-ui.png)
+
+### Exceptions
+![Exceptions](diagrama-exceptions.png)
+
+## 3. Decisões de projeto da Etapa 3
+
+### Sobre Generics e o Repositório Genérico
+**1. Como representar operações sem dado de retorno?**  
+O grupo adotou OperationResult<Void> para operações que retornam apenas sucesso ou falha, sem necessidade de devolver uma entidade. O tipo Void representa a ausência de valor em contextos genéricos, mantendo a segurança de tipos e evitando avisos do compilador. Nesses casos, a UI utiliza apenas isSuccess() e getMessage(), enquanto getData() permanece null.
+
+**2. O que é genuinamente comum entre os serviços?**  
+   A semelhança entre StudentService, PlanService e EnrollmentService é apenas arquitetural:
+   Todos pertencem à camada de aplicação (Service);
+   Todos dependem de um repositório específico;
+   Todos utilizam OperationResult para padronizar retornos.
+   As regras de negócio e assinaturas dos métodos são diferentes, o que inviabiliza a criação de um GenericService
+
+**3. Herança ou composição para o repositório genérico?**  
+   O grupo adotou composição entre Serviços e Repositórios. Os serviços recebem os repositórios via construtor e delegam as operações de persistência para eles. Essa abordagem reduz o acoplamento e permite trocar a tecnologia de persistência sem alterar a lógica de negócio.
+
+**4. Parâmetro de tipo limitado: quando restringir o tipo genérico?**  
+   A restrição (<T extends Interface>) só é necessária quando a classe genérica precisa acessar métodos específicos do tipo parametrizado. Como Repository<T> apenas armazena e retorna objetos, sem acessar atributos internos das entidades, o grupo optou por utilizar parâmetros irrestritos (<T>), evitando abstrações artificiais e complexidade desnecessária
+
+**5. ArrayList ou List? O tipo da referência importa?**  
+   Sim. O grupo concluiu que é mais adequado programar voltado para a interface, utilizando List<T> nas assinaturas públicas e deixando ArrayList apenas para as implementações internas. Isso reduz o acoplamento e facilita futuras mudanças na estrutura de dados utilizada.
+
+**6. A refatoração em cascata e o controle de compilação:**  
+   Foi adotada uma estratégia de Refatoração Incremental por Fluxo de Domínio:
+   1. Introdução de OperationResult<T>;
+   2. Refatoração do domínio de Planos;
+   3. Refatoração do domínio de Alunos;
+   4. Refatoração do domínio de Matrículas.  
+
+Os principais problemas encontrados foram:  
+   + Uso de tipos brutos (raw types) nos menus;  
+   + Métodos sem retorno exigindo definição explícita de tipo.
+
+   As correções envolveram a tipagem explícita das variáveis e a padronização de operações sem retorno como OperationResult<Void>.
+
+**7. O atributo `nextCode` como caso especial no EnrollmentService:**  
+   O atributo nextCode é uma particularidade do domínio de matrículas e não faz parte da abstração genérica. Por isso, ele foi retirado do EnrollmentService para ser tratado na implementação concreta da classe RepositoryEnrollment relacionada às matrículas, juntamente com outras regras específicas desse domínio.
+
+---
+
+### Sobre Tratamento de Exceções e Validações
+**8. A validação pertence ao menu ou à `UserInterface`?**  
+   A responsabilidade de garantir que um número seja inteiro, que um campo obrigatório não esteja em branco ou que uma data esteja no formato correto pertence à camada de aplicação e controle, mas a captura inicial do dado e tratamento de erros de digitação brutos pertencem à classe concreta de UserInterface. A UserInterface protege o sistema contra quebras imediatas (como um NumberFormatException ao digitar letras onde se esperavam números), enquanto o Menu ou o Serviço realizam a validação lógica e semântica dos dados recebidos, acionando as exceções apropriadas.
+
+**9. Uma estratégia de tratamento consistente para todos os menus:**  
+   Foi adotada a estratégia de Laços de Repetição com Captura de Exceções Múltiplas. Dentro de cada método de interação dos menus (como StudentMenu e PlanMenu), o fluxo de captura de dados é envelopado em um bloco while (!sucesso). O bloco tenta executar a operação enviando os dados para a camada de negócios; se uma exceção específica de validação ou de negócio for lançada, o menu exibe a mensagem de erro amigável ao usuário via ui.showError() e o laço repete, permitindo uma nova tentativa sem encerrar a execução do programa.
+
+**10. Quando lançar exceção e quando retornar `OperationResult` com falha?**  
+    Uma exceção é lançada quando o fluxo ideal do sistema é interrompido por uma violação de regra ou inconsistência de dados (ex: tentar cadastrar um CPF inválido, deixar um campo obrigatório em branco, ou tentar matricular um aluno com débitos). Nesses casos, o método é interrompido imediatamente disparando um throw new BusinessException ou ValidationException.
+    Um OperationResult com falha é usado em métodos de consulta e listagem onde não encontrar um registro é um resultado possível do fluxo, e não uma quebra de regra. Por exemplo ao buscar um aluno pelo CPF no método findByCpf, a ausência do registro não é um erro do sistema, mas um fato. O serviço então retorna return new OperationResult<>(false, "Aluno não encontrado."), permitindo que a interface trate o retorno nulo de forma limpa, exibindo uma mensagem informativa sem precisar de um bloco try-catch para uma simples busca.
+
+
+**11. Verificada ou não verificada para as exceções personalizadas?**  
+    As exceções de validação e infraestrutura foram implementadas como **Exceções Verificadas**, herdando diretamente de `Exception` ou de suas respectivas bases. Essa abordagem garante em tempo de compilação que a camada de interface (UI/Menus) capture falhas de digitação ou de sistema antes que elas poluam as entidades de negócio. O ecossistema dessas exceções personalizadas criadas pelo grupo engloba:  
++ **A Base de Validação**: 
+  + **ValidationException.java:** Superclasse para todos os erros de preenchimento e sintaxe de formulários do sistema.  
+  + **Exceções Concretas de Validação (Herdam de ValidationException):**
+    + **RequiredFieldException.java:** Lançada imediatamente se o usuário deixar em branco ou enviar nulo um campo obrigatório essencial (como nome ou e-mail). 
+      + **InvalidFormatFieldException.java:** Disparada quando os dados preenchidos violam o formato esperado pelo sistema, como formatos de telefone inválidos, e-mails incorretos ou inserção de letras em campos puramente numéricos.  
+    + **Exceções de Infraestrutura e Arquivos (Herdam de uma base de Persistência):**  
+      + **PersistenceException.java:** Superclasse verificada responsável por agrupar qualquer falha de entrada e saída (I/O) ou manipulação física de arquivos no disco.  
+      + **CorruptedFileException.java:** Lançada na inicialização do sistema quando o processo de desserialização binária detecta que o arquivo .ser está violado, ilegível ou com incompatibilidade de classes.   
+      + **WriteFailureException.java:** Lançada pela persistência quando ocorre um erro crítico ao tentar salvar os dados no disco (como falta de permissão ou espaço esgotado), acionando os mecanismos de recuperação e backup.
+
+**12. Verificada ou não verificada para as exceções de domínio?** As regras e restrições que gerenciam o funcionamento da academia foram blindadas utilizando Exceções Verificadas de Domínio, estendendo a classe base `BusinessException.java` (herda de `Exception`). Isso força os Menus a preverem e tratarem fluxos onde o negócio é violado, exibindo mensagens amigáveis em vez de quebrar o software. O grupo estruturou o restante de suas exceções de domínio nas seguintes categorias:
+
+* **A Base de Negócio e o Controlador Geral:**
+* `BusinessException.java`: Superclasse que unifica todas as violações de regras operacionais do sistema da academia.
+* `FitManagerException.java`: Exceção específica do controlador central da aplicação, lançada quando ocorre uma falha na orquestração ou na ponte de comunicação de dados entre os menus e os múltiplos serviços.
+
+
+* **Restrições Operacionais de Alunos (Herdam de `BusinessException`):**
+* `DuplicatedStudentException.java`: Lançada se houver tentativa de cadastrar um aluno cujo CPF já exista na base de dados.
+
+
+* **Restrições Operacionais de Planos (Herdam de `BusinessException`):**
+* `DuplicatedPlanException.java`: Lançada ao tentar registrar um plano com um nome idêntico a um já existente (ignorando maiúsculas e minúsculas).
+* `PlanInUseException.java`: Disparada se o administrador tentar excluir ou alterar criticamente um plano que já possua alunos ativamente vinculados a ele, protegendo a integridade dos contratos.
+
+
+* **Restrições de Matrículas e Contratos (Herdam de `BusinessException`):**
+* `DuplicatedEnrollmentException.java`: Lançada caso o sistema detecte uma tentativa de reinserção de uma matrícula com o mesmo identificador ou chaves duplicadas.
+* `StudentWithActiveEnrollmentException.java`: Lançada para bloquear a criação de um novo contrato caso o aluno correspondente já possua uma matrícula com o status `ACTIVE` no sistema, impedindo sobreposição de cobranças.
+
+
+* **Restrições de Fluxo Financeiro (Herdam de `BusinessException`):**
+* `PaymentValueMismatchException.java`: Disparada se um pagamento avulso tentar enviar um valor maior do que o saldo devedor restante do aluno, ou se o pagamento inicial de matrícula for menor do que a parcela mínima do plano.
+* `InvalidPaymentMethodException.java`: Lançada para blindar os serviços caso um número de opção de pagamento incorreto ou inexistente consiga burlar o menu e chegar até a lógica de negócios.
+
+
+
+**13. Onde lançar e onde capturar?** As exceções são lançadas exclusivamente na camada de aplicação/regras de negócio (`StudentService`, `PlanService` e `EnrollmentService`), onde os dados são processados e validados contra as regras do sistema. A captura ocorre na camada de interface do usuário (dentro dos métodos dos Menus concretos). O `FitManager` atua apenas como uma ponte de delegação, declarando as cláusulas `throws` em suas assinaturas para encaminhar o erro até a interface que sabe como exibir a mensagem ao usuário.
+
+**14. Relançar, encapsular ou tratar localmente?** O sistema adota o Tratamento Local na Interface e o Encapsulamento de Exceções de Infraestrutura. Exceções de negócio e validação são geradas na camada de serviço e tratadas localmente nos menus para guiar a correção do usuário. Já exceções de infraestrutura (como uma `IOException` na persistência de arquivos) são capturadas pelo `DataManager` ou repositórios, encapsuladas em mensagens claras ou tratadas localmente com fluxos alternativos (como o acionamento de backups), evitando expor o erro técnico bruto da máquina para a interface do usuário.
+
+---
+
+### Sobre a Persistência em Arquivos
+
+**15. Onde fica a responsabilidade de persistência na arquitetura?** A responsabilidade de persistência está totalmente concentrada no pacote `persistence`. Os repositórios realizam a manipulação e serialização dos dados, enquanto o `DataManager` coordena operações globais de carga, salvamento e tratamento de falhas de I/O. Essa separação mantém baixo acoplamento entre as camadas do sistema.
+
+**16. Texto ou binário?** O sistema utiliza serialização binária nativa do Java (`ObjectOutputStream` e `ObjectInputStream`). Todas as entidades implementam `Serializable`, permitindo armazenar e recuperar objetos completos diretamente dos arquivos `.ser`.
+
+**17. Como o formato de arquivo representa o tipo concreto?** A serialização binária registra automaticamente metadados sobre o tipo concreto dos objetos. Assim, ao salvar subclasses como `AnnualPlan`, `MonthlyPlan`, `CashPayment` ou `PixPayment`, o Java preserva essas informações e recria corretamente o objeto original durante a leitura, sem necessidade de conversões manuais.
+
+**18. Referências cruzadas: o que gravar, o que reconstruir?** O grupo optou por gravar objetos inteiros em cascata. Assim, ao salvar uma matrícula, os objetos completos de aluno e plano são serializados junto com ela. Isso elimina a necessidade de reconstruir referências manualmente durante a carga. Para evitar inconsistências, o `DataManager` garante que os arquivos sejam carregados e salvos em conjunto.
+
+**19. Quando sincronizar memória e arquivo?** A sincronização ocorre por meio de salvamento em lote no encerramento do sistema. O método `saveAll()` é executado apenas quando o usuário escolhe sair da aplicação. Essa estratégia reduz operações de I/O durante o uso e simplifica a arquitetura.
+
+**20. Como detectar que um arquivo está corrompido?** O sistema detecta arquivos corrompidos na camada de persistência durante o processo de desserialização executado pelos repositórios. Quando ocorre alguma falha na leitura do arquivo — como formato inválido, incompatibilidade de classes serializadas ou erro na estrutura dos dados — o repositório encapsula o problema em uma exceção específica do domínio, `CorruptedFileException`. A detecção é tratada pelo método `safeLoad()` da classe `DataManager`. Durante a execução de `loadAll()`, cada repositório é carregado individualmente dentro de um bloco `try-catch`. Caso uma `CorruptedFileException` seja lançada, o sistema não encerra sua execução. Em vez disso, exibe uma mensagem de erro ao usuário por meio da interface escolhida (`UserInterface`) e inicializa apenas o repositório afetado com uma coleção vazia. Essa abordagem garante tolerância a falhas, impedindo que um único arquivo corrompido provoque o encerramento completo da aplicação. O usuário é informado sobre o problema e o sistema continua operando normalmente com os demais dados carregados com sucesso.
+
+**21. O que fazer quando a gravação falha parcialmente?** Como mecanismo adicional de tolerância a falhas, o sistema implementa uma estratégia de backup de emergência. Quando a gravação dos arquivos principais falha durante o encerramento, o `DataManager` tenta persistir os dados atuais da memória em uma pasta de recuperação (backup). Caso essa operação seja concluída com sucesso, o sistema informa o usuário e permite o encerramento normal. Apenas quando tanto a gravação principal quanto o backup de emergência falham simultaneamente o encerramento é bloqueado, evitando perda permanente de dados.
+
+**22. O paradoxo da interface na inicialização** O grupo revisitou o fluxo de inicialização e decidiu manter a escolha da interface como a primeira etapa do sistema. Após a seleção, a implementação concreta de `UserInterface` é criada e injetada no `FitManager` e no `DataManager`. Somente depois disso ocorre a execução do método `loadAll()`. Dessa forma, qualquer erro detectado durante o carregamento dos arquivos pode ser comunicado utilizando a mesma interface escolhida pelo usuário, preservando a consistência da experiência de uso. Por exemplo, usuários da interface gráfica recebem mensagens através de caixas de diálogo (`JOptionPane`), enquanto usuários da interface de terminal recebem mensagens no console.
+
+---
+
+### Sobre o Relatório Financeiro
+
+**23. Onde reside a lógica de agregação?** A lógica de agregação e cálculo matemático reside inteiramente na camada de aplicação, especificamente dentro do método `generateFinancialReport(int month, int year)` na classe `EnrollmentService`. Nenhuma regra de cálculo ou processamento de dados financeiros fica localizada nos menus ou na interface do usuário. O menu limita-se a coletar o período desejado, repassar a requisição ao `FitManager` e renderizar o objeto consolidado na tela.
+
+**24. Como agrupar por tipo sem o uso proibido de `instanceof`?** Para eliminar completamente o uso de condicionais por tipo concreto (`instanceof` ou `getClass()`), o grupo aplicou o conceito de Polimorfismo. Foram adicionados os métodos abstratos `getPlanTypeName()` na superclasse `Plan` e `getPaymentMethodName()` na superclasse `Payment`. Cada classe filha (como `AnnualPlan` ou `PixPayment`) implementa seu respectivo método retornando uma `String` identificadora (ex: "Annual", "Pix"). O motor de cálculo no serviço itera sobre os pagamentos e usa esses retornos textuais polimórficos diretamente como chaves estruturadoras dentro de objetos `Map<String, Double>`, alcançando o agrupamento de forma limpa e puramente orientada a objetos.
+
+**25. Ausência de dados é resultado, não falha.** O sistema adota o padrão de design Null Object Pattern através da classe `FinancialReport`. Ao ser instanciada para um mês e ano específicos, ela inicializa todos os seus acumuladores monetários em `0.0`, contadores em `0` e mapas de agrupamento vazios. Se o `EnrollmentService` realizar a busca no repositório e não encontrar nenhuma movimentação financeira no período selecionado, ele retorna esse objeto perfeitamente estruturado e zerado. A interface do usuário recebe o relatório, detecta a ausência de atividade pelo método `report.hasFinancialActivity()` e exibe uma mensagem informativa padronizada, sem nunca lançar exceções, exibir mensagens de erro ou retornar referências nulas (`null`) que exigiriam verificações defensivas em cascata.
+
+---
+
+### Sobre Arquitetura e Integração
+
+**26. O que fazer ao detectar inconsistência na inicialização?** Em vez de encerrar a aplicação abruptamente (crash) ao encontrar uma inconsistência ou um arquivo corrompido, o sistema exibe uma mensagem de erro na interface e inicializa apenas a coleção afetada como vazia. Isso permite que a aplicação continue em execução com os demais dados intactos. O tratamento técnico dessa decisão ocorre por meio da classe `CorruptedFileException`, localizada no pacote `exceptions`. Na arquitetura, o repositório é responsável por detectar a falha na leitura do arquivo e lançar a exceção, que, por sua vez, é interceptada pelo `DataManager` por meio de um bloco `try-catch` no método de leitura.
+
+**27. A estrutura de pacotes reflete a arquitetura?** Optou-se por expandir a estrutura de pacotes além das divisões tradicionais de interface, aplicação e domínio. Foram criados novos diretórios dedicados a separar responsabilidades técnicas específicas, tais como `src/persistence`, `src/exceptions`, `src/formatters` e `src/validators`. A criação de pacotes como `src/persistence` (contendo o `DataManager` e os repositórios), `exceptions` (agrupando `BusinessException`, `PersistenceException`, `CorruptedFileException`, etc.) e `formatters` (como o `DateFormatter`) comprova que a arquitetura isola os detalhes de I/O (leitura/gravação de arquivos) e a infraestrutura de erros para longe das camadas de Domínio e Aplicação, garantindo assim uma alta coesão do sistema.
+
+**28. Como planejar a ordem de integração?** Foi adotada uma "Estratégia de Refatoração Incremental por Fluxo de Domínio" para implementar o uso de tipos genéricos (`OperationResult<T>`) no sistema sem quebrar a compilação do projeto como um todo.
+
+**29. Warnings como métrica de qualidade** Utilização pontual e consciente da anotação `@SuppressWarnings("unchecked")` nos métodos de carga e leitura dos repositórios ou do `DataManager`, tratando o alerta emitido pelo compilador Java na linha de desserialização. A decisão justifica-se pela garantia de segurança de tipo (Type Safety) presente no fluxo de gravação. O próprio sistema assegura, por meio do método `saveAll()`, que apenas coleções válidas sejam serializadas nos arquivos `.ser` (como `students.ser`, `plans.ser`, `enrollments.ser`). Dessa forma, o cast realizado ao recuperar os dados é totalmente seguro. O uso explícito do `@SuppressWarnings` atua como uma métrica de qualidade, permitindo que a compilação permaneça 100% limpa e ocultando exclusivamente alertas cujo comportamento é intencional e dominado.
+
+---
+
+## 4. Como os generics eliminaram duplicação e melhoraram a segurança de tipos
+
+A adoção de tipos genéricos trouxe segurança em tempo de compilação e eliminou duplicação arquitetural.
+
+* **A. Parametrização do `OperationResult<T>`:** Antes, os menus precisavam "adivinhar" o tipo de retorno e forçar um cast manual, o que poderia gerar erros graves em execução (`ClassCastException`).
+  *Antes (Etapa 2 - Com `Object` e Cast explícito):*
+```java
+// Retorno genérico exigia o uso de (Student)
+OperationResult result = fitManager.findStudentByCpf(cpf);
+Student student = (Student) result.getData();
+
+```
+
+
+*Depois (Etapa 3 - Com Generics):*
+```java
+// Retorno seguro. O compilador já garante que data é um Student.
+OperationResult<Student> result = fitManager.findStudentByCpf(cpf);
+Student student = result.getData();
+
+```
+
+
+* **B. Repositório Genérico:** Antes, os três serviços (`StudentService`, `PlanService`, `EnrollmentService`) repetiam a lógica idêntica de manter um `ArrayList`, iterar sobre ele para listar elementos e gerenciar o fluxo CRUD. Com a criação da classe abstrata genérica `Repository<T>`, esses comportamentos foram centralizados. A coleção interna e o método genérico `listAll()` passaram a existir em um só lugar, eliminando a duplicação e forçando a implementação abstrata de métodos de persistência (`save()` e `load()`).
+
+---
+
+## 5. Política de exceções e estratégia de persistência
+
+**Política de Exceções:**
+
+* **Limite entre `OperationResult` e Exceções:** O grupo adotou `OperationResult` com falha (`success = false`) para regras de negócio previstas e contornáveis (ex: aluno não encontrado ou CPF duplicado). O lançamento de Exceções foi reservado para interrupções imprevistas do fluxo ou violações irrecuperáveis, como falha técnica de leitura (`CorruptedFileException`) ou violações brutas de entrada (`NumberFormatException`).
+* **Onde é lançado e capturado:** Exceções de validação de interface são tratadas diretamente dentro da `UserInterface` (`TerminalUI`/`JOptionPaneUI`), impedindo que cheguem aos menus em forma de stack trace. Exceções de infraestrutura são lançadas pelo `DataManager` e capturadas no carregamento inicial (`FitManager`), exibindo apenas mensagens controladas ao usuário.
+
+**Estratégia de Persistência:**
+
+* **Formato e Polimorfismo:** Optou-se pela serialização binária (arquivos `.ser` manipulados via `ObjectOutputStream` e `ObjectInputStream`). Essa escolha foi feita pois a serialização binária do Java preserva automaticamente os tipos concretos das subclasses. Ao carregar os pagamentos de uma matrícula, o sistema sabe instanciar corretamente um `PixPayment` ou `CashPayment` sem condicionais ou parsers manuais.
+* **Ordem de Carregamento e Falhas:** Para respeitar a integridade relacional, alunos e planos (independentes) são carregados primeiro, e matrículas (dependentes) por último. Em caso de arquivo ausente na primeira execução, o sistema trata como fluxo normal e inicializa coleções vazias. Em caso de arquivo corrompido, a `CorruptedFileException` é tratada iniciando também como vazio para evitar a quebra total da aplicação.
+
+---
+
+## 6. Funcionalidades Extras
+
+**Funcionalidade 1: Mecanismo de Backup de Emergência e Bloqueio de Encerramento (Tolerância a Falhas na Gravação)** Implementamos um sistema de backup automático como contingência. Ao encerrar o programa, se a gravação principal falhar (por exemplo, por falta de espaço ou permissão), o `DataManager` captura a exceção de I/O e tenta salvar os dados em um diretório alternativo (`backup/`). Se ambas as tentativas falharem, o `MainMenu` intercepta a falha e bloqueia o encerramento do programa (`option = 0`), avisando o usuário para que os dados em memória não sejam perdidos.
+
+1. **A funcionalidade agrega valor real ao domínio?** Sim. Em um sistema de gestão de academia real, a perda de dados de contratos e pagamentos resultaria em prejuízos financeiros severos. O mecanismo protege ativamente a academia contra a perda de dados durante o momento mais crítico da sessão (o encerramento).
+2. **Ela aplica ao menos um dos conceitos centrais desta etapa de forma genuína?** Sim. A funcionalidade faz uso intensivo do Tratamento de Exceções (capturando falhas de I/O em blocos `try-catch` e controlando o fluxo para não fechar o programa) e da Persistência em Arquivos (gerenciando a criação de diretórios de backup e múltiplos fluxos de gravação).
+3. **Está corretamente posicionada na arquitetura?** Sim. Toda a lógica de gravação e tentativa de backup reside exclusivamente no pacote `persistence` (dentro do `DataManager`). A interface (`MainMenu`) apenas avalia o retorno booleano do gerenciador central (`isSucessoUltimoSalvamento()`) para decidir se interrompe o fechamento ou não, sem conhecer detalhes de como o arquivo é salvo, preservando a separação em camadas.
+4. **Quais classes existentes foram modificadas?**
+* `DataManager`: Recebeu o método privado `saveEmergencyBackup()` e lógicas adicionais de `try-catch` para gerenciar a flag de sucesso do último salvamento.
+* `FitManager`: Foi ajustado para repassar o status de sucesso do salvamento.
+* `MainMenu`: Foi modificado na opção `5 -> Sair` e no tratamento de cancelamento (`option == -1`) para avaliar a flag de sucesso; caso falso, o laço de repetição é mantido ativo para impedir a destruição dos dados em memória.
+
+
+
+---
+
+## 7. Dificuldades e Aprendizados da Etapa 3
+
+O principal desafio desta etapa foi blindar completamente a Interface do Usuário (UI). O grupo precisou refatorar extensivamente as classes de Menu e a `UserInterface` para garantir que campos que esperavam números (como `getInt()` ou `getDouble()`) não fizessem o sistema quebrar ao receber texto ou cliques de cancelamento. Aprendeu-se o conceito de Guard Clauses, aplicando `if (option == -1) return;` para tornar a navegação à prova de falhas.
+
+Além disso, a implementação do `DataManager` trouxe grande aprendizado sobre o ciclo de vida de arquivos. A descoberta de que os métodos genéricos de desserialização (`readObject()`) sempre retornam `Object` nos forçou a entender por que o compilador gera warnings e como documentar corretamente o porquê de um cast ser seguro, justificando o uso pontual da anotação `@SuppressWarnings("unchecked")`. Entendemos que tratar erros de I/O de forma limpa, fechando recursos em blocos `try-catch`, é o que separa um programa acadêmico de um software de nível profissional.
+
+---
+
+## 8. Evolução e Adequações Baseadas no Feedback da Etapa 2
+
+A equipe analisou e retificou minuciosamente os pontos de atenção apontados na avaliação anterior, em especial no que tange às regras de negócio do sistema.
+
+* **Adequação da Lógica de Desconto:** As subclasses de `Plan` foram ajustadas para empregar a condicional estrita `if (months > getMinDurationMonths())`. Essa modificação garante que o benefício não seja indevidamente concedido no caso-limite em que o período contratado coincide exatamente com a carência mínima exigida.
+* **Retificação da Multa Rescisória do Plano Anual:** A lógica de isenção presente no método `getCancellationFee` da classe `AnnualPlan` foi refatorada. O cálculo matemático agora computa dinamicamente o período estabelecido na matrícula (`enrollment.getDurationMonths() / 2.0`), em detrimento da duração mínima estática do plano. Isso assegura a aplicação precisa da isenção de multa caso a quebra do acordo ocorra após o cumprimento de metade do contrato.
+* **Mitigação de Complexidade e Duplicidade de Código:** A adoção do padrão arquitetural genérico `Repository<T>` e a delegação das validações de entrada de dados (tais como `getInt()` e `getDouble()`) exclusivamente para a camada de visualização (`UserInterface`) promoveram uma redução significativa na extensão e na complexidade ciclomática dos métodos alocados nos serviços e nos fluxos transacionais.

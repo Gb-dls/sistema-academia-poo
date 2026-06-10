@@ -1,8 +1,9 @@
 package domain.plan;
 
 import domain.Enrollment;
-
-public abstract class Plan {
+import java.io.Serializable;
+public abstract class Plan implements Serializable{
+     private static final long serialVersionUID = 1L;
      private String name;
      private String description;
      private int minDurationMonths;
@@ -42,9 +43,13 @@ public abstract class Plan {
 
      public abstract double getCancellationFee(Enrollment enrollment);
 
+     // Metodos para o relatorio //
+     // Cada subclasse deverá retornar seu nome de categoria (ex: "Mensal", "Anual") //
+     public abstract String getPlanTypeName();
+
      // Calcula a taxa baseada em porcentagem se o tempo mínimo de contrato não foi atingido
      protected double calculatePercentageFee(Enrollment enrollment, double percentage) {
-          if (enrollment.getMonthsActive() < getMinDurationMonths()) {
+          if (enrollment.getMonthsActive() <= enrollment.getDurationMonths()) {
                return enrollment.getTotalPrice() * percentage;
           }
           return 0.0;
@@ -56,14 +61,15 @@ public abstract class Plan {
           double totalWithoutDiscount = pricePerMonth * minDurationMonths;
 
           // Chama o metodo polimorfico que trara o valor com desconto da subclasse
-          double totalWithDiscount = calculateTotalPrice(minDurationMonths);
+          double totalWithDiscount = (calculateTotalPrice(minDurationMonths + 1)) / (minDurationMonths + 1);
 
           return "Nome: " + name + "\n" +
                   "Descrição: " + description + "\n" +
                   "Duração mínima: " + minDurationMonths + " meses\n" +
                   "Preço mensal: R$ " + String.format("%.2f", pricePerMonth) + "\n" +
                   "Preço total (sem desconto): R$ " + String.format("%.2f", totalWithoutDiscount) + "\n" +
-                  "Preço total (com desconto): R$ " + String.format("%.2f", totalWithDiscount) + "\n";
+                  "Preço mensal (**com desconto): R$ " + String.format("%.2f", totalWithDiscount) + "\n" +
+                  "**Desconto válido apenas para matriculas realizadas com período ACIMA do mínimo";
      }
 
 }
