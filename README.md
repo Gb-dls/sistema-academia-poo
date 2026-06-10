@@ -12,7 +12,10 @@ Sistema de gerenciamento de academia desenvolvido em Java, permitindo o controle
 
 Java 21
 
-## Como compilar e executar - PARTE 1
+---
+# Etapa 1
+
+## Como compilar e executar
 
 ### Compilar
 Navegue até a pasta `src` do projeto e execute:
@@ -35,7 +38,10 @@ src/
 └── validators/     → CpfValidator, ContactValidator
 ```
 
-## Como compilar e executar - PARTE 2
+---
+# Etapa 2
+
+## Como compilar e executar
 
 ### Pré-requisito
 Crie a pasta `bin` na raiz do projeto (apenas na primeira vez):
@@ -64,5 +70,42 @@ src/
 │   └── payment/    → Hierarquia polimórfica de pagamentos (Payment abstrata, CashPayment, PixPayment, etc.)
 ├── formatters/     → Formatador isolado (DateFormatter)
 ├── ui/             → Contratos e implementações visuais (UserInterface, TerminalUI, JOptionPaneUI e Menus)
+└── validators/     → Validadores isolados (CpfValidator, ContactValidator)
+```
+
+---
+# Etapa 3
+
+## Como compilar e executar 
+
+### Pré-requisito
+Crie a pasta `bin` na raiz do projeto (apenas na primeira vez):
+```bash
+mkdir bin
+```
+
+### Compilar
+Navegue até a pasta `src` do projeto e execute:
+```bash
+javac -d ../bin application/*.java domain/*.java domain/payment/*.java domain/plan/*.java formatters/*.java validators/*.java ui/*.java exceptions/*.java persistence/*.java```
+```
+
+### Executar
+Ainda dentro da pasta `src`, execute:
+```bash
+java -cp ../bin ui.Main
+```
+## Estrutura do projeto
+
+```
+src/
+├── application/    → Serviços, controladores e padronização (FitManager, StudentService, PlanService, EnrollmentService, OperationResult<T>)
+├── domain/         → Entidades de negócio (Student, Enrollment, FinancialReport)
+│   ├── plan/       → Hierarquia polimórfica de planos (Plan abstrata, MonthlyPlan, AnnualPlan, etc.)
+│   └── payment/    → Hierarquia polimórfica de pagamentos (Payment abstrata, CashPayment, PixPayment, etc.)
+├── exceptions/     → Hierarquia de exceções personalizadas (FitManagerException, BusinessException, PersistenceException, etc.)
+├── formatters/     → Formatador isolado (DateFormatter)
+├── persistence/    → Gerenciamento e persistência de dados em arquivos (DataManager, Repository<T>, repositórios específicos e SaveState)
+├── ui/             → Contratos, implementações visuais (UserInterface, TerminalUI, JOptionPaneUI, Menus) e a classe de inicialização Main
 └── validators/     → Validadores isolados (CpfValidator, ContactValidator)
 ```
