@@ -2,13 +2,14 @@ package application;
 
 
 // Classe que padroniza o retorno de todas as operações do sistema
-public class OperationResult {
+public class OperationResult<T> {
     // ================= ATRIBUTOS =================
 
 
     private boolean success;                // Indica se a operação foi bem-sucedida (true) ou falhou (false)
     private String message;                 // Mensagem descritiva do resultado
-    private Object data;                    //Permite retornar um objeto junto com o resultado.
+    //private Object data;                    //Permite retornar um objeto junto com o resultado.
+    private T data;
 
 
     // ================= CONSTRUTORES =================
@@ -20,7 +21,7 @@ public class OperationResult {
     }
 
     // Construtor com objeto, usado quando a operação retorna um dado junto
-    public OperationResult(boolean success, String message, Object data) {
+    public OperationResult(boolean success, String message, T data) {
         this.success = success;
         this.message = message;
         this.data = data;
@@ -38,7 +39,7 @@ public class OperationResult {
     }
 
     // Retorna o objeto associado ao resultado, ou null se não houver
-    public Object getData(){
+    public T getData(){
         return this.data;
     }
 

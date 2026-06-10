@@ -33,7 +33,8 @@ public class Main {
         }
 
         // Instancia o gerenciador principal do sistema
-        FitManager fitManager = new FitManager();
+        FitManager fitManager = new FitManager(ui);
+        fitManager.loadAll();   //carrega os dados
 
         // Cria os menus do sistema
         StudentMenu studentMenu       = new StudentMenu(ui, fitManager);

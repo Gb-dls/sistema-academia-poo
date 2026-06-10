@@ -13,7 +13,7 @@ public class QuarterlyPlan extends Plan {
         double basePrice = getPricePerMonth() * months;
 
         // Regra: desconto de 5%
-        if (months >= getMinDurationMonths()) {
+        if (months > getMinDurationMonths()) {
             return basePrice * 0.95;
         }
 
@@ -25,4 +25,8 @@ public class QuarterlyPlan extends Plan {
     public double getCancellationFee(Enrollment enrollment) {
         return calculatePercentageFee(enrollment, 0.10);
     }
+
+
+    @Override
+    public String getPlanTypeName() { return "Quarterly"; }
 }
